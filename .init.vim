@@ -17,16 +17,15 @@ Plug 'zchee/deoplete-jedi'
 Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
 " ()'' autocomplete
 Plug 'Raimondi/delimitMate'
-" Multiple cursor
-Plug 'terryma/vim-multiple-cursors'
 " Indent lines
 Plug 'Yggdroot/indentLine'
 call plug#end()
 
 colorscheme gruvbox 
 let g:spacegray_low_contrast = 1
-let g:airline_theme='deus'
+let g:airline_theme='gruvbox'
 set background=dark
+set termguicolors
 let g:airline#extensions#tabline#enabled = 1
 
 " semshi color change
@@ -51,20 +50,8 @@ set splitbelow splitright " opening vim at belowright position
 let g:deoplete#enable_at_startup = 1
 call deoplete#custom#option('num_processes', 1)
 
-" deoplete tab-complete
-inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
-inoremap <expr><CR> pumvisible() ? "\<C-y>" : "\<CR>"
-inoremap <expr><S-Tab> pumvisible() ? "\<c-p>" : "\<S-Tab>"
-
 " autocomplete ()
 let delimitMate_expand_cr=1
-
-" vim-multiple-cursor
-let g:multi_cursor_use_default_mapping=0
-let g:multi_cursor_next_key='<C-n>'
-let g:multi_cursor_prev_key='<C-p>'
-let g:multi_cursor_skip_key='<C-x>'
-let g:multi_cursor_quit_key='<Es >'
 
 " Uncomment the following to have Vim jump to the last position when reopening a file
 if has("autocmd")
@@ -80,7 +67,7 @@ nnoremap <C-s> :source ~/udg/mseok/.init.vim<CR>
 nnoremap <Left> :vertical resize +2<CR>
 nnoremap <Right> :vertical resize -2<CR>
 
-nnoremap <leader>n :25Vexplore<CR>
+nnoremap <leader><leader> :25Vexplore<CR>
 nnoremap <leader><ENTER> :Goyo<CR>
 nnoremap <leader>, :vsplit ~/udg/mseok/.init.vim<CR>
 nnoremap <leader>id :IndentLinesDisable<CR>
