@@ -1,9 +1,10 @@
 call plug#begin('~/.local/share/nvim/plugged')
 Plug 'junegunn/goyo.vim'
 Plug 'junegunn/limelight.vim'
+Plug 'NLKNguyen/papercolor-theme'
 " colorscheme
 Plug 'morhetz/gruvbox'
-Plug 'ajh17/Spacegray.vim'
+Plug 'sjl/badwolf'
 " status
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -20,13 +21,6 @@ Plug 'Raimondi/delimitMate'
 " Indent lines
 Plug 'Yggdroot/indentLine'
 call plug#end()
-
-colorscheme gruvbox 
-let g:spacegray_low_contrast = 1
-let g:airline_theme='gruvbox'
-set background=dark
-set termguicolors
-let g:airline#extensions#tabline#enabled = 1
 
 " semshi color change
 function MyCustomHighlights()
@@ -63,7 +57,10 @@ endif
 let mapleader = " "
 " nnoremap <leader><Space> :CtrlP<CR>
 nnoremap <C-l> :set background=light<CR>
+" nnoremap <C-L> :set background=dark<CR>
 nnoremap <C-s> :source ~/udg/mseok/.init.vim<CR>
+" nnoremap <Up> :resize +2<CR>
+" nnoremap <Down> :resize -2<CR>
 nnoremap <Left> :vertical resize +2<CR>
 nnoremap <Right> :vertical resize -2<CR>
 
@@ -73,11 +70,28 @@ nnoremap <leader>, :vsplit ~/udg/mseok/.init.vim<CR>
 nnoremap <leader>id :IndentLinesDisable<CR>
 nnoremap <leader>ie :IndentLinesEnable<CR>
 
+" nnoremap <C-J> <C-W><C-J>
+" nnoremap <C-K> <C-W><C-K>
+" nnoremap <C-L> <C-W><C-L>
+" nnoremap <C-H> <C-W><C-H>
+
+" python commenting as vscode
 autocmd FileType python nmap <C-_> <S-i># <Esc>
 autocmd FileType python vmap <C-_> <S-i># <Esc>
 
 map <F1> :colorscheme gruvbox<CR>
-map <F2> :colorscheme spacegray<CR>
+map <F2> :set background=dark<CR>:colorscheme badwolf<CR>
+map <F3> :set background=light<CR>:colorscheme PaperColor<CR>
+
+colorscheme badwolf 
+let g:spacegray_low_contrast = 1
+let g:airline_theme='badwolf'
+set background=dark
+set termguicolors
+let g:airline#extensions#tabline#enabled = 1
+
+hi! Normal ctermbg=NONE guibg=NONE
+hi! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE 
 
 " Goyo
 function! s:goyo_enter()
