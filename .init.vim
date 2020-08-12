@@ -1,25 +1,28 @@
 call plug#begin('~/.local/share/nvim/plugged')
+" design
 Plug 'junegunn/goyo.vim'
-Plug 'junegunn/limelight.vim'
 Plug 'NLKNguyen/papercolor-theme'
 " colorscheme
-Plug 'morhetz/gruvbox'
 Plug 'sjl/badwolf'
+Plug 'ayu-theme/ayu-vim'
 " status
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 " Syntax & autocomplete
 Plug 'Shougo/deoplete.nvim' , { 'do': ':UpdateRemotePlugins' }
-Plug 'davidhalter/jedi-vim' " python autocomplete
-Plug 'tpope/vim-markdown'
-" Plug 'deoplete-plugins/deoplete-jedi' " jedi + deoplete
+Plug 'deoplete-plugins/deoplete-jedi' " jedi + deoplete
+" Plug 'davidhalter/jedi-vim'
 Plug 'zchee/deoplete-jedi'
+Plug 'tpope/vim-markdown'
 " highlighting
 Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
 " ()'' autocomplete
 Plug 'Raimondi/delimitMate'
 " Indent lines
 Plug 'Yggdroot/indentLine'
+
+Plug 'tpope/vim-surround'
+Plug 'airblade/vim-gitgutter'
 call plug#end()
 
 " semshi color change
@@ -39,6 +42,10 @@ set laststatus=2 " shows uppder status line
 set cmdheight=1 " command space height
 set nobackup nowritebackup " no backups
 set splitbelow splitright " opening vim at belowright position
+set langmap=ㅎg,ㅓj,ㅏk,ㅣl,ㅗh " key mapping from kr to en
+set path+=**
+
+let g:netrw_liststyle=3
 
 " autocomplete
 let g:deoplete#enable_at_startup = 1
@@ -59,35 +66,51 @@ let mapleader = " "
 nnoremap <C-l> :set background=light<CR>
 " nnoremap <C-L> :set background=dark<CR>
 nnoremap <C-s> :source ~/udg/mseok/.init.vim<CR>
-" nnoremap <Up> :resize +2<CR>
-" nnoremap <Down> :resize -2<CR>
-nnoremap <Left> :vertical resize +2<CR>
-nnoremap <Right> :vertical resize -2<CR>
+nnoremap <leader><Up> :resize +2<CR>
+nnoremap <leader><Down> :resize -2<CR>
+nnoremap <leader><Left> :vertical resize +2<CR>
+nnoremap <leader><Right> :vertical resize -2<CR>
 
-nnoremap <leader><leader> :25Vexplore<CR>
 nnoremap <leader><ENTER> :Goyo<CR>
 nnoremap <leader>, :vsplit ~/udg/mseok/.init.vim<CR>
 nnoremap <leader>id :IndentLinesDisable<CR>
 nnoremap <leader>ie :IndentLinesEnable<CR>
+nnoremap <leader><leader> :Explore<CR>
+nnoremap <leader>t :tabnew /home/wykgroup/udg/mseok<CR>
+nnoremap <C-j> :tabprevious<CR>
+nnoremap <C-k> :tabnext<CR>
+nnoremap <C-n> :bn<CR>
+nnoremap <C-p> :bn<CR>
+nnoremap <C-x> :bd<CR>
+nnoremap term :tab term<CR>
 
-" nnoremap <C-J> <C-W><C-J>
-" nnoremap <C-K> <C-W><C-K>
-" nnoremap <C-L> <C-W><C-L>
-" nnoremap <C-H> <C-W><C-H>
+nnoremap <leader>gh :GitGutterPreviewHunk<CR>
+
+" buffer control
+" move to next buffer
+" move to previous buffer
+" delete current buffer
+nnoremap <C-n> :bn<CR> 
+nnoremap <C-p> :bp<CR> 
+nnoremap <C-x> :bd<CR> 
 
 " python commenting as vscode
 autocmd FileType python nmap <C-_> <S-i># <Esc>
 autocmd FileType python vmap <C-_> <S-i># <Esc>
 
-map <F1> :colorscheme gruvbox<CR>
-map <F2> :set background=dark<CR>:colorscheme badwolf<CR>
-map <F3> :set background=light<CR>:colorscheme PaperColor<CR>
-
 colorscheme badwolf 
 let g:spacegray_low_contrast = 1
 let g:airline_theme='badwolf'
 set background=dark
-set termguicolors
+set t_Co=256
+" let ayucolor="light"  " for light version of theme                                                                                             
+" let ayucolor="mirage" " for mirage version of theme                                                                                            
+" let ayucolor="dark"   " for dark version of theme                                                                                              
+" colorscheme ayu
+if has("gui_running") || g:colors_name=="ayu"                                                                                                    
+    set termguicolors
+endif
+
 let g:airline#extensions#tabline#enabled = 1
 
 hi! Normal ctermbg=NONE guibg=NONE
@@ -100,17 +123,11 @@ function! s:goyo_enter()
     set scrolloff=999
     set number
     set rnu
-    Limelight
-    let g:limelight_conceal_guifg = 'DarkGray'
-    let g:limelight_conceal_guifg = '#777777'
-    let g:limelight_paragraph_span = 1
 endfunction
 
 function! s:goyo_leave()
     set showmode
     set showcmd
-    set scrolloff=999
-    Limelight!
 endfunction
 
 autocmd! User GoyoEnter nested call <SID>goyo_enter()

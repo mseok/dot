@@ -23,6 +23,8 @@ alias rme='rm *.e*'
 alias rma='rm *.o* *.e*'
 alias watch='watch '
 
+alias sb='source ~/udg/mseok/.bashrc'
+
 function watcha {
     watch $(alias "$@" | cut -d\' -f2)
 }
@@ -32,4 +34,8 @@ conda activate pytorch-1.5.0
 export PATH=/home/udg/msh/programs:$PATH
 if [[ ./ -ef ~ ]]; then
     cd ~/udg/mseok
+fi
+
+if [ -n "$DISPLAY" -a "$TERM" == "xterm" ]; then
+    export TERM=xterm-256color
 fi
