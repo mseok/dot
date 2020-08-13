@@ -103,11 +103,11 @@ let g:spacegray_low_contrast = 1
 let g:airline_theme='badwolf'
 set background=dark
 set t_Co=256
-" let ayucolor="light"  " for light version of theme                                                                                             
-" let ayucolor="mirage" " for mirage version of theme                                                                                            
-" let ayucolor="dark"   " for dark version of theme                                                                                              
+" let ayucolor="light"  " for light version of theme
+" let ayucolor="mirage" " for mirage version of theme
+" let ayucolor="dark"   " for dark version of theme
 " colorscheme ayu
-if has("gui_running") || g:colors_name=="ayu"                                                                                                    
+if has("gui_running") || g:colors_name=="ayu"
     set termguicolors
 endif
 
