@@ -3,9 +3,9 @@ dot files for my work space
 
 ## Files
 Currently contains...
-- .bashrc
+- `.bashrc`
 setting file for the bash
-- .init.vim
+- `.init.vim`
 setting file for the neo-vim
 
 ## Usage

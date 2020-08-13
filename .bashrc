@@ -31,7 +31,9 @@ function watcha {
 
 export PYTHONPATH=~/jaechang/work/programs/plip:$PYTHONPATH
 conda activate pytorch-1.5.0 
-export PATH=/home/udg/msh/programs:$PATH
+CURR_PATH=`pwd`
+MPATH="$(dirname "$CURR_PATH")"
+export PATH=MPATH/programs:$PATH
 if [[ ./ -ef ~ ]]; then
     cd ~/udg/mseok
 fi
