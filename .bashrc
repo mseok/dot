@@ -1,6 +1,4 @@
-CURR_PATH=`pwd`
-MPATH="$(dirname "$CURR_PATH")"
-alias vi='TERM=screen-256color $MPATH/programs/neovim/bin/nvim -u $MPATH/.init.vim'
+alias vi='TERM=screen-256color $MPATH/programs/nvim -u $MPATH/.init.vim'
 
 # Job submit alias
 alias qa='qstat -a'
@@ -31,12 +29,9 @@ function watcha {
     watch $(alias "$@" | cut -d\' -f2)
 }
 
-export PYTHONPATH=~/jaechang/work/programs/plip:$PYTHONPATH
-conda activate pytorch-1.5.0 
+# export PYTHONPATH=~/jaechang/work/programs/plip:$PYTHONPATH
+# export PYTHONPATH=/appl/anaconda3/bin/python
 export PATH=MPATH/programs:$PATH
-if [[ ./ -ef ~ ]]; then
-    cd $MPATH
-fi
 
 if [ -n "$DISPLAY" -a "$TERM" == "xterm" ]; then
     export TERM=xterm-256color
