@@ -1,9 +1,9 @@
-alias vi='TERM=screen-256color /home/wykgroup/jaechang/work/programs/neovim_build/bin/nvim -u ~/udg/mseok/.init.vim'
+alias vi='TERM=screen-256color $MPATH/programs/nvim -u $MPATH/.init.vim'
 
 # Job submit alias
 alias qa='qstat -a'
 alias qm='watch "qstat -a | grep msh | grep -v C"'
-alias qq='~/udg/mseok/template/qst'
+alias qq='$MPATH/template/qst'
 
 # current status
 alias nnn='nn | grep "horus" | sed "s/\x1b\[[0-9;]*m//g"'
@@ -23,13 +23,14 @@ alias rme='rm *.e*'
 alias rma='rm *.o* *.e*'
 alias watch='watch '
 
+alias sb='source $MPATH/.bashrc'
+
 function watcha {
     watch $(alias "$@" | cut -d\' -f2)
 }
 
-export PYTHONPATH=~/jaechang/work/programs/plip:$PYTHONPATH
-conda activate pytorch-1.5.0 
-export PATH=/home/udg/msh/programs:$PATH
-if [[ ./ -ef ~ ]]; then
-    cd ~/udg/mseok
+export PATH=MPATH/programs:$PATH
+
+if [ -n "$DISPLAY" -a "$TERM" == "xterm" ]; then
+    export TERM=xterm-256color
 fi
