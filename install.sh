@@ -14,10 +14,14 @@ do
         continue
     fi
     
-    # Check the shell type and filename, if zsh then change .bashrc to .zshrc
+    # Check the filename and the shell type
     if [[ $dotf == *"bash"* ]]; then
-        if [[ $CHECK_SHELL == *"zsh" ]]; then
-            FILE=$PARENT_DIR/.zshrc
+        if [[ $CHECK_SHELL != *"bash" ]]; then
+            continue
+        fi
+    elif [[ $dotf == *"zsh"* ]]; then
+        if [[ $CHECK_SHELL != *"zsh" ]]; then
+            continue
         fi
     else
         FILE=$PARENT_DIR/$dotf
