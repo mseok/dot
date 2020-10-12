@@ -16,16 +16,15 @@ do
     
     # Check the filename and the shell type
     if [[ $dotf == *"bash"* ]]; then
-        if [[ $CHECK_SHELL != *"bash" ]]; then
+        if [[ $SHELL != *"bash" ]]; then
             continue
         fi
     elif [[ $dotf == *"zsh"* ]]; then
-        if [[ $CHECK_SHELL != *"zsh" ]]; then
+        if [[ $SHELL != *"zsh" ]]; then
             continue
         fi
-    else
-        FILE=$PARENT_DIR/$dotf
     fi
+    FILE=$PARENT_DIR/$dotf
     # Check the file exists
     if [[ -f "$FILE" ]]; then
         if [ "$( diff "${FILE}" "${dotf}" )" != "" ]; then

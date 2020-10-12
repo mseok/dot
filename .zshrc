@@ -11,9 +11,9 @@ source $ZSH/oh-my-zsh.sh
 
 # Aliases
 # Basic
-alias vi='nvim -u ~/.config/nvim/init.vim'
+alias vi='nvim -u ~/.init.vim'
 alias la='ls -a'
-alias sz='source ~/.zshrc'
+alias sz='source ~/.zsh_profile'
 
 # Git
 alias gs='git status'
