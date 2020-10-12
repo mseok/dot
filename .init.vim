@@ -17,18 +17,22 @@ Plug 'tpope/vim-markdown'
 Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
 " ()'' autocomplete
 Plug 'Raimondi/delimitMate'
+Plug 'tpope/vim-surround'
 " Indent lines
 Plug 'Yggdroot/indentLine'
-
-Plug 'tpope/vim-surround'
+" Git
 Plug 'airblade/vim-gitgutter'
+" PEP8
+Plug 'tell-k/vim-autopep8'
 call plug#end()
 
 " semshi color change
 function MyCustomHighlights()
     hi semshiAttribute      ctermfg=36 guifg=#00af87
+    hi ColorColumn ctermbg=gray
 endfunction
 autocmd FileType python call MyCustomHighlights()
+autocmd FileType python noremap <leader>ap :call Autopep8()<CR>
 
 " basic vim setting
 syntax on
@@ -45,7 +49,11 @@ set langmap=ㅎg,ㅓj,ㅏk,ㅣl,ㅗh " key mapping from kr to en
 set path+=**
 set clipboard=unnamed " use OS clipboard
 
-let g:netrw_liststyle=3
+" autopep8
+let g:autopep8_max_line_length=79
+let g:autopep8_indent_size=4
+let g:autopep8_disable_show_diff=1
+" let g:autopep8_aggressive=2
 
 " autocomplete
 let g:deoplete#enable_at_startup = 1
@@ -54,7 +62,7 @@ call deoplete#custom#option('num_processes', 1)
 " autocomplete ()
 let delimitMate_expand_cr=1
 
-" Uncomment the following to have Vim jump to the last position when reopening a file
+" Jump to the last position when reopening a file
 if has("autocmd")
     au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
@@ -62,17 +70,15 @@ endif
 " key bindings
 " nore -> non recursive mapping
 let mapleader = " "
-" nnoremap <leader><Space> :CtrlP<CR>
 nnoremap <C-l> :set background=light<CR>
-" nnoremap <C-L> :set background=dark<CR>
 nnoremap <C-s> :source ~/.init.vim<CR>
 nnoremap <leader><Up> :resize +2<CR>
 nnoremap <leader><Down> :resize -2<CR>
 nnoremap <leader><Left> :vertical resize +2<CR>
 nnoremap <leader><Right> :vertical resize -2<CR>
-
 nnoremap <leader><ENTER> :Goyo<CR>
-nnoremap <leader>, :vsplit ~/.init.vim<CR>
+nnoremap <leader>,v :vsplit ~/.init.vim<CR>
+nnoremap <leader>,s :split ~/.init.vim<CR>
 nnoremap <leader>id :IndentLinesDisable<CR>
 nnoremap <leader>ie :IndentLinesEnable<CR>
 nnoremap <leader><leader> :Explore<CR>
@@ -84,16 +90,12 @@ nnoremap <C-n> :bn<CR>
 nnoremap <C-p> :bn<CR>
 nnoremap <C-x> :bd<CR>
 nnoremap term :tab term<CR>
-
 nnoremap <leader>gh :GitGutterPreviewHunk<CR>
 
 " buffer control
-" move to next buffer
-" move to previous buffer
-" delete current buffer
-nnoremap <C-n> :bn<CR> 
-nnoremap <C-p> :bp<CR> 
-nnoremap <C-x> :bd<CR> 
+nnoremap <C-n> :bn<CR>| " move to next buffer
+nnoremap <C-p> :bp<CR>| " move to previous buffer
+nnoremap <C-x> :bd<CR>| " delete current buffer
 
 nnoremap <C-i> :w<CR>:!python %<CR>
 
@@ -103,9 +105,6 @@ let g:airline_theme='badwolf'
 set background=dark
 set t_Co=256
 let ayucolor="light"  " for light version of theme
-" let ayucolor="mirage" " for mirage version of theme
-" let ayucolor="dark"   " for dark version of theme
-" colorscheme ayu
 if has("gui_running") || g:colors_name=="ayu"
     set termguicolors
 endif

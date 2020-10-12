@@ -29,8 +29,6 @@ function watcha {
     watch $(alias "$@" | cut -d\' -f2)
 }
 
-# export PYTHONPATH=~/jaechang/work/programs/plip:$PYTHONPATH
-# export PYTHONPATH=/appl/anaconda3/bin/python
 export PATH=MPATH/programs:$PATH
 
 if [ -n "$DISPLAY" -a "$TERM" == "xterm" ]; then

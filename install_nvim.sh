@@ -1,3 +1,4 @@
+#!/bin/bash
 CURR_DIR=`pwd`
 PAR_DIR="$(dirname "$CURR_DIR")"
 
@@ -21,11 +22,20 @@ if [ ! -x "$wget" ]; then
     echo "ERROR: No apachectl." >&2
     exit 1
 fi
-
 $wget ${NVIM_URL}
 chmod u+x nvim.appimage
 ln -s nvim.appimage nvim
 
+if [ ! -x "$curl" ]; then
+    echo "ERROR: No curl." >&2
+    exit 1
+fi
 $curl ${CURL_OPTS} ${CURL_URL}
+
+if [ ! -x "$pip" ]; then
+    echo "ERROR: No PIP" >&2
+    exit 1
+fi
+# PIP setting
 $pip install pynvim
 $pip install jedi
