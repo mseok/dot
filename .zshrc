@@ -8,6 +8,9 @@ DISABLE_UNTRACKED_FILES_DIRTY="true"
 plugins=(git)
 
 source $ZSH/oh-my-zsh.sh
+if [[ -f ~/.zsh_profile ]]; then
+    . ~/.zsh_profile
+fi
 
 # Aliases
 # Basic
