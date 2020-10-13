@@ -25,6 +25,10 @@ alias watch='watch '
 
 alias sb='source $MPATH/.bashrc'
 
+function jpt {
+    jupyter-lab --no-browser --port=$1
+}
+
 function watcha {
     watch $(alias "$@" | cut -d\' -f2)
 }
