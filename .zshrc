@@ -31,5 +31,13 @@ alias horus='ssh -X wykgroup@horus.kaist.ac.kr'
 alias messi='ssh -X messi@kaist.ac.kr'
 alias os='ssh team1@192.249.19.115'
 
+open_local {
+    open -a Safari localhost:$1
+}
+
+juptyer-pid {
+    netstat -anv | grep $1
+}
+
 # User configuration
 export MANPATH="/usr/local/man:$MANPATH"
