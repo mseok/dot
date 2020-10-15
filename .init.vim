@@ -24,6 +24,8 @@ Plug 'Yggdroot/indentLine'
 Plug 'airblade/vim-gitgutter'
 " PEP8
 Plug 'tell-k/vim-autopep8'
+" Autoformatting
+Plug 'sbdchd/neoformat'
 call plug#end()
 
 " semshi color change
@@ -121,6 +123,12 @@ let g:airline#extensions#tabline#enabled = 1
 
 hi! Normal ctermbg=NONE guibg=NONE
 hi! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE 
+
+" Autoformatting
+let g:neoformat_basic_format_align = 1  " Enable alignment
+let g:neoformat_basic_format_retab = 1  " Enable tab to space conversion
+let g:neoformat_basic_format_trim = 1  " Enable trimmming of trailing whitespace
+noremap <leader>nf :Neoformat<CR>
 
 " Goyo
 function! s:goyo_enter()
