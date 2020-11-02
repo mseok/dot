@@ -1,42 +1,58 @@
 #!/bin/bash
-echo "Starting to run install commands."
+echo "Starting to install."
 
-# All dot files in this repository
-DOTFS=`ls -ad .*`
+# Check shell type
+echo "Checking shell type ..."
+SHELL_NAME=`echo $SHELL`
+IFS="/" read -a arr <<< "$SHELL_NAME"
+SHELL_NAME="${arr[-1]}"
+if [[ $SHELL_NAME == "bash" ]]; then
+    RC=".bashrc"
+elif [[ $SHELL_NAME == "zsh" ]]; then
+    RC=".zshrc"
+else
+    echo "Only supporting bash and zsh currently."
+    exit 100
+fi
+echo "Currently on '$SHELL_NAME'."
 
-# Parent directory's dot files
-CURRENT_DIR=`pwd`
-PARENT_DIR="$(dirname "$CURRENT_DIR")"
-for dotf in $DOTFS
-do
-    # Check the directory exists
-    if [[ -d $dotf ]]; then
-        continue
+# Directory setting
+echo "Do you want to install at '$HOME' [y/n]?"
+read answer
+if [[ $answer == "y" ]]; then
+    INSTALL_DIR=$HOME
+elif [[ $answer == "n" ]]; then
+    echo "Write the directory for the setting."
+    read INSTALL_DIR
+    INSTALL_DIR="$(cd "$INSTALL_DIR"; pwd)"
+    if [[ $INSTALL_DIR == $HOME ]]; then
+        echo "This is home directory."
+        exit 100
     fi
-    
-    # Check the filename and the shell type
-    if [[ $dotf == *"bash"* ]]; then
-        if [[ $SHELL != *"bash" ]]; then
-            continue
-        fi
-    elif [[ $dotf == *"zsh"* ]]; then
-        if [[ $SHELL != *"zsh" ]]; then
-            continue
-        fi
-    fi
-    FILE=$PARENT_DIR/$dotf
-    # Check the file exists
-    if [[ -f "$FILE" ]]; then
-        if [ "$( diff "${FILE}" "${dotf}" )" != "" ]; then
-            cp "$dotf" "$FILE"
-        fi
-    else
-        echo "$FILE does not exist."
-        echo "Make hard link files at parent directory."
-        MAKE_LINK=`ln $dotf $FILE`
-        echo $MAKE_LINK
-    fi
-done
+else
+    echo "Should choose between 'y' or 'n'."
+    exit 100
+fi
+echo "Install directory is set to $INSTALL_DIR"
+
+# Backup
+if [[ -f "$INSTALL_DIR/$RC" && ! -f "$INSTALL_DIR/$RC.bak" ]]; then
+    echo "Generating backup file: from '$INSTALL_DIR/$RC' to '$INSTALL_DIR/$RC.bak' ..."
+    mv $INSTALL_DIR/$RC $INSTALL_DIR/$RC.bak
+fi
+
+# Copy rc file and Add path if it is not exist on the .bash_profile
+DOT_PATH=`pwd`
+echo "Copying '$RC' file to '$INSTALL_DIR' ..."
+echo "Adding '$DOT_PATH' path to '$INSTALL_DIR/$RC' ..."
+echo "DOT_PATH=$DOT_PATH" | cat $RC > $INSTALL_DIR/$RC
+. $INSTALL_DIR/$RC
+
+# Copy tmux config to home directory
+TMUXF=.tmux.conf
+if [[ ! -f $INSTALL_DIR/$TMUXF ]]; then
+    cp $DOT_PATH/$TMUXF $INSTALL_DIR
+fi
 
 # Change the execution authority of the tmux files
 TMUX_FILES=`ls -ad tmux-*`

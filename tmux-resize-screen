@@ -1,6 +1,4 @@
 #!/bin/bash
-
-
 cmd="$(tmux display -p '#{pane_current_command}')"
 cmd="$(basename "${cmd,,*}")"
 

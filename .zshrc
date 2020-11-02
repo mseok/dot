@@ -27,17 +27,21 @@ alias gcm='git commit -m '
 alias glog='git log --graph --abbrev-commit --pretty=oneline'
 
 # SSH
-alias horus='ssh -X wykgroup@horus.kaist.ac.kr'
-alias messi='ssh -X messi@kaist.ac.kr'
-alias os='ssh team1@192.249.19.115'
+alias horus='ssh -X -Y wykgroup@horus.kaist.ac.kr'
+alias messi='ssh -X -Y mseok@messi.kaist.ac.kr'
 
-open_local {
-    open -a Safari localhost:$1
+openlocal() {
+    open -a Safari https://localhost:"$1"
 }
 
-juptyer-pid {
-    netstat -anv | grep $1
+jpt() {
+    ssh -N -f -L localhost:"$1":localhost:"$2" mseok@messi.kaist.ac.kr
+}
+
+juptyer-pid() {
+    lsof -i tcp:"$1"
 }
 
 # User configuration
 export MANPATH="/usr/local/man:$MANPATH"
+export PATH="/usr/local/sbin:$PATH"
