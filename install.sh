@@ -40,12 +40,15 @@ if [[ -f "$INSTALL_DIR/$RC" && ! -f "$INSTALL_DIR/$RC.bak" ]]; then
     echo "Generating backup file: from '$INSTALL_DIR/$RC' to '$INSTALL_DIR/$RC.bak' ..."
     mv $INSTALL_DIR/$RC $INSTALL_DIR/$RC.bak
 fi
+cp $RC $INSTALL_DIR/$RC
 
 # Copy rc file and Add path if it is not exist on the .bash_profile
 DOT_PATH=`pwd`
 echo "Copying '$RC' file to '$INSTALL_DIR' ..."
 echo "Adding '$DOT_PATH' path to '$INSTALL_DIR/$RC' ..."
-echo "DOT_PATH=$DOT_PATH" | cat $RC > $INSTALL_DIR/$RC
+sed -e "1i\
+DOT_PATH=$DOT_PATH
+" < $INSTALL_DIR/$RC 1<> $INSTALL_DIR/$RC
 . $INSTALL_DIR/$RC
 
 # Copy tmux config to home directory
