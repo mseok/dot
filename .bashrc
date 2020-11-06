@@ -36,7 +36,7 @@ if [ -n "$DISPLAY" -a "$TERM" == "xterm" ]; then
 fi
 
 alias vi='TERM=screen-256color $DOT_PATH/programs/nvim -u $DOT_PATH/.init.vim'
-alias sb='source $HOME/.bash_profile'
+alias sb='source $DOT_PATH/.bashrc'
 . $DOT_PATH/.git-completion.bash
 . $DOT_PATH/.git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
