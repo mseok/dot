@@ -67,8 +67,8 @@ fi
 # Copy rc file and Add path if it is not exist on the .bashrc
 DOT_PATH=`pwd`
 echo ""
-echo "Copying '$RC' file to '$INSTALL_DIR' ..."
-echo "Adding '$DOT_PATH' path to '$INSTALL_DIR/$RC' ..."
+echo "Copy '$RC' file to '$INSTALL_DIR' and"
+echo "add '$DOT_PATH' path to '$INSTALL_DIR/$RC' ..."
 echo "DOT_PATH=$DOT_PATH" > $INSTALL_DIR/$RC
 echo "INSTALL_DIR=$INSTALL_DIR" >> $INSTALL_DIR/$RC
 cat $RC >> $INSTALL_DIR/$RC
@@ -92,6 +92,15 @@ for TMUXF in $TMUX_FILES
 do
     chmod +x "$TMUXF"
 done
+
+# Add DOT_PATH to .init.vim
+INIT_VIM=.init.vim
+echo ""
+echo "Copy '$INIT_VIM' file to '$INSTALL_DIR' and"
+echo "add '$DOT_PATH' path to '$INSTALL_DIR/$INIT_VIM' ..."
+# echo "let \$DOT_PATH='$DOT_PATH'" > $INSTALL_DIR/$INIT_VIM
+echo "let \$INSTALL_DIR='$INSTALL_DIR'" > $INSTALL_DIR/$INIT_VIM
+cat $INIT_VIM >> $INSTALL_DIR/$INIT_VIM
 
 echo ""
 echo "Done."
