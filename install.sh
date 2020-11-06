@@ -43,6 +43,7 @@ if [[ -f "$INSTALL_DIR/$RC" && ! -f "$INSTALL_DIR/$RC.bak" ]]; then
     echo "Generating backup file: from '$INSTALL_DIR/$RC' to '$INSTALL_DIR/$RC.bak' ..."
     mv $INSTALL_DIR/$RC $INSTALL_DIR/$RC.bak
 fi
+cp $RC $INSTALL_DIR/$RC
 
 # Conda env settings
 echo "Do you have conda environment [y/n]?"
