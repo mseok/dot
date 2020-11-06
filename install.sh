@@ -70,6 +70,7 @@ echo ""
 echo "Copying '$RC' file to '$INSTALL_DIR' ..."
 echo "Adding '$DOT_PATH' path to '$INSTALL_DIR/$RC' ..."
 echo "DOT_PATH=$DOT_PATH" > $INSTALL_DIR/$RC
+echo "INSTALL_DIR=$INSTALL_DIR" >> $INSTALL_DIR/$RC
 cat $RC >> $INSTALL_DIR/$RC
 if [[ $CONDA_ENV ]]; then
     echo "Adding conda environment '$env' to '$INSTALL_DIR/$RC' ..."
@@ -82,6 +83,7 @@ TMUXF=.tmux.conf
 echo ""
 echo "Adding '$DOT_PATH' path to '$INSTALL_DIR/$TMUXF' ..."
 echo "DOT_PATH=$DOT_PATH" > $INSTALL_DIR/$TMUXF
+echo "INSTALL_DIR=$INSTALL_DIR" >> $INSTALL_DIR/$TMUXF
 cat $DOT_PATH/$TMUXF >> $INSTALL_DIR/$TMUXF
 
 # Change the execution authority of the tmux files
