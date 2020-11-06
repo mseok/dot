@@ -35,6 +35,14 @@ if [ -n "$DISPLAY" -a "$TERM" == "xterm" ]; then
     export TERM=xterm-256color
 fi
 
+if [[ "$pwd" == "$INSTALL_DIR" ]]; then
+    cd $INSTALL_DIR
+fi
+
+if { [ "$TERM" = "screen" ] && [ -n "$TMUX" ]; } then
+    tmux source $INSTALL_DIR/.tmux.conf
+fi
+
 alias vi='TERM=screen-256color $DOT_PATH/programs/nvim -u $DOT_PATH/.init.vim'
 alias sb='source $DOT_PATH/.bashrc'
 . $DOT_PATH/.git-completion.bash
