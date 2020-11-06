@@ -6,8 +6,10 @@ Plug 'ayu-theme/ayu-vim'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 " Syntax & autocomplete
-Plug 'neoclide/coc.nvim', { 'branch': 'master', 'do': { -> coc#util#install()} }
-" Plug 'dense-analysis/ale'
+Plug 'Shougo/deoplete.nvim' , { 'do': ':UpdateRemotePlugins' }
+Plug 'deoplete-plugins/deoplete-jedi' " jedi + deoplete
+Plug 'davidhalter/jedi-vim'
+Plug 'zchee/deoplete-jedi'
 Plug 'tpope/vim-markdown'
 " highlighting
 Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
