@@ -18,8 +18,6 @@ Plug 'tpope/vim-surround'
 Plug 'Yggdroot/indentLine'
 " Git
 Plug 'airblade/vim-gitgutter'
-" PEP8
-Plug 'tell-k/vim-autopep8'
 " Autoformatting
 Plug 'sbdchd/neoformat'
 call plug#end()
@@ -30,7 +28,7 @@ function MyCustomHighlights()
     hi ColorColumn ctermbg=gray
 endfunction
 autocmd FileType python call MyCustomHighlights()
-autocmd FileType python noremap <leader>ap :call Autopep8()<CR>
+autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
 
 " basic vim setting
 syntax on
@@ -47,15 +45,10 @@ set langmap=ㅎg,ㅓj,ㅏk,ㅣl,ㅗh " key mapping from kr to en
 set path+=**
 set clipboard=unnamed " use OS clipboard
 
-" autopep8
-let g:autopep8_max_line_length=79
-let g:autopep8_indent_size=4
-let g:autopep8_disable_show_diff=1
-" let g:autopep8_aggressive=2
-
 " autocomplete
-let g:coc_node_path = '/home/mseok/programs/node/bin/node'
-let g:airline#extensions#coc#enabled = 1
+let g:deoplete#enable_at_startup = 1
+call deoplete#custom#option('num_processes', 1)
+let g:jedi#completions_enabled = 0
 
 " autocomplete ()
 let delimitMate_expand_cr=1
@@ -66,28 +59,25 @@ if has("autocmd")
 endif
 
 " key bindings
-" nore -> non recursive mapping
 let mapleader = " "
 nnoremap <C-l> :set background=light<CR>
-nnoremap <C-s> :source ~/.init.vim<CR>
-nnoremap <leader><Up> :resize +2<CR>
-nnoremap <leader><Down> :resize -2<CR>
-nnoremap <leader><Left> :vertical resize +2<CR>
-nnoremap <leader><Right> :vertical resize -2<CR>
-nnoremap <leader><ENTER> :Goyo<CR>
-nnoremap <leader>,v :vsplit ~/.init.vim<CR>
-nnoremap <leader>,s :split ~/.init.vim<CR>
-nnoremap <leader>id :IndentLinesDisable<CR>
-nnoremap <leader>ie :IndentLinesEnable<CR>
+nnoremap <C-s> :source $INSTALL_DIR/.init.vim<CR>
+nnoremap <leader>,v :vsplit $INSTALL_DIR/.init.vim<CR>
+nnoremap <leader>,s :split $INSTALL_DIR/.init.vim<CR>
 nnoremap <leader><leader> :Explore<CR>
-nnoremap <leader>o :20Vexplore<CR>
-nnoremap <leader>t :tabnew /home/mseok/<CR>
-nnoremap <C-j> :tabprevious<CR>
-nnoremap <C-k> :tabnext<CR>
+
+" Buffer
 nnoremap <C-n> :bn<CR>
 nnoremap <C-p> :bn<CR>
 nnoremap <C-x> :bd<CR>
+
+" Tab
 nnoremap term :tab term<CR>
+nnoremap <C-j> :tabprevious<CR>
+nnoremap <C-k> :tabnext<CR>
+nnoremap <leader>t :tabnew $INSTALL_DIR<CR>
+
+" git
 nnoremap <leader>gh :GitGutterPreviewHunk<CR>
 
 " buffer control
@@ -95,7 +85,6 @@ nnoremap <C-n> :bn<CR>| " move to next buffer
 nnoremap <C-p> :bp<CR>| " move to previous buffer
 nnoremap <C-x> :bd<CR>| " delete current buffer
 
-nnoremap <C-i> :w<CR>:!python %<CR>
 
 colorscheme badwolf 
 let g:spacegray_low_contrast = 1
@@ -124,4 +113,7 @@ hi! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
 let g:neoformat_basic_format_align = 1  " Enable alignment
 let g:neoformat_basic_format_retab = 1  " Enable tab to space conversion
 let g:neoformat_basic_format_trim = 1  " Enable trimmming of trailing whitespace
-noremap <leader>nf :Neoformat<CR>
+autocmd FileType python noremap <leader>nf :Neoformat<CR>
+
+nnoremap <leader>id :IndentLinesDisable<CR>
+nnoremap <leader>ie :IndentLinesEnable<CR>

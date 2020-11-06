@@ -43,8 +43,8 @@ if { [ "$TERM" = "screen" ] && [ -n "$TMUX" ]; } then
     tmux source $INSTALL_DIR/.tmux.conf
 fi
 
-alias vi='TERM=screen-256color $DOT_PATH/programs/nvim -u $DOT_PATH/.init.vim'
-alias sb='source $DOT_PATH/.bashrc'
+alias vi='TERM=screen-256color $DOT_PATH/programs/nvim -u $INSTALL_DIR/.init.vim'
+alias sb='source $INSTALL_DIR/.bashrc'
 . $DOT_PATH/.git-completion.bash
 . $DOT_PATH/.git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
