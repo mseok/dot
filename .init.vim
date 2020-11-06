@@ -1,6 +1,4 @@
 call plug#begin('~/.local/share/nvim/plugged')
-" design
-Plug 'junegunn/goyo.vim'
 " colorscheme
 Plug 'sjl/badwolf'
 Plug 'ayu-theme/ayu-vim'
@@ -8,10 +6,8 @@ Plug 'ayu-theme/ayu-vim'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 " Syntax & autocomplete
-Plug 'Shougo/deoplete.nvim' , { 'do': ':UpdateRemotePlugins' }
-Plug 'deoplete-plugins/deoplete-jedi' " jedi + deoplete
-Plug 'davidhalter/jedi-vim'
-Plug 'zchee/deoplete-jedi'
+Plug 'neoclide/coc.nvim', { 'branch': 'master', 'do': { -> coc#util#install()} }
+" Plug 'dense-analysis/ale'
 Plug 'tpope/vim-markdown'
 " highlighting
 Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
@@ -58,8 +54,8 @@ let g:autopep8_disable_show_diff=1
 " let g:autopep8_aggressive=2
 
 " autocomplete
-let g:deoplete#enable_at_startup = 1
-call deoplete#custom#option('num_processes', 1)
+let g:coc_node_path = '/home/mseok/programs/node/bin/node'
+let g:airline#extensions#coc#enabled = 1
 
 " autocomplete ()
 let delimitMate_expand_cr=1
@@ -129,20 +125,3 @@ let g:neoformat_basic_format_align = 1  " Enable alignment
 let g:neoformat_basic_format_retab = 1  " Enable tab to space conversion
 let g:neoformat_basic_format_trim = 1  " Enable trimmming of trailing whitespace
 noremap <leader>nf :Neoformat<CR>
-
-" Goyo
-function! s:goyo_enter()
-    set noshowmode
-    set noshowcmd
-    set scrolloff=999
-    set number
-    set rnu
-endfunction
-
-function! s:goyo_leave()
-    set showmode
-    set showcmd
-endfunction
-
-autocmd! User GoyoEnter nested call <SID>goyo_enter()
-autocmd! User GoyoLeave nested call <SID>goyo_leave()
