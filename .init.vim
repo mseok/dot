@@ -40,6 +40,7 @@ function MyCustomHighlights()
     hi semshiErrorSign       ctermfg=231 guifg=#ffffff ctermbg=160 guibg=#d70000
     hi semshiErrorChar       ctermfg=231 guifg=#ffffff ctermbg=160 guibg=#d70000
 endfunction
+autocmd ColorScheme * call MyCustomHighlights()
 autocmd FileType python call MyCustomHighlights()
 autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
 autocmd FileType python set colorcolumn=80 " vertical line at 80
