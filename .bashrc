@@ -48,4 +48,8 @@ alias sb='source $INSTALL_DIR/.bashrc'
 . $DOT_PATH/.git-completion.bash
 . $DOT_PATH/.git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
-export PS1='[\[\e[36;1m\]\u\[\033[00m\]@\[\e[32;1m\]\h\[\033[00m\]] \[\e[31;1m\]\w\[\033[33m\]$(__git_ps1 " (%s)") \[\e[0m\]- \!\n$ '
+PS1=""
+if [ ! -z "$CONDA_DEFAULT_ENV" ]; then
+    PS1+="($CONDA_DEFAULT_ENV) "
+fi
+PS1+='[\[\e[36;1m\]\u\[\033[00m\]@\[\e[32;1m\]\h\[\033[00m\]] \[\e[31;1m\]\w\[\033[33m\]$(__git_ps1 " (%s)") \[\e[0m\]\n$ '
