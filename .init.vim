@@ -26,11 +26,23 @@ call plug#end()
 
 " semshi color change
 function MyCustomHighlights()
-    hi semshiAttribute      ctermfg=36 guifg=#00af87
-    hi ColorColumn ctermbg=gray
+    hi semshiAttribute       ctermfg=36 guifg=#00af87
+    hi semshiLocal           ctermfg=209 guifg=#ff875f
+    hi semshiGlobal          ctermfg=214 guifg=#ffaf00
+    hi semshiImported        ctermfg=214 guifg=#ffaf00 cterm=bold gui=bold
+    hi semshiParameter       ctermfg=75  guifg=#5fafff
+    hi semshiParameterUnused ctermfg=117 guifg=#87d7ff cterm=underline gui=underline
+    hi semshiFree            ctermfg=218 guifg=#ffafd7
+    hi semshiBuiltin         ctermfg=207 guifg=#ff5fff
+    hi semshiSelf            ctermfg=249 guifg=#b2b2b2
+    hi semshiUnresolved      ctermfg=80 guifg=#5fd7d7 cterm=underline gui=underline
+    hi semshiSelected        ctermfg=231 guifg=#ffffff ctermbg=161 guibg=#d7005f
+    hi semshiErrorSign       ctermfg=231 guifg=#ffffff ctermbg=160 guibg=#d70000
+    hi semshiErrorChar       ctermfg=231 guifg=#ffffff ctermbg=160 guibg=#d70000
 endfunction
 autocmd FileType python call MyCustomHighlights()
 autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
+autocmd FileType python set colorcolumn=80 " vertical line at 80
 
 " basic vim setting
 syntax on
@@ -38,7 +50,6 @@ set smartindent " indentation
 set tabstop=4 " tab width 4
 set shiftwidth=4 " >> << width 4
 set expandtab " tab to space
-set colorcolumn=80 " vertical line at 80
 set laststatus=2 " shows uppder status line
 set cmdheight=1 " command space height
 set nobackup nowritebackup " no backups
@@ -63,9 +74,6 @@ endif
 " key bindings
 let mapleader = " "
 nnoremap <C-l> :set background=light<CR>
-" nnoremap <C-s> :source /home/wykgroup/mseok/dot/.init.vim<CR>
-" nnoremap <leader>,v :vsplit /home/wykgroup/mseok/dot/.init.vim<CR>
-" nnoremap <leader>,s :split /home/wykgroup/mseok/dot/.init.vim<CR>
 nnoremap <C-s> :source $INSTALL_DIR/.init.vim<CR>
 nnoremap <leader>,v :vsplit $INSTALL_DIR/.init.vim<CR>
 nnoremap <leader>,s :split $INSTALL_DIR/.init.vim<CR>
@@ -90,26 +98,41 @@ nnoremap <C-n> :bn<CR>| " move to next buffer
 nnoremap <C-p> :bp<CR>| " move to previous buffer
 nnoremap <C-x> :bd<CR>| " delete current buffer
 
-
-colorscheme badwolf 
-let g:spacegray_low_contrast = 1
-let g:airline_theme='badwolf'
-set background=dark
-set t_Co=256
-let ayucolor="light"  " for light version of theme
-if has("gui_running") || g:colors_name=="ayu"
+" colorscheme functions
+function Dark_colorscheme()
+    colorscheme badwolf 
+    let g:airline_theme='badwolf'
+    set background=dark
+    set t_Co=256
     set termguicolors
-endif
-
-function Light_ayu()
-    set termguicolors
-    set background=light
-    let g:airline_theme='light'
-    colorscheme ayu
+    hi! ColorColumn ctermbg=252 guibg=#d0d0d0
 endfunction
-noremap <leader>light :call Light_ayu()<CR>
+function Light_colorscheme()
+    colorscheme ayu
+    let g:airline_theme='light'
+    let g:ayucolor="light"  " for light version of theme
+    set background=light
+    set t_Co=256
+    set termguicolors
+    hi! Normal ctermbg=255 guibg=#EEEEEE
+    hi! Visual ctermfg=255 guifg=#EEEEEE ctermbg=237 guibg=#3A3A3A
+    hi! ColorColumn ctermbg=252 guibg=#d0d0d0
+endfunction
+noremap <leader>dark :call Dark_colorscheme()<CR>
+noremap <leader>light :call Light_colorscheme()<CR>
 
-let g:airline#extensions#tabline#enabled = 1
+" time dependent colorscheme setting
+function CheckTime()
+    let hr=(strftime('%H'))
+    if hr >= 19
+        call Dark_colorscheme()
+    elseif hr >= 8
+        call Light_colorscheme()
+    elseif hr >= 0
+        call Dark_colorscheme()
+    endif
+endfunction
+autocmd FileType * call CheckTime()
 
 hi! Normal ctermbg=NONE guibg=NONE
 hi! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE 
