@@ -1,4 +1,4 @@
-let $INSTALL_DIR='/home/mseok'
+let $INSTALL_DIR='/home/wykgroup/mseok'
 call plug#begin('~/.local/share/nvim/plugged')
 " colorscheme
 Plug 'sjl/badwolf'
@@ -41,6 +41,7 @@ function MyCustomHighlights()
     hi semshiErrorSign       ctermfg=231 guifg=#ffffff ctermbg=160 guibg=#d70000
     hi semshiErrorChar       ctermfg=231 guifg=#ffffff ctermbg=160 guibg=#d70000
 endfunction
+
 autocmd ColorScheme * call MyCustomHighlights()
 autocmd FileType python call MyCustomHighlights()
 autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
@@ -60,6 +61,10 @@ set langmap=ㅎg,ㅓj,ㅏk,ㅣl,ㅗh " key mapping from kr to en
 set path+=**
 set clipboard=unnamed " use OS clipboard
 
+hi! StatusLineNC ctermbg=None guibg=None
+hi! VertSplit ctermbg=None guibg=None
+set fillchars+=vert:\|  " vertical line character
+
 " autocomplete
 let g:deoplete#enable_at_startup = 1
 call deoplete#custom#option('num_processes', 1)
@@ -72,6 +77,9 @@ let delimitMate_expand_cr=1
 if has("autocmd")
     au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
+
+" airline
+let g:airline#extensions#tabline#enabled = 1
 
 " key bindings
 let mapleader = " "
@@ -105,21 +113,19 @@ function Dark_colorscheme()
     colorscheme badwolf 
     let g:airline_theme='badwolf'
     set background=dark
-    if has("gui_running")
-        set t_Co=256
-        set termguicolors
-    endif
+    set t_Co=256
+    set termguicolors
     hi! ColorColumn ctermbg=252 guibg=#d0d0d0
+    hi! StatusLineNC ctermbg=145 guibg=#AFAFAF
+    hi! VertSplit ctermbg=145 guibg=#AFAFAF
 endfunction
 function Light_colorscheme()
     colorscheme ayu
     let g:airline_theme='light'
     let g:ayucolor="light"  " for light version of theme
     set background=light
-    if has("gui_running")
-        set t_Co=256
-        set termguicolors
-    endif
+    set t_Co=256
+    set termguicolors
     hi! Normal ctermbg=255 guibg=#EEEEEE
     hi! Visual ctermfg=255 guifg=#EEEEEE ctermbg=237 guibg=#3A3A3A
     hi! ColorColumn ctermbg=252 guibg=#d0d0d0
@@ -139,9 +145,6 @@ function CheckTime()
     endif
 endfunction
 autocmd FileType * call CheckTime()
-
-hi! Normal ctermbg=NONE guibg=NONE
-hi! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE 
 
 " Autoformatting
 let g:neoformat_basic_format_align = 1  " Enable alignment
