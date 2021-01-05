@@ -113,10 +113,13 @@ function Dark_colorscheme()
     let g:airline_theme='badwolf'
     set background=dark
     set t_Co=256
-    set termguicolors
+    if has("gui_running")
+        set termguicolors
+    endif
     hi! ColorColumn ctermbg=252 guibg=#d0d0d0
     hi! StatusLineNC ctermbg=145 guibg=#AFAFAF
     hi! VertSplit ctermbg=145 guibg=#AFAFAF
+    call MyCustomHighlights()
 endfunction
 function Light_colorscheme()
     colorscheme ayu
@@ -124,10 +127,13 @@ function Light_colorscheme()
     let g:ayucolor="light"  " for light version of theme
     set background=light
     set t_Co=256
-    set termguicolors
+    if has("gui_running")
+        set termguicolors
+    endif
     hi! Normal ctermbg=255 guibg=#EEEEEE
     hi! Visual ctermfg=255 guifg=#EEEEEE ctermbg=237 guibg=#3A3A3A
     hi! ColorColumn ctermbg=252 guibg=#d0d0d0
+    call MyCustomHighlights()
 endfunction
 noremap <leader>dark :call Dark_colorscheme()<CR>
 noremap <leader>light :call Light_colorscheme()<CR>
