@@ -51,15 +51,16 @@ read answer
 if [[ $answer == "y" ]]; then
     printf "Write your conda environment.\nConda Env: "
     read env
-    CONDA_BASE=$(conda info --base)
-    source $CONDA_BASE/etc/profile.d/conda.sh
-    ENVS=$(conda env list | awk '{print $1}' )
-    if [[ $ENVS = *"$env"* ]]; then
-       CONDA_ENV="conda activate $env"
-    else 
-       echo "Error: Please provide a valid virtual environment. For a list of valid virtual environment, please see 'conda env list' "
-       exit
-    fi
+    CONDA_ENV="conda activate $env"
+    # CONDA_BASE=$(conda info --base)
+    # source $CONDA_BASE/etc/profile.d/conda.sh
+    # ENVS=$(conda env list | awk '{print $1}' )
+    # if [[ $ENVS = *"$env"* ]]; then
+    #    CONDA_ENV="conda activate $env"
+    # else 
+    #    echo "Error: Please provide a valid virtual environment. For a list of valid virtual environment, please see 'conda env list' "
+    #    exit
+    # fi
 else
     echo "Do not add about conda initialize"
 fi
