@@ -73,10 +73,7 @@ echo "add '$DOT_PATH' path to '$INSTALL_DIR/$RC' ..."
 echo "DOT_PATH=$DOT_PATH" > $INSTALL_DIR/$RC
 echo "INSTALL_DIR=$INSTALL_DIR" >> $INSTALL_DIR/$RC
 cat $RC >> $INSTALL_DIR/$RC
-if [[ $CONDA_ENV ]]; then
-    echo "Adding conda environment '$env' to '$INSTALL_DIR/$RC' ..."
-    echo $CONDA_ENV >> $INSTALL_DIR/$RC
-fi
+echo $CONDA_ENV >> $INSTALL_DIR/$RC
 . $INSTALL_DIR/$RC
 
 # Copy tmux config to home directory
