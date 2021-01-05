@@ -138,6 +138,22 @@ endfunction
 noremap <leader>dark :call Dark_colorscheme()<CR>
 noremap <leader>light :call Light_colorscheme()<CR>
 
+let $MACMODE=$HOME.'/mac_mode'
+if filereadable($MACMODE)
+    source $MACMODE
+endif
+
+function SetColor()
+    if $MODE == 'Dark'
+        call Dark_colorscheme()
+    elseif $MODE == 'Light'
+        call Light_colorscheme()
+    else
+        echom 'shit'
+        call CheckTime()
+    endif
+endfunction
+
 " time dependent colorscheme setting
 function CheckTime()
     let hr=(strftime('%H'))
@@ -149,7 +165,7 @@ function CheckTime()
         call Dark_colorscheme()
     endif
 endfunction
-autocmd FileType * call CheckTime()
+autocmd FileType * call SetColor()
 
 " Autoformatting
 let g:neoformat_basic_format_align = 1  " Enable alignment
