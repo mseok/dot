@@ -1,4 +1,3 @@
-let $INSTALL_DIR='/home/wykgroup/mseok'
 call plug#begin('~/.local/share/nvim/plugged')
 " colorscheme
 Plug 'sjl/badwolf'
