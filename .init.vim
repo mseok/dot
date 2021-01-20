@@ -1,14 +1,14 @@
 call plug#begin('~/.local/share/nvim/plugged')
-" status
+" design
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'sjl/badwolf'
+Plug 'hzchirs/vim-material'
+Plug 'mhinz/vim-startify'
+Plug 'vim-python/python-syntax'
 " Syntax & autocomplete
-Plug 'Shougo/deoplete.nvim' , { 'do': ':UpdateRemotePlugins' }
-Plug 'deoplete-plugins/deoplete-jedi' " jedi + deoplete
-Plug 'davidhalter/jedi-vim'
-Plug 'zchee/deoplete-jedi'
-Plug 'tpope/vim-markdown'
+Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+Plug 'deoplete-plugins/deoplete-jedi'
 " ()'' autocomplete
 Plug 'Raimondi/delimitMate'
 Plug 'tpope/vim-surround'
@@ -20,18 +20,14 @@ Plug 'airblade/vim-gitgutter'
 Plug 'sbdchd/neoformat'
 call plug#end()
 
-" color
-" hi Normal           ctermfg=0 ctermbg=231
-" hi colorcolumn      ctermbg=255
-" echo synIDattr(synID(line('.'), col('.'), 1), 'name')
 autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
 autocmd FileType python set colorcolumn=80 " vertical line at 80
 
 " basic vim setting
 syntax on
 " set smartindent " indentation
-set tabstop=2 " tab width
-set shiftwidth=2 " >> << width
+set tabstop=4 " tab width
+set shiftwidth=4 " >> << width
 set expandtab " tab to space
 set laststatus=2 " shows uppder status line
 set cmdheight=1 " command space height
@@ -44,10 +40,12 @@ hi! StatusLineNC ctermbg=None guibg=None
 hi! VertSplit ctermbg=None guibg=None
 set fillchars+=vert:\|  " vertical line character
 
-" autocomplete
+" python-syntax
+let g:python_highlight_all = 1
+
+" deoplete
 let g:deoplete#enable_at_startup = 1
-call deoplete#custom#option('num_processes', 1)
-let g:jedi#completions_enabled = 0
+let g:jedi#completions_enabled = 1
 
 " autocomplete ()
 let delimitMate_expand_cr=1
@@ -72,11 +70,8 @@ nnoremap <C-n> :bn<CR>
 nnoremap <C-p> :bn<CR>
 nnoremap <C-x> :bd<CR>
 
-" Tab
-nnoremap term :tab term<CR>
-nnoremap <C-j> :tabprevious<CR>
-nnoremap <C-k> :tabnext<CR>
-nnoremap <leader>t :tabnew $INSTALL_DIR<CR>
+" Tags
+nnoremap <C-f> <C-]>
 
 " git
 nnoremap <leader>gh :GitGutterPreviewHunk<CR>
@@ -86,23 +81,25 @@ nnoremap <C-n> :bn<CR>| " move to next buffer
 nnoremap <C-p> :bp<CR>| " move to previous buffer
 nnoremap <C-x> :bd<CR>| " delete current buffer
 
-
 " colorscheme functions
 function Dark_colorscheme()
-    " colorscheme goodwolf
-    colorscheme badwolf
-    let g:airline_theme='simple'
+    set background=dark
+    set termguicolors
+    " colorscheme badwolf
+    colorscheme vim-material
+    let g:airline_theme='material'
 endfunction
 function Light_colorscheme()
-    colorscheme mgoodwolf
-    let g:airline_theme='sol'
+    " colorscheme mgoodwolf
+    set termguicolors
+    set background=light
+    colorscheme vim-material
+    let g:airline_theme='material'
 endfunction
 noremap <leader>dark :call Dark_colorscheme()<CR>
 noremap <leader>light :call Light_colorscheme()<CR>
-" call Light_colorscheme()
-call Dark_colorscheme()
-hi Comment ctermbg=None
-hi Normal  ctermbg=None
+call Light_colorscheme()
+" call Dark_colorscheme()
 
 " Autoformatting
 let g:neoformat_basic_format_align = 1  " Enable alignment
