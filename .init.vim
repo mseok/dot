@@ -4,14 +4,13 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'sjl/badwolf'
 Plug 'hzchirs/vim-material'
-Plug 'mhinz/vim-startify'
 Plug 'vim-python/python-syntax'
 " Syntax & autocomplete
 Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 Plug 'deoplete-plugins/deoplete-jedi'
+Plug 'davidhalter/jedi-vim'
 " ()'' autocomplete
 Plug 'Raimondi/delimitMate'
-Plug 'tpope/vim-surround'
 " Indent lines
 Plug 'Yggdroot/indentLine'
 " Git
@@ -34,7 +33,8 @@ set cmdheight=1 " command space height
 set nobackup nowritebackup " no backups
 set splitbelow splitright " opening vim at belowright position
 set path+=**
-set clipboard=unnamed " use OS clipboard
+set clipboard=unnamedplus " use OS clipboard
+set completeopt-=preview " deoplete complete do not show window
 
 hi! StatusLineNC ctermbg=None guibg=None
 hi! VertSplit ctermbg=None guibg=None
@@ -45,7 +45,8 @@ let g:python_highlight_all = 1
 
 " deoplete
 let g:deoplete#enable_at_startup = 1
-let g:jedi#completions_enabled = 1
+let g:jedi#completions_enabled = 0
+let g:jedi#show_call_signatures = 2
 
 " autocomplete ()
 let delimitMate_expand_cr=1
@@ -70,9 +71,6 @@ nnoremap <C-n> :bn<CR>
 nnoremap <C-p> :bn<CR>
 nnoremap <C-x> :bd<CR>
 
-" Tags
-nnoremap <C-f> <C-]>
-
 " git
 nnoremap <leader>gh :GitGutterPreviewHunk<CR>
 
@@ -86,15 +84,15 @@ function Dark_colorscheme()
     set background=dark
     set termguicolors
     " colorscheme badwolf
+    let g:airline_theme='raven'
     colorscheme vim-material
-    let g:airline_theme='material'
 endfunction
 function Light_colorscheme()
     " colorscheme mgoodwolf
     set termguicolors
     set background=light
+    let g:airline_theme='silver'
     colorscheme vim-material
-    let g:airline_theme='material'
 endfunction
 noremap <leader>dark :call Dark_colorscheme()<CR>
 noremap <leader>light :call Light_colorscheme()<CR>

@@ -52,5 +52,6 @@ PS1=""
 if [ ! -z "$CONDA_DEFAULT_ENV" ]; then
     PS1+="($CONDA_DEFAULT_ENV) "
 fi
-PS1+='[\[\e[36;1m\]\u\[\033[00m\]@\[\e[32;1m\]\h\[\033[00m\]] \[\e[31;1m\]\w\[\033[33m\]$(__git_ps1 " (%s)") \[\e[0m\]\n$ '
-alias python_ctags="ctags -R --fields=+l --languages=python --python-kinds=-iv -f ./tags . $(python -c "import os, sys; print(' '.join('{}'.format(d) for d in sys.path if os.path.isdir(d)))")"
+# PS1+='[\[\e[36;1m\]\u\[\033[00m\]@\[\e[32;1m\]\h\[\033[00m\]] \[\e[31;1m\]\w\[\033[33m\]$(__git_ps1 " (%s)") \[\e[0m\]\n$ '
+PS1+='[\[\e[36;1m\]\u\[\033[00m\]@\[\e[32;1m\]\h\[\033[00m\]] \[\e[31;1m\]\w\[\033[33m\] \[\e[0m\]\n$ '
+unset CONDA_SHLVL
