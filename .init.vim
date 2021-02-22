@@ -29,7 +29,7 @@ set tabstop=4 " tab width
 set shiftwidth=4 " >> << width
 set expandtab " tab to space
 set laststatus=2 " shows uppder status line
-set cmdheight=1 " command space height
+set cmdheight=2 " command space height
 set nobackup nowritebackup " no backups
 set splitbelow splitright " opening vim at belowright position
 set path+=**
@@ -43,10 +43,15 @@ set fillchars+=vert:\|  " vertical line character
 " python-syntax
 let g:python_highlight_all = 1
 
-" deoplete
+" Autocomplete (Deoplete, Jedi)
 let g:deoplete#enable_at_startup = 1
 let g:jedi#completions_enabled = 0
 let g:jedi#show_call_signatures = 2
+let g:jedi#goto_command = "<C-f>"
+function Jedi_call_signature_colors()
+    hi! jediFat ctermbg=None ctermfg=red guifg=#ff0000 guibg=None term=bold,underline cterm=bold,underline gui=bold,underline
+endfunction
+autocmd FileType python call Jedi_call_signature_colors()
 
 " autocomplete ()
 let delimitMate_expand_cr=1
@@ -84,8 +89,11 @@ function Dark_colorscheme()
     set background=dark
     set termguicolors
     " colorscheme badwolf
+    " let g:material_style='oceanic'
+    " let g:material_style='palenight'
     let g:airline_theme='raven'
     colorscheme vim-material
+    hi Normal ctermbg=None guibg=None
 endfunction
 function Light_colorscheme()
     " colorscheme mgoodwolf
@@ -96,8 +104,8 @@ function Light_colorscheme()
 endfunction
 noremap <leader>dark :call Dark_colorscheme()<CR>
 noremap <leader>light :call Light_colorscheme()<CR>
-call Light_colorscheme()
-" call Dark_colorscheme()
+" call Light_colorscheme()
+call Dark_colorscheme()
 
 " Autoformatting
 let g:neoformat_basic_format_align = 1  " Enable alignment
@@ -105,5 +113,14 @@ let g:neoformat_basic_format_retab = 1  " Enable tab to space conversion
 let g:neoformat_basic_format_trim = 1  " Enable trimmming of trailing whitespace
 autocmd FileType python noremap <leader>nf :Neoformat<CR>
 
-nnoremap <leader>id :IndentLinesDisable<CR>
-nnoremap <leader>ie :IndentLinesEnable<CR>
+function Copy_mode()
+    execute "IndentLinesDisable"
+    execute "GitGutterDisable"
+endfunction
+function Normal_mode()
+    execute "IndentLinesEnable"
+    execute "GitGutterEnable"
+endfunction
+
+nnoremap <leader>cp :call Copy_mode()<CR>
+nnoremap <leader>nc :call Normal_mode()<CR>
