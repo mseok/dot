@@ -3,8 +3,9 @@ call plug#begin('~/.local/share/nvim/plugged')
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'sjl/badwolf'
-Plug 'hzchirs/vim-material'
-Plug 'vim-python/python-syntax'
+Plug 'kristijanhusak/vim-hybrid-material'
+Plug 'jaxbot/semantic-highlight.vim'
+Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
 " Syntax & autocomplete
 Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 Plug 'deoplete-plugins/deoplete-jedi'
@@ -33,15 +34,12 @@ set cmdheight=2 " command space height
 set nobackup nowritebackup " no backups
 set splitbelow splitright " opening vim at belowright position
 set path+=**
-set clipboard=unnamedplus " use OS clipboard
+set clipboard=unnamed " use OS clipboard
 set completeopt-=preview " deoplete complete do not show window
 
 hi! StatusLineNC ctermbg=None guibg=None
 hi! VertSplit ctermbg=None guibg=None
 set fillchars+=vert:\|  " vertical line character
-
-" python-syntax
-let g:python_highlight_all = 1
 
 " Autocomplete (Deoplete, Jedi)
 let g:deoplete#enable_at_startup = 1
@@ -53,8 +51,27 @@ function Jedi_call_signature_colors()
 endfunction
 autocmd FileType python call Jedi_call_signature_colors()
 
+" highlighting
+let g:semshi#mark_selected_nodes = 0
+let g:semshi#excluded_hl_groups = ['local', ]
+let g:semshi#error_sign = 0
+let g:semshi#mark_selected_nodes = 0
+function MyCustomHighlights()
+    hi semshiLocal           ctermfg=209 guifg=#ff875f
+    hi semshiGlobal          ctermfg=214 guifg=#ffaf00
+    hi semshiImported        ctermfg=214 guifg=#ffaf00 cterm=bold gui=bold
+    hi semshiParameter       ctermfg=75  guifg=#5fafff
+    hi semshiParameterUnused ctermfg=117 guifg=#87d7ff cterm=underline gui=underline
+    hi semshiFree            ctermfg=218 guifg=#ffafd7
+    hi semshiBuiltin         ctermfg=207 guifg=#ff5fff
+    hi semshiAttribute       ctermfg=36  guifg=#00af87
+    hi semshiSelf            ctermfg=249 guifg=#b2b2b2
+    hi semshiUnresolved      ctermfg=226 guifg=#ffff00 cterm=underline gui=underline
+endfunction
+autocmd ColorScheme * call MyCustomHighlights()
+
 " autocomplete ()
-let delimitMate_expand_cr=1
+let delimitMate_expand_cr = 1
 
 " Jump to the last position when reopening a file
 if has("autocmd")
@@ -88,11 +105,8 @@ nnoremap <C-x> :bd<CR>| " delete current buffer
 function Dark_colorscheme()
     set background=dark
     set termguicolors
-    " colorscheme badwolf
-    " let g:material_style='oceanic'
-    " let g:material_style='palenight'
-    let g:airline_theme='raven'
-    colorscheme vim-material
+    let g:airline_theme='hybrid'
+    colorscheme hybrid_material
     hi Normal ctermbg=None guibg=None
 endfunction
 function Light_colorscheme()
