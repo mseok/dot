@@ -19,9 +19,6 @@ alias la='ls -a'
 alias rmo='rm *.o*'
 alias rme='rm *.e*'
 alias rma='rm *.o* *.e*'
-alias watch='watch '
-
-alias qq='/appl/bin/qq'
 
 function jpt {
     jupyter-lab --no-browser --port=$1
