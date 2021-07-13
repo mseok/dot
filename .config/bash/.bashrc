@@ -12,6 +12,7 @@ alias ga="git add ."
 alias gcm="git commit -m "
 alias glog="git log --graph --abbrev-commit --pretty=oneline"
 alias vi="nvim -u $HOME/dot/.config/nvim/init.vim"
+alias sb="source $HOME/dot/.config/bash/.bashrc"
 
 # Functions
 function jpt {
@@ -32,4 +33,6 @@ source $HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux
-tmux source $HOME/dot/.config/tmux/.tmux.conf
+if { [ "$TERM" = "screen" ] && [ -n "$TMUX" ]; } then
+    tmux source $INSTALL_DIR/.tmux.conf
+fi

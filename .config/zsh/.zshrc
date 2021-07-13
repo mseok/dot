@@ -9,23 +9,16 @@ autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'
 
 # Prompt Settings
+autoload colors && colors
 PROMPT=""
 if [ ! -z "$CONDA_DEFAULT_ENV" ]; then
     PROMPT+="($CONDA_DEFAULT_ENV) "
 fi
-PROMPT+="[\[\e[36;1m\]\u\[\033[00m\]@\[\e[32;1m\]\h\[\033[00m\]] \[\e[31;1m\]\w\[\033[33m\] \[\e[0m\]\n$ "
-
-# Git Settings
-autoload -Uz vcs_info
-precmd_vcs_info() { vcs_info }
-precmd_functions+=( precmd_vcs_info )
-setopt prompt_subst
-RPROMPT=\$vcs_info_msg_0_
-zstyle ':vcs_info:git:*' formats '%F{yellow}(%b)%r%f'
-zstyle ':vcs_info:*' enable git
-source $HOME/dot/completion/git-completion.zsh
-source $HOME/dot/completion/git-prompt.sh
-export GIT_PS1_SHOWDIRTYSTATE=1
+NEWLINE=$'\n'
+CYAN=$'\e[36;1m'
+# RED=$'\e[31:1m'
+WHITE=$'\e[00m'
+PROMPT+="[${CYAN}%m${WHITE}] ${CYAN}%F{red}%d%f${NEWLINE}${WHITE}$ "
 
 # Basic Aliases
 alias la="ls -a"
@@ -38,6 +31,7 @@ alias ga="git add ."
 alias gcm="git commit -m "
 alias glog="git log --graph --abbrev-commit --pretty=oneline"
 alias vi="nvim -u $HOME/dot/.config/nvim/init.vim"
+alias sz="source $HOME/dot/.config/zsh/.zshrc"
 
 # SSH Aliases
 alias horus="ssh -X -Y wykgroup@horus.kaist.ac.kr"
@@ -55,4 +49,6 @@ juptyer-pid() {
 }
 
 # Tmux
-tmux source $HOME/dot/.config/tmux/.tmux.conf
+if { [ "$TERM" = "screen" ] && [ -n "$TMUX" ]; } then
+    tmux source $INSTALL_DIR/.tmux.conf
+fi
