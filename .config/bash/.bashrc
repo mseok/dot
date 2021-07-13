@@ -27,8 +27,8 @@ if [ ! -z "$CONDA_DEFAULT_ENV" ]; then
 fi
 PS1+="[\[\e[36;1m\]\u\[\033[00m\]@\[\e[32;1m\]\h\[\033[00m\]] \[\e[31;1m\]\w\[\033[33m\] \[\e[0m\]\n$ "
 
-source $HOME/dot/.git-completion.bash
-source $HOME/dot/.git-prompt.sh
+source $HOME/dot/completion/git-completion.bash
+source $HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux

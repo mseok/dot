@@ -23,6 +23,9 @@ setopt prompt_subst
 RPROMPT=\$vcs_info_msg_0_
 zstyle ':vcs_info:git:*' formats '%F{yellow}(%b)%r%f'
 zstyle ':vcs_info:*' enable git
+source $HOME/dot/completion/git-completion.zsh
+source $HOME/dot/completion/git-prompt.sh
+export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Basic Aliases
 alias la="ls -a"
