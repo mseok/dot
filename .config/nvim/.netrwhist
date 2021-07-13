@@ -1,0 +1,12 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhistcnt =2
+let g:netrw_dirhist_2='/home/mseok/.local/share/nvim/plugged'
+let g:netrw_dirhist_1='/home/mseok/work/DL/DTI_PDBbind/refactored3_5-2/benchmarks'
+let g:netrw_dirhist_0='/run/user/1023/dconf'
+let g:netrw_dirhist_9='/home/mseok/work/DL/DTI_PDBbind/uncertainty1/benchmarks/screening'
+let g:netrw_dirhist_8='/home/mseok/work/DL/DTI_PDBbind/refactored3_5'
+let g:netrw_dirhist_7='/home/mseok/work/DL/DTI_PDBbind/refactored3_5/casf2016_benchmark'
+let g:netrw_dirhist_6='/home/mseok/data/DTI_PDBbind/CASF-2016/total_sdf_decoy_docking'
+let g:netrw_dirhist_5='/home/mseok/work/DL/DTI_PDBbind/refactored3_5/log'
+let g:netrw_dirhist_4='/home/mseok/work/DL/DTI_PDBbind/uncertainty2'
+let g:netrw_dirhist_3='/home/mseok/work/DL/DTI_PDBbind'
