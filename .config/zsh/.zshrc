@@ -51,3 +51,5 @@ juptyer-pid() {
     lsof -i tcp:"$1"
 }
 
+# Tmux
+tmux source $HOME/dot/.config/tmux/.tmux.conf
