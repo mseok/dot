@@ -9,17 +9,19 @@ Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 Plug 'deoplete-plugins/deoplete-jedi'
 Plug 'davidhalter/jedi-vim'
 " ()'' autocomplete
-Plug 'jiangmiao/auto-pairs'
-" Indent lines
+Plug 'Raimondi/delimitMate'
+" Indent Lines
 Plug 'Yggdroot/indentLine'
 " Git
 Plug 'airblade/vim-gitgutter'
 " Autoformatting
 Plug 'sbdchd/neoformat'
+" Start Page
+Plug 'mhinz/vim-startify'
 call plug#end()
 
 autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
-autocmd FileType python set colorcolumn=80 " vertical line at 80
+autocmd FileType python set colorcolumn=80
 
 " basic vim setting
 syntax on
@@ -37,12 +39,26 @@ let g:deoplete#enable_at_startup=1
 let g:jedi#completions_enabled=0
 let g:jedi#show_call_signatures=2
 let g:jedi#goto_command="<C-f>"
+let g:jedi#use_splits_not_buffers="right"
+let g:jedi#popup_on_dot=0
 function Jedi_call_signature_colors()
     hi! jediFat ctermbg=None ctermfg=red guifg=#ff0000 guibg=None term=bold,underline cterm=bold,underline gui=bold,underline
 endfunction
 autocmd FileType python call Jedi_call_signature_colors()
 " autocomplete ()
 let delimitMate_expand_cr=1
+
+" Autoformatting
+let g:neoformat_basic_format_align=1  " Enable alignment
+let g:neoformat_basic_format_retab=1  " Enable tab to space conversion
+let g:neoformat_basic_format_trim=1  " Enable trimmming of trailing whitespace
+let g:neoformat_enabled_python = ['black']
+" Auto Lint When Save
+augroup fmt
+  autocmd!
+  autocmd BufWritePre * undojoin | Neoformat
+augroup END
+autocmd FileType python noremap <leader>nf :Neoformat<CR>
 
 " Themes
 hi! StatusLineNC ctermbg=None guibg=None
@@ -105,14 +121,10 @@ endfunction
 " key bindings
 let mapleader = " "
 nnoremap <C-s> :source $HOME/dot/.config/nvim/init.vim<CR>
-nnoremap <leader>,v :vsplit $HOME/dot/.config/nvim/.init.vim<CR>
-nnoremap <leader>,s :split $HOME/dot/.config/nvim/.init.vim<CR>
+nnoremap <leader>,v :vsplit $HOME/dot/.config/nvim/init.vim<CR>
+nnoremap <leader>,s :split $HOME/dot/.config/nvim/init.vim<CR>
 nnoremap <leader><leader> :Explore<CR>
 nnoremap Q <nop>
-nnoremap <Up> :resize +2<CR>
-nnoremap <Down> :resize -2<CR>
-nnoremap <Left> :vertical resize +2<CR>
-nnoremap <Right> :vertical resize +2<CR>
 xnoremap K :move '<-2<CR>gv-gv
 xnoremap J :move '>+1<CR>gv-gv
 " Buffer
