@@ -54,7 +54,7 @@ let g:neoformat_enabled_python = ['black']
 " Auto Lint When Save
 augroup fmt
     autocmd!
-    autocmd BufWritePre * undojoin | Neoformat
+    autocmd BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
 augroup END
 autocmd FileType python noremap <leader>nf :Neoformat<CR>
 
