@@ -45,8 +45,6 @@ function Jedi_call_signature_colors()
     hi! jediFat ctermbg=None ctermfg=red guifg=#ff0000 guibg=None term=bold,underline cterm=bold,underline gui=bold,underline
 endfunction
 autocmd FileType python call Jedi_call_signature_colors()
-" autocomplete ()
-let delimitMate_expand_cr=1
 
 " Autoformatting
 let g:neoformat_basic_format_align=1  " Enable alignment
@@ -55,8 +53,8 @@ let g:neoformat_basic_format_trim=1  " Enable trimmming of trailing whitespace
 let g:neoformat_enabled_python = ['black']
 " Auto Lint When Save
 augroup fmt
-  autocmd!
-  autocmd BufWritePre * undojoin | Neoformat
+    autocmd!
+    autocmd BufWritePre * undojoin | Neoformat
 augroup END
 autocmd FileType python noremap <leader>nf :Neoformat<CR>
 
