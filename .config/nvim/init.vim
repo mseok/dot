@@ -1,4 +1,35 @@
-call plug#begin('~/mseok/.local/share/nvim/plugged')
+" basic vim setting
+syntax on
+set expandtab smartindent
+set tabstop=4 shiftwidth=4
+set laststatus=2
+set nobackup nowritebackup
+set splitbelow splitright
+set path+=**
+set clipboard=unnamed
+set completeopt=menuone,noselect
+set cmdheight=2
+autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
+autocmd FileType python set colorcolumn=80
+
+filetype plugin on
+
+" key bindings
+let mapleader = " "
+nnoremap <C-s> :source $HOME/dot/.config/nvim/init.vim<CR>
+nnoremap <leader>,v :vsplit $HOME/dot/.config/nvim/init.vim<CR>
+nnoremap <leader>,s :split $HOME/dot/.config/nvim/init.vim<CR>
+nnoremap <leader><leader> :Explore<CR>
+nnoremap Q <nop>
+xnoremap K :move '<-2<CR>gv-gv
+xnoremap J :move '>+1<CR>gv-gv
+
+" Buffer
+nnoremap <C-n> :bn<CR>
+nnoremap <C-p> :bn<CR>
+nnoremap <C-x> :bd<CR>
+
+call plug#begin('~/.local/share/nvim/plugged')
 " Prettier
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -19,23 +50,6 @@ Plug 'nvie/vim-flake8'
 " Start Page
 Plug 'mhinz/vim-startify'
 call plug#end()
-
-filetype plugin on
-
-autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
-autocmd FileType python set colorcolumn=80
-
-" basic vim setting
-syntax on
-set expandtab smartindent
-set tabstop=4 shiftwidth=4
-set laststatus=2
-set nobackup nowritebackup
-set splitbelow splitright
-set path+=**
-set clipboard=unnamed
-set completeopt=menuone,noselect
-set cmdheight=2
 
 " Autocomplete
 let $AUTOCOMPLETE = $HOME.'/dot/.config/nvim/autocomplete.vim'
@@ -100,10 +114,10 @@ function Light_colorscheme()
     colorscheme tokyonight
     call MyCustomHighlights()
 endfunction
-nnoremap <leader>dark :call Dark_colorscheme()<CR>
-nnoremap <leader>light :call Light_colorscheme()<CR>
 " call Light_colorscheme()
 call Dark_colorscheme()
+nnoremap <leader>dark :call Dark_colorscheme()<CR>
+nnoremap <leader>light :call Light_colorscheme()<CR>
 
 function Copy_mode()
     execute "IndentLinesDisable"
@@ -114,19 +128,6 @@ function Normal_mode()
     execute "GitGutterEnable"
 endfunction
 
-" key bindings
-let mapleader = " "
-nnoremap <C-s> :source $HOME/dot/.config/nvim/init.vim<CR>
-nnoremap <leader>,v :vsplit $HOME/dot/.config/nvim/init.vim<CR>
-nnoremap <leader>,s :split $HOME/dot/.config/nvim/init.vim<CR>
-nnoremap <leader><leader> :Explore<CR>
-nnoremap Q <nop>
-xnoremap K :move '<-2<CR>gv-gv
-xnoremap J :move '>+1<CR>gv-gv
-" Buffer
-nnoremap <C-n> :bn<CR>
-nnoremap <C-p> :bn<CR>
-nnoremap <C-x> :bd<CR>
 " git
 nnoremap <leader>gh :GitGutterPreviewHunk<CR>
 nnoremap <leader>cp :call Copy_mode()<CR>
