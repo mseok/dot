@@ -31,8 +31,9 @@ set laststatus=2
 set nobackup nowritebackup
 set splitbelow splitright
 set path+=**
-set clipboard=unnamed
+" set clipboard=unnamed
 set completeopt-=preview
+set cmdheight=2
 
 " Autocomplete (Deoplete, Jedi)
 let g:deoplete#enable_at_startup=1
@@ -50,12 +51,7 @@ autocmd FileType python call Jedi_call_signature_colors()
 let g:neoformat_basic_format_align=1  " Enable alignment
 let g:neoformat_basic_format_retab=1  " Enable tab to space conversion
 let g:neoformat_basic_format_trim=1  " Enable trimmming of trailing whitespace
-let g:neoformat_enabled_python = ['black']
-" Auto Lint When Save
-augroup fmt
-    autocmd!
-    autocmd BufWritePre * try | undojoin | Neoformat | catch /^Vim\%((\a\+)\)\=:E790/ | finally | silent Neoformat | endtry
-augroup END
+let g:neoformat_enabled_python = ["autopep8"]
 autocmd FileType python noremap <leader>nf :Neoformat<CR>
 
 " Themes

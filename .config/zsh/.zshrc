@@ -3,9 +3,8 @@ export TERM="xterm-256color"
 export HISFILE=~/.config/zsh/.zsh_hitstory
 export EDITOR="nvim"
 
-# PATH=$PATH:$HOME/.scripts
-bindkey -v  # vi-mode
 autoload -Uz compinit && compinit
+_comp_options+=(globdots)
 zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'
 
 # Prompt Settings
@@ -15,13 +14,21 @@ if [ ! -z "$CONDA_DEFAULT_ENV" ]; then
     PROMPT+="($CONDA_DEFAULT_ENV) "
 fi
 NEWLINE=$'\n'
-CYAN=$'\e[36;1m'
-# RED=$'\e[31:1m'
-WHITE=$'\e[00m'
-PROMPT+="[${CYAN}%m${WHITE}] ${CYAN}%F{red}%d%f${NEWLINE}${WHITE}$ "
+PROMPT+="[%B%F{cyan}%n%b%F{white}@%B%F{green}%m%F{231}%b] %B%F{red}%d%b%f${NEWLINE}%F{231}$ "
 
 # Basic Aliases
 alias la="ls -a"
+alias ll="ls -l"
+alias vi="nvim -u $HOME/dot/.config/nvim/init.vim"
+alias sz="source $HOME/dot/.config/zsh/.zshrc"
+alias ta="tmux a -t"
+alias tn="tmux new -s"
+alias tl="tmux ls"
+if [ ! -x "$(command -v foo)" ]; then
+    if [ ! -d "$HOME/.config/alacrity" ]; then
+        alias reload="cp $HOME/dot/.config/alacritty/alacritty.yml $HOME/.config/alacritty"
+    fi
+fi
 
 # Git Aliases
 alias gs="git status"
@@ -30,12 +37,11 @@ alias gp="git push"
 alias ga="git add ."
 alias gcm="git commit -m "
 alias glog="git log --graph --abbrev-commit --pretty=oneline"
-alias vi="nvim -u $HOME/dot/.config/nvim/init.vim"
-alias sz="source $HOME/dot/.config/zsh/.zshrc"
 
 # SSH Aliases
 alias horus="ssh -X -Y wykgroup@horus.kaist.ac.kr"
 alias messi="ssh -X -Y mseok@messi.kaist.ac.kr"
+alias saraswati="ssh -X -Y wykgroup@saraswati1.kaist.ac.kr"
 
 # Functions
 openlocal() {
@@ -49,6 +55,9 @@ juptyer-pid() {
 }
 
 # Tmux
-if { [ "$TERM" = "screen" ] && [ -n "$TMUX" ]; } then
-    tmux source $INSTALL_DIR/.tmux.conf
+if { [ -n "$TMUX" ]; } then
+    tmux source $HOME/dot/.config/tmux/.tmux.conf
 fi
+
+bindkey "^[[H" beginning-of-line
+bindkey "^[[F" end-of-line

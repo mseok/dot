@@ -3,6 +3,17 @@ export EDITOR="nvim"
 
 # Basic Aliases
 alias la="ls -a"
+alias ll="ls -l"
+alias vi="nvim -u $HOME/dot/.config/nvim/init.vim"
+alias sb="source $HOME/dot/.config/bash/.bashrc"
+alias ta="tmux a -t"
+alias tn="tmux new -s"
+alias tl="tmux ls"
+if [ ! -x "$(command -v foo)" ]; then
+    if [ ! -d "$HOME/.config/alacrity" ]; then
+        alias reload="cp $HOME/dot/.config/alacritty/alacritty.yml $HOME/.config/alacritty"
+    fi
+fi
 
 # Git Aliases
 alias gs="git status"
@@ -11,8 +22,6 @@ alias gp="git push"
 alias ga="git add ."
 alias gcm="git commit -m "
 alias glog="git log --graph --abbrev-commit --pretty=oneline"
-alias vi="nvim -u $HOME/dot/.config/nvim/init.vim"
-alias sb="source $HOME/dot/.config/bash/.bashrc"
 
 # Functions
 function jpt {
@@ -33,6 +42,6 @@ source $HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux
-if { [ "$TERM" = "screen" ] && [ -n "$TMUX" ]; } then
-    tmux source $INSTALL_DIR/.tmux.conf
+if { [ -n "$TMUX" ]; } then
+    tmux source $HOEM/dot/.config/tmux/.tmux.conf
 fi
