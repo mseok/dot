@@ -9,7 +9,7 @@ window:
 scrolling:
   history: 10000
   multiplier: 3
-background_opacity: .85
+background_opacity: 1
 window.dynamic_title: true
 
 font:

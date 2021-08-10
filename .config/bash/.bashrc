@@ -43,5 +43,5 @@ export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux
 if { [ -n "$TMUX" ]; } then
-    tmux source $HOEM/dot/.config/tmux/.tmux.conf
+    tmux source $HOME/dot/.config/tmux/.tmux.conf
 fi

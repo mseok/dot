@@ -1,24 +1,26 @@
-call plug#begin('~/.local/share/nvim/plugged')
-" design
+call plug#begin('~/mseok/.local/share/nvim/plugged')
+" Prettier
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'sjl/badwolf'
+Plug 'folke/tokyonight.nvim', { 'branch': 'main' }
 Plug 'numirias/semshi', {'do': ':UpdateRemotePlugins'}
+Plug 'frazrepo/vim-rainbow'
 " Syntax & autocomplete
-Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-Plug 'deoplete-plugins/deoplete-jedi'
-Plug 'davidhalter/jedi-vim'
-" ()'' autocomplete
-Plug 'Raimondi/delimitMate'
+Plug 'hrsh7th/nvim-compe'
+Plug 'neovim/nvim-lspconfig'
 " Indent Lines
 Plug 'Yggdroot/indentLine'
 " Git
 Plug 'airblade/vim-gitgutter'
 " Autoformatting
 Plug 'sbdchd/neoformat'
+Plug 'nvie/vim-flake8'
 " Start Page
 Plug 'mhinz/vim-startify'
 call plug#end()
+
+filetype plugin on
 
 autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>
 autocmd FileType python set colorcolumn=80
@@ -31,28 +33,23 @@ set laststatus=2
 set nobackup nowritebackup
 set splitbelow splitright
 set path+=**
-" set clipboard=unnamed
-set completeopt-=preview
+set clipboard=unnamed
+set completeopt=menuone,noselect
 set cmdheight=2
 
-" Autocomplete (Deoplete, Jedi)
-let g:deoplete#enable_at_startup=1
-let g:jedi#completions_enabled=0
-let g:jedi#show_call_signatures=2
-let g:jedi#goto_command="<C-f>"
-let g:jedi#use_splits_not_buffers="right"
-let g:jedi#popup_on_dot=0
-function Jedi_call_signature_colors()
-    hi! jediFat ctermbg=None ctermfg=red guifg=#ff0000 guibg=None term=bold,underline cterm=bold,underline gui=bold,underline
-endfunction
-autocmd FileType python call Jedi_call_signature_colors()
+" Autocomplete
+let $AUTOCOMPLETE = $HOME.'/dot/.config/nvim/autocomplete.vim'
+if filereadable($AUTOCOMPLETE)
+  source $AUTOCOMPLETE
+endif
 
 " Autoformatting
 let g:neoformat_basic_format_align=1  " Enable alignment
 let g:neoformat_basic_format_retab=1  " Enable tab to space conversion
-let g:neoformat_basic_format_trim=1  " Enable trimmming of trailing whitespace
-let g:neoformat_enabled_python = ["autopep8"]
-autocmd FileType python noremap <leader>nf :Neoformat<CR>
+let g:neoformat_basic_format_trim=1   " Enable trimmming of trailing whitespace
+let g:neoformat_enabled_python = ["flake8", "autopep8", "black"]
+autocmd FileType python noremap <leader>nf :Neoformat autopep8<CR>
+autocmd FileType python noremap <leader>f :call flake8#Flake8()<CR>
 
 " Themes
 hi! StatusLineNC ctermbg=None guibg=None
@@ -78,6 +75,9 @@ function MyCustomHighlights()
     hi semshiUnresolved      ctermfg=226 guifg=#ffff00 cterm=underline gui=underline
 endfunction
 autocmd ColorScheme * call MyCustomHighlights()
+let g:rainbow_active=1
+let g:rainbow_guifgs = ['RoyalBlue3', 'DarkOrange3', 'DarkOrchid3', 'FireBrick']
+let g:rainbow_ctermfgs = ['lightblue', 'lightgreen', 'yellow', 'red', 'magenta']
 
 " Jump to the last position when reopening a file
 if has("autocmd")
@@ -90,16 +90,18 @@ function Dark_colorscheme()
     set termguicolors
     let g:airline_theme='hybrid'
     colorscheme badwolf
-    hi Normal ctermbg=None guibg=None
+    call MyCustomHighlights()
 endfunction
 function Light_colorscheme()
     set termguicolors
     set background=light
     let g:airline_theme='silver'
-    colorscheme vim-material
+    let g:tokyonight_style = "day"
+    colorscheme tokyonight
+    call MyCustomHighlights()
 endfunction
-noremap <leader>dark :call Dark_colorscheme()<CR>
-noremap <leader>light :call Light_colorscheme()<CR>
+nnoremap <leader>dark :call Dark_colorscheme()<CR>
+nnoremap <leader>light :call Light_colorscheme()<CR>
 " call Light_colorscheme()
 call Dark_colorscheme()
 
