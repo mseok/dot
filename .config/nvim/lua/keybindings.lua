@@ -11,9 +11,9 @@ end
 -- Leader
 g.mapleader = " "
 
-map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.vim<CR>")
-map("n", "<leader>,v", ":vsplit $HOME/dot/.config/nvim/init.vim<CR>")
-map("n", "<leader>,s", ":split $HOME/dot/.config/nvim/init.vim<CR>")
+map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.lua<CR>")
+map("n", "<leader>,v", ":vsplit $HOME/dot/.config/nvim/init.lua<CR>")
+map("n", "<leader>,s", ":split $HOME/dot/.config/nvim/init.lua<CR>")
 map("n", "<leader><leader>", ":Explore<CR>")
 map("n", "Y", "y$")
 map("x", "K", ":move '<-2<CR>gv-gv")
