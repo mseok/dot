@@ -1,0 +1,67 @@
+TSStrong       xxx cterm=bold gui=boldSStringSpecial xxx links to SpecialChar
+TSKeywordReturn xxx links to TSKeyword
+TSTextReference xxx links to Constant
+TSEnvironment  xxx links to Macro
+TSEnvironmentName xxx links to Type
+TSTitle        xxx links to Title
+TSLiteral      xxx links to String
+TSTagAttribute xxx links to TSProperty
+TSEmphasis     xxx cterm=bold gui=bold
+TSUnderline    xxx cterm=underline gui=underline
+TSNote         xxx cterm=bold ctermfg=235 ctermbg=110 gui=bold guifg=#2c2e34 guibg=#6cb6eb
+TSWarning      xxx cterm=bold ctermfg=235 ctermbg=179 gui=bold guifg=#2c2e34 guibg=#deb974
+TSDanger       xxx cterm=bold ctermfg=235 ctermbg=203 gui=bold guifg=#2c2e34 guibg=#ec7279
+TSAnnotation   xxx links to Purple
+TSAttribute    xxx links to Yellow
+TSBoolean      xxx links to Green
+TSCharacter    xxx links to Green
+TSComment      xxx links to Comment
+TSConditional  xxx links to Purple
+TSConstBuiltin xxx links to CyanItalic
+TSConstMacro   xxx links to CyanItalic
+TSConstant     xxx links to RedItalic
+TSConstructor  xxx links to Blue
+TSException    xxx links to Purple
+TSField        xxx links to Blue
+TSFloat        xxx links to Green
+TSFuncBuiltin  xxx links to Blue
+TSFuncMacro    xxx links to Blue
+TSFunction     xxx links to Blue
+TSInclude      xxx links to Purple
+TSKeyword      xxx links to Purple
+TSKeywordFunction xxx links to Purple
+TSKeywordOperator xxx links to Purple
+TSLabel        xxx links to Purple
+TSMethod       xxx links to Blue
+TSNamespace    xxx links to Yellow
+TSNone         xxx links to Fg
+TSNumber       xxx links to Green
+TSOperator     xxx links to Purple
+TSParameter    xxx links to RedItalic
+TSParameterReference xxx links to RedItalic
+TSProperty     xxx links to Blue
+TSPunctBracket xxx links to Grey
+TSPunctDelimiter xxx links to Grey
+TSPunctSpecial xxx links to Yellow
+TSRepeat       xxx links to Purple
+TSString       xxx links to Green
+TSStringEscape xxx links to Yellow
+TSStringRegex  xxx links to Yellow
+TSStructure    xxx links to CyanItalic
+TSSymbol       xxx links to Red
+TSTag          xxx links to RedItalic
+TSTagDelimiter xxx links to Purple
+TSText         xxx links to Green
+TSStrike       xxx links to Grey
+TSMath         xxx links to Green
+TSType         xxx links to Yellow
+TSTypeBuiltin  xxx links to Yellow
+TSURI          xxx links to markdownUrl
+TSStringSpecial xxx links to SpecialChar
+TSKeywordReturn xxx links to TSKeyword
+TSTextReference xxx links to Constant
+TSEnvironment  xxx links to Macro
+TSEnvironmentName xxx links to Type
+TSTitle        xxx links to Title
+TSLiteral      xxx links to String
+TSTagAttribute xxx links to TSProperty

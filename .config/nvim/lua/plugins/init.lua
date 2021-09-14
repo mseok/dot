@@ -24,8 +24,10 @@ packer.startup(function()
   use {"L3MON4D3/LuaSnip"}
 	use {"neovim/nvim-lspconfig"}
   use {"folke/tokyonight.nvim"}
-  use {"sjl/badwolf"}
-  -- use {"numirias/semshi"}
+  use {"sainnhe/edge"}
+  use {"ishan9299/modus-theme-vim"}
+  use {"fenetikm/falcon"}
+  use {"marko-cerovac/material.nvim"}
   use {
     "hoob3rt/lualine.nvim",
     requires = {"kyazdani42/nvim-web-devicons", opt = true}

@@ -54,7 +54,6 @@ opt("o", "hidden", true)
 opt("o", "splitbelow", true)
 opt("o", "splitright", true)
 opt("o", "clipboard","unnamed,unnamedplus")
-opt("o", "termguicolors", true)
 opt("o", "laststatus", 2)
 opt("o", "cmdheight", 2)
 
