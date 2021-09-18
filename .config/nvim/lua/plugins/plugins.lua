@@ -12,6 +12,11 @@ require("gitsigns").setup({
   },
 })
 
+function _G.copy_mode()
+    vim.api.nvim_command("Gitsigns toggle_signs")
+    vim.api.nvim_command("IndentBlanklineToggle")
+end
+
 -- indentline
 vim.g.indent_blankline_char = '┊'
 vim.g.indent_blankline_filetype_exclude = { 'help', 'packer' }

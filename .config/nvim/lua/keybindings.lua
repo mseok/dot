@@ -61,3 +61,5 @@ opt("o", "cmdheight", 2)
 api.nvim_exec([[autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>]], false)
 api.nvim_exec([[autocmd FileType python set colorcolumn=80]], false)
 api.nvim_exec([[autocmd FileType python set tabstop=4 shiftwidth=4]], false)
+
+map("n", "<leader>cp", ":lua copy_mode()<CR>")
