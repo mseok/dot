@@ -11,16 +11,22 @@ local packer = require"packer"
 local util = require"packer.util"
 
 packer.init({
-  package_root = util.join_paths(fn.stdpath("data"), "site", "pack")
+  package_root = util.join_paths(fn.stdpath("data"), "site", "pack"),
+  git = {
+      clone_timeout = 300, -- 5 mins
+  },
+  profile = {
+      enable = true,
+  },
 })
 packer.startup(function()
   use {"wbthomason/packer.nvim"}
 	use {"nvim-treesitter/nvim-treesitter"}
-  use {"hrsh7th/nvim-cmp"}
+  use {"hrsh7th/cmp-nvim-lsp"}
   use {"hrsh7th/cmp-buffer"}
   use {"hrsh7th/cmp-path"}
-  use {"hrsh7th/cmp-nvim-lsp"}
   use {"saadparwaiz1/cmp_luasnip"}
+  use {"hrsh7th/nvim-cmp"}
   use {"L3MON4D3/LuaSnip"}
 	use {"neovim/nvim-lspconfig"}
   use {"folke/tokyonight.nvim"}

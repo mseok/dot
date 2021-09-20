@@ -1,5 +1,4 @@
-vim.o.completeopt = "menuone,noselect"
-local luasnip = require "luasnip"
+vim.o.completeopt = "menu,menuone,noselect"
 local cmp = require "cmp"
 cmp.setup({
   snippet = {
@@ -8,6 +7,8 @@ cmp.setup({
     end,
   },
 	mapping = {
+    ['<C-u>'] = cmp.mapping.scroll_docs(-4),
+    ['<C-d>'] = cmp.mapping.scroll_docs(4),
     ["<C-y>"] = cmp.mapping.confirm({ select = true }),
     ["<C-e>"] = cmp.mapping.close(),
   },
