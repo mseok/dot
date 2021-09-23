@@ -22,6 +22,7 @@ packer.init({
 packer.startup(function()
   use {"wbthomason/packer.nvim"}
 	use {"nvim-treesitter/nvim-treesitter"}
+  use {"nvim-treesitter/playground"}
   use {"hrsh7th/cmp-nvim-lsp"}
   use {"hrsh7th/cmp-buffer"}
   use {"hrsh7th/cmp-path"}
@@ -29,11 +30,9 @@ packer.startup(function()
   use {"hrsh7th/nvim-cmp"}
   use {"L3MON4D3/LuaSnip"}
 	use {"neovim/nvim-lspconfig"}
-  use {"folke/tokyonight.nvim"}
-  use {"sainnhe/edge"}
-  use {"ishan9299/modus-theme-vim"}
-  use {"fenetikm/falcon"}
-  use {"marko-cerovac/material.nvim"}
+  use {"projekt0n/github-nvim-theme"}
+  use {"rktjmp/lush.nvim"}
+  use {"~/dot/.config/nvim/lua/colors/MscheMe"}
   use {
     "hoob3rt/lualine.nvim",
     requires = {"kyazdani42/nvim-web-devicons", opt = true}
@@ -49,5 +48,4 @@ packer.startup(function()
   use {"nvim-treesitter/nvim-treesitter-textobjects"}
   use {"mhinz/vim-startify"}
   use {"sbdchd/neoformat"}
-  use {"nvie/vim-flake8"}
 end)

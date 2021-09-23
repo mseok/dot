@@ -22,7 +22,7 @@ map("x", "K", ":move '>+1<CR>gv-gv")
 -- Buffer
 map("n", "<C-n>", ":bn<CR>", {noremap = true})
 map("n", "<C-p>", ":bp<CR>", {noremap = true})
-map("n", "<C-x>", ":bd<CR>", {noremap = true})
+map("n", "<leader>bd", ":bd<CR>", {noremap = true})
 
 vim.api.nvim_exec([[
   cnoreabbrev W! w!
