@@ -1,0 +1,3 @@
+[submodule ".config/nvim/lua/colors/MscheMe"]
+	path = .config/nvim/lua/colors/MscheMe
+	url = https://github.com/mseok/MscheMe.git
