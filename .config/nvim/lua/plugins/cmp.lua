@@ -7,10 +7,12 @@ cmp.setup({
     end,
   },
 	mapping = {
-    ['<C-u>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-d>'] = cmp.mapping.scroll_docs(4),
+    ["<C-u>"] = cmp.mapping.scroll_docs(-4),
+    ["<C-d>"] = cmp.mapping.scroll_docs(4),
     ["<C-y>"] = cmp.mapping.confirm({ select = true }),
     ["<C-e>"] = cmp.mapping.close(),
+    ["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+    ["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
   },
   formatting = {
     format = function(entry, vim_item)
@@ -29,6 +31,8 @@ cmp.setup({
     { name = "buffer" },
     { name = "path" },
   },
+  experimental = {
+    -- native_menu = true,
+    custom_menu = true,
+  },
 })
-
-
