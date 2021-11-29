@@ -6,12 +6,22 @@ if vim.fn.has("termguicolors") then
   opt.termguicolors = true
 end
 
-cmd "colorscheme MscheMe"
+-- cmd "colorscheme MscheMe"
+vim.g.nightflyTransparent = 1
+cmd "colorscheme nightfly"
 
 require("indent_blankline").setup {
     char = "¦",
     show_trailing_blankline_indent = false,
+    show_current_context = true,
+    show_current_context_start = true,
+    char_highlight_list = {
+      "IndentBlanklineIndent1",
+    }
 }
+cmd [[hi IndentBlanklineIndent1 guifg=#fec8d8 gui=nocombine]]
+
+cmd [[hi CursorLine guibg=grey25]]
 
 local custom_gruvbox = require'lualine.themes.gruvbox'
 local colors = {
@@ -45,9 +55,12 @@ custom_gruvbox.command.c.fg = custom_gruvbox.command.a.bg
 require"lualine".setup {
   options = {
     icons_enabled = true,
-    theme = custom_gruvbox,
-    component_separators = {"", ""},
-    section_separators = {"", ""},
+    -- theme = custom_gruvbox,
+    -- component_separators = {"", ""},
+    -- section_separators = {"", ""},
+    -- theme = "gruvbox-material",
+    -- theme = "moonlight",
+    theme = "nightfly",
     disabled_filetypes = {}
   },
   sections = {

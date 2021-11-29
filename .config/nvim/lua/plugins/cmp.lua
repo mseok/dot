@@ -25,10 +25,38 @@ cmp.setup({
   },
   sources = {
     { name = "nvim_lsp" },
-    { name = "luasnip" },
-    { name = "buffer" },
     { name = "path" },
+    {
+      name = "buffer",
+      option = {
+        -- All buffers (include hidden buffers)
+        get_bufnrs = function()
+          return vim.api.nvim_list_bufs()
+        end
+        -- Only Visible Buffers
+        -- get_bufnrs = function()
+        --   local bufs = {}
+        --   for _, win in ipairs(vim.api.nvim_list_wins()) do
+        --     bufs[vim.api.nvim_win_get_buf(win)] = true
+        --   end
+        --   return vim.tbl_keys(bufs)
+        -- end
+      }
+    },
+    { name = "luasnip" },
   },
 })
 
+cmp.setup.cmdline('/', {
+  sources = {
+    { name = 'buffer' }
+  }
+})
 
+-- cmp.setup.cmdline(':', {
+--   sources = cmp.config.sources({
+--     { name = 'path' }
+--   }, {
+--     { name = 'cmdline' }
+--   })
+-- })

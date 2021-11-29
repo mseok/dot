@@ -11,6 +11,9 @@ end
 -- Leader
 g.mapleader = " "
 
+map("n", "<leader>gh", ":Gitsigns preview_hunk<CR>")
+map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
+map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
 map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.lua<CR>")
 map("n", "<leader>,v", ":vsplit $HOME/dot/.config/nvim/init.lua<CR>")
 map("n", "<leader>,s", ":split $HOME/dot/.config/nvim/init.lua<CR>")
@@ -39,8 +42,8 @@ vim.api.nvim_exec([[
 
 local scopes = {o = vim.o, b = vim.bo, w = vim.wo}
 function opt(scope, key, value)
-    scopes[scope][key] = value
-    if scope ~= "o" then scopes["o"][key] = value end
+  scopes[scope][key] = value
+  if scope ~= "o" then scopes["o"][key] = value end
 end
 
 local indent = 2
@@ -56,10 +59,12 @@ opt("o", "splitright", true)
 opt("o", "clipboard","unnamed,unnamedplus")
 opt("o", "laststatus", 2)
 opt("o", "cmdheight", 2)
+opt("o", "cmdheight", 2)
+g.shada = "$XDG_DATA_HOME/nvim/shada/main.shada"
 
 -- Autocmd
 api.nvim_exec([[autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>]], false)
--- api.nvim_exec([[autocmd FileType python set colorcolumn=80]], false)
 api.nvim_exec([[autocmd FileType python set tabstop=4 shiftwidth=4]], false)
+api.nvim_exec([[autocmd User Startified setlocal cursorline]], false)
 
 map("n", "<leader>cp", ":lua copy_mode()<CR>")

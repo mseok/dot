@@ -21,18 +21,22 @@ packer.init({
 })
 packer.startup(function()
   use {"wbthomason/packer.nvim"}
-	use {"nvim-treesitter/nvim-treesitter"}
+  use {"nvim-treesitter/nvim-treesitter"}
   use {"nvim-treesitter/playground"}
-  use {"hrsh7th/cmp-nvim-lsp"}
-  use {"hrsh7th/cmp-buffer"}
-  use {"hrsh7th/cmp-path"}
-  use {"saadparwaiz1/cmp_luasnip"}
-  use {"hrsh7th/nvim-cmp"}
+  use {
+    "hrsh7th/nvim-cmp",
+    requires = {
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      "saadparwaiz1/cmp_luasnip",
+    }
+  }
   use {"L3MON4D3/LuaSnip"}
-	use {"neovim/nvim-lspconfig"}
-  use {"projekt0n/github-nvim-theme"}
+  use {"neovim/nvim-lspconfig"}
   use {"rktjmp/lush.nvim"}
   use {"~/dot/.config/nvim/lua/colors/MscheMe"}
+  use {"bluz71/vim-nightfly-guicolors"}
   use {
     "hoob3rt/lualine.nvim",
     requires = {"kyazdani42/nvim-web-devicons", opt = true}
