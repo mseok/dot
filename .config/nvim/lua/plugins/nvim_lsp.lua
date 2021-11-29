@@ -22,7 +22,7 @@ local on_attach = function(_, bufnr)
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require("cmp_nvim_lsp").update_capabilities(capabilities)
+capabilities = require("cmp_nvim_lsp").update_capabilities(capabilities, {snippetSupport = false})
 
 -- Lua LSP setting
 local system_name
@@ -35,7 +35,7 @@ elseif vim.fn.has('win32') == 1 then
 else
   print("Unsupported system for sumneko")
 end
--- set the path to the sumneko installation; if you previously installed via the now deprecated :LspInstall, use
+
 -- local sumneko_root_path = vim.fn.stdpath('cache')..'/lspconfig/sumneko/lua-language-server'
 -- local sumneko_binary = sumneko_root_path.."/bin/"..system_name.."/lua-language-server"
 -- local runtime_path = vim.split(package.path, ';')

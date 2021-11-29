@@ -52,4 +52,5 @@ packer.startup(function()
   use {"nvim-treesitter/nvim-treesitter-textobjects"}
   use {"mhinz/vim-startify"}
   use {"sbdchd/neoformat"}
+  use {"ellisonleao/glow.nvim"}
 end)
