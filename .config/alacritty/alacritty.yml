@@ -1,11 +1,12 @@
 window:
   dimensions:
     columns: 140
-    lines: 38
+    lines: 40
   padding:
-    x: 12
-    y: 12
+    x: 5
+    y: 3
   decorations: full
+  startup_mode: Maximized
 scrolling:
   history: 10000
   multiplier: 3
@@ -14,14 +15,7 @@ window.dynamic_title: true
 
 font:
   normal:
-    family: Menlo
-    style: Regular
-  bold:
-    family: Menlo
-    style: Bold
-  italic:
-    family: Menlo 
-    style: Italic
+    family: CaskaydiaCove Nerd Font
   size: 16
   offset:
     x: 0
@@ -36,32 +30,36 @@ draw_bold_text_with_bright_colors: true
 colors:
   # Default colors
   primary:
-    background: '#1b1b1b'
-    foreground: '#f8f6f2'
+    background: '0x1E1E28'
+    foreground: '0xD7DAE0'
+
+  # Colors the cursor will use if `custom_cursor_colors` is true
+  cursor:
+    text: '0x1E1E28'
+    cursor: '0xB3E1A3'
 
   # Normal colors
   normal:
-    black:   '#1c1b19'
-    red:     '#ff2b4a'
-    green:   '#aeee31'
-    yellow:  '#fade3d'
-    blue:    '#0e9dfc'
-    magenta: '#a72e9c'
-    cyan:    '#8dfbba'
-    white:   '#f8f6f2'
+    black:   '0x6E6C7C'
+    red:     '0xE28C8C'
+    green:   '0xB3E1A3'
+    yellow:  '0xEADDA0'
+    blue:    '0xA4B9EF'
+    magenta: '0xC6AAE8'
+    cyan:    '0xF0AFE1'
+    white:   '0xD7DAE0'
 
   # Bright colors
   bright:
-    black:   '#000000'
-    red:     '#ff2b4a'
-    green:   '#aeee31'
-    yellow:  '#fade3d'
-    blue:    '#0e9dfc'
-    magenta: '#ff9eb8'
-    cyan:    '#8dfbba'
-    white:   '#fefefe'
+    black:   '0x6E6C7C'
+    red:     '0xE28C8C'
+    green:   '0xB3E1A3'
+    yellow:  '0xEADDA0'
+    blue:    '0xA4B9EF'
+    magenta: '0xC6AAE8'
+    cyan:    '0xF0AFE1'
+    white:   '0xD7DAE0'
 
-cursor:
-  style: Block
-  unfocused_hollow: true
-
+  indexed_colors:
+    - { index: 16, color: '0xECBFBD' }
+    - { index: 17, color: '0x3E4058' }

@@ -6,9 +6,47 @@ if vim.fn.has("termguicolors") then
   opt.termguicolors = true
 end
 
--- cmd "colorscheme MscheMe"
-vim.g.nightflyTransparent = 1
-cmd "colorscheme nightfly"
+local catppuccin = require("catppuccin")
+catppuccin.setup(
+    {
+		transparent_background = true,
+		term_colors = false,
+		styles = {
+			comments = "italic",
+			functions = "bold",
+			keywords = "italic",
+			strings = "NONE",
+			variables = "NONE",
+		},
+		integrations = {
+			treesitter = true,
+			native_lsp = {
+				enabled = true,
+				virtual_text = {
+					errors = "italic",
+					hints = "italic",
+					warnings = "italic",
+					information = "italic",
+				},
+				underlines = {
+					errors = "underline",
+					hints = "underline",
+					warnings = "underline",
+					information = "underline",
+				},
+			},
+			lsp_trouble = false,
+			lsp_saga = false,
+			gitgutter = false,
+			gitsigns = true,
+			indent_blankline = {
+				enabled = true,
+				colored_indent_levels = true,
+			},
+		},
+	}
+)
+cmd "colorscheme catppuccin"
 
 require("indent_blankline").setup {
     char = "¦",
@@ -19,48 +57,11 @@ require("indent_blankline").setup {
       "IndentBlanklineIndent1",
     }
 }
-cmd [[hi IndentBlanklineIndent1 guifg=#fec8d8 gui=nocombine]]
-
-cmd [[hi CursorLine guibg=grey25]]
-
-local custom_gruvbox = require'lualine.themes.gruvbox'
-local colors = {
-  black   = "#1c1b19",
-  white   = "#f8f6f2",
-  red     = "#ff2c4b",
-  green   = "#aeee31",
-  yellow  = "#fade3d",
-  magenta = "#a72e9c",
-  orange  = "#ff875f",
-  blue    = "#5fafff",
-  pink    = "#ffafd7",
-  cyan    = "#00d787",
-}
-custom_gruvbox.normal.a.bg = colors.pink
-custom_gruvbox.insert.a.bg = colors.cyan
-custom_gruvbox.visual.a.bg = colors.orange
-custom_gruvbox.command.a.bg = colors.blue
-custom_gruvbox.normal.b.fg = custom_gruvbox.normal.a.bg
-custom_gruvbox.normal.c.fg = custom_gruvbox.normal.a.bg
-custom_gruvbox.insert.c.bg = custom_gruvbox.normal.c.bg
-custom_gruvbox.insert.b.fg = custom_gruvbox.insert.a.bg
-custom_gruvbox.insert.c.fg = custom_gruvbox.insert.a.bg
-custom_gruvbox.visual.c.bg = custom_gruvbox.normal.c.bg
-custom_gruvbox.visual.b.fg = custom_gruvbox.visual.a.bg
-custom_gruvbox.visual.c.fg = custom_gruvbox.visual.a.bg
-custom_gruvbox.command.c.bg = custom_gruvbox.normal.c.bg
-custom_gruvbox.command.b.fg = custom_gruvbox.command.a.bg
-custom_gruvbox.command.c.fg = custom_gruvbox.command.a.bg
 
 require"lualine".setup {
   options = {
     icons_enabled = true,
-    -- theme = custom_gruvbox,
-    -- component_separators = {"", ""},
-    -- section_separators = {"", ""},
-    -- theme = "gruvbox-material",
-    -- theme = "moonlight",
-    theme = "nightfly",
+    theme = "catppuccin",
     disabled_filetypes = {}
   },
   sections = {
@@ -70,10 +71,6 @@ require"lualine".setup {
       {
         "diff",
         colored = true, -- displays diff status in color if set to true
-        -- all colors are in format #rrggbb
-        color_added = colors.green, -- changes diff"s added foreground color
-        color_modified = colors.yellow, -- changes diff"s modified foreground color
-        color_removed = colors.red, -- changes diff"s removed foreground color
         symbols = {added = "+", modified = "~", removed = "-"} -- changes diff symbols
       },
     },

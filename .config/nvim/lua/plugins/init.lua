@@ -37,6 +37,7 @@ packer.startup(function()
   use {"rktjmp/lush.nvim"}
   use {"~/dot/.config/nvim/lua/colors/MscheMe"}
   use {"bluz71/vim-nightfly-guicolors"}
+  use {"catppuccin/nvim", as = "catppuccin"}
   use {
     "hoob3rt/lualine.nvim",
     requires = {"kyazdani42/nvim-web-devicons", opt = true}
