@@ -9,7 +9,7 @@ end
 local catppuccin = require("catppuccin")
 catppuccin.setup(
     {
-		transparent_background = true,
+		transparent_background = false,
 		term_colors = false,
 		styles = {
 			comments = "italic",
@@ -35,9 +35,6 @@ catppuccin.setup(
 					information = "underline",
 				},
 			},
-			lsp_trouble = false,
-			lsp_saga = false,
-			gitgutter = false,
 			gitsigns = true,
 			indent_blankline = {
 				enabled = true,
@@ -47,6 +44,7 @@ catppuccin.setup(
 	}
 )
 cmd "colorscheme catppuccin"
+cmd [[hi! Visual guibg=#5024c1]]
 
 require("indent_blankline").setup {
     char = "¦",
