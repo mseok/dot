@@ -2,7 +2,7 @@ local api = vim.api
 local cmd = vim.cmd
 local g   = vim.g
 
-local function map(mode, lhs, rhs, opts)
+function _G.custom_map(mode, lhs, rhs, opts)
   local options = {noremap = true}
   if opts then options = vim.tbl_extend("force", options, opts) end
   api.nvim_set_keymap(mode, lhs, rhs, options)
@@ -11,24 +11,24 @@ end
 -- Leader
 g.mapleader = " "
 
-map("n", "<leader>gh", ":Gitsigns preview_hunk<CR>")
-map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
-map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
-map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.lua<CR>")
-map("n", "<leader>,v", ":vsplit $HOME/dot/.config/nvim/init.lua<CR>")
-map("n", "<leader>,s", ":split $HOME/dot/.config/nvim/init.lua<CR>")
-map("n", "<leader><leader>", ":Explore<CR>")
-map("n", "<leader>g", ":Gitsigns preview_hunk<CR>")
-map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
-map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
-map("n", "Y", "y$")
-map("x", "K", ":move '<-2<CR>gv-gv")
-map("x", "K", ":move '>+1<CR>gv-gv")
+custom_map("n", "<leader>gh", ":Gitsigns preview_hunk<CR>")
+custom_map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
+custom_map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
+custom_map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.lua<CR>")
+custom_map("n", "<leader>,v", ":vsplit $HOME/dot/.config/nvim/init.lua<CR>")
+custom_map("n", "<leader>,s", ":split $HOME/dot/.config/nvim/init.lua<CR>")
+custom_map("n", "<leader><leader>", ":Explore<CR>")
+custom_map("n", "<leader>g", ":Gitsigns preview_hunk<CR>")
+custom_map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
+custom_map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
+custom_map("n", "Y", "y$")
+custom_map("x", "K", ":move '<-2<CR>gv-gv")
+custom_map("x", "K", ":move '>+1<CR>gv-gv")
 
 -- Buffer
-map("n", "<C-n>", ":bn<CR>", {noremap = true})
-map("n", "<C-p>", ":bp<CR>", {noremap = true})
-map("n", "<leader>bd", ":bd<CR>", {noremap = true})
+custom_map("n", "<C-n>", ":bn<CR>", {noremap = true})
+custom_map("n", "<C-p>", ":bp<CR>", {noremap = true})
+custom_map("n", "<leader>bd", ":bd<CR>", {noremap = true})
 
 vim.api.nvim_exec([[
   cnoreabbrev W! w!
@@ -65,9 +65,9 @@ opt("o", "cmdheight", 2)
 opt("o", "cmdheight", 2)
 g.shada = "$XDG_DATA_HOME/nvim/shada/main.shada"
 
--- Autocmd
-api.nvim_exec([[autocmd FileType python nnoremap <C-i> :w<CR>:!python %<CR>]], false)
-api.nvim_exec([[autocmd FileType python set tabstop=4 shiftwidth=4]], false)
-api.nvim_exec([[autocmd User Startified setlocal cursorline]], false)
+ function _G.copy_mode()
+  vim.api.nvim_command("Gitsigns toggle_signs")
+  vim.api.nvim_command("IndentBlanklineToggle")
+end
 
-map("n", "<leader>cp", ":lua copy_mode()<CR>")
+custom_map("n", "<leader>cp", ":lua copy_mode()<CR>")

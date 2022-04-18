@@ -19,7 +19,7 @@ PROMPT+="[%B%F{cyan}%n%b%F{white}@%B%F{green}%m%F{231}%b] %B%F{red}%d%b%f${NEWLI
 # Basic Aliases
 alias la="ls -a"
 alias ll="ls -l"
-alias vi="nvim -u $HOME/dot/.config/nvim/init.vim"
+alias vi="nvim -u $HOME/dot/.config/nvim/init.lua"
 alias sz="source $HOME/dot/.config/zsh/.zshrc"
 alias ta="tmux a -t"
 alias tn="tmux new -s"

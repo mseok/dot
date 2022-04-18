@@ -22,7 +22,7 @@ packer.init({
 packer.startup(function()
   use {"wbthomason/packer.nvim"}
   use {"nvim-treesitter/nvim-treesitter"}
-  use {"nvim-treesitter/playground"}
+  use {"nvim-treesitter/nvim-treesitter-textobjects"}
   use {
     "hrsh7th/nvim-cmp",
     requires = {
@@ -32,11 +32,7 @@ packer.startup(function()
       "saadparwaiz1/cmp_luasnip",
     }
   }
-  use {"L3MON4D3/LuaSnip"}
   use {"neovim/nvim-lspconfig"}
-  use {"rktjmp/lush.nvim"}
-  use {"~/dot/.config/nvim/lua/colors/MscheMe"}
-  use {"bluz71/vim-nightfly-guicolors"}
   use {"catppuccin/nvim", as = "catppuccin"}
   use {
     "hoob3rt/lualine.nvim",
@@ -50,8 +46,12 @@ packer.startup(function()
       "nvim-lua/plenary.nvim"
 	  }
 	}
-  use {"nvim-treesitter/nvim-treesitter-textobjects"}
-  use {"mhinz/vim-startify"}
   use {"sbdchd/neoformat"}
-  use {"ellisonleao/glow.nvim"}
+  use {"RRethy/vim-illuminate"}
+  use {"akinsho/bufferline.nvim", tag = "*", requires = "kyazdani42/nvim-web-devicons"}
+  use {
+    "nvim-telescope/telescope.nvim",
+    requires = { "nvim-lua/plenary.nvim" }
+  }
+  use { "glepnir/dashboard-nvim" }
 end)
