@@ -49,6 +49,3 @@ cmp.setup.cmdline('/', {
     { name = 'buffer' }
   }
 })
-
--- autopairing
-require("nvim-autopairs").setup({})

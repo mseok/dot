@@ -65,7 +65,7 @@ opt("o", "cmdheight", 2)
 opt("o", "cmdheight", 2)
 g.shada = "$XDG_DATA_HOME/nvim/shada/main.shada"
 
- function _G.copy_mode()
+function _G.copy_mode()
   vim.api.nvim_command("Gitsigns toggle_signs")
   vim.api.nvim_command("IndentBlanklineToggle")
 end

@@ -22,7 +22,6 @@ packer.init({
 packer.startup(function()
   use {"wbthomason/packer.nvim"}
   use {"nvim-treesitter/nvim-treesitter"}
-  use {"nvim-treesitter/nvim-treesitter-textobjects"}
   use {
     "hrsh7th/nvim-cmp",
     requires = {
@@ -33,25 +32,25 @@ packer.startup(function()
     }
   }
   use {"neovim/nvim-lspconfig"}
-  use {"catppuccin/nvim", as = "catppuccin"}
   use {
     "hoob3rt/lualine.nvim",
     requires = {"kyazdani42/nvim-web-devicons", opt = true}
   }
-  use {"windwp/nvim-autopairs"}
-  use {"lukas-reineke/indent-blankline.nvim"}
   use {
     "lewis6991/gitsigns.nvim",
-    requires = {
-      "nvim-lua/plenary.nvim"
-	  }
-	}
-  use {"sbdchd/neoformat"}
-  use {"RRethy/vim-illuminate"}
-  use {"akinsho/bufferline.nvim", tag = "*", requires = "kyazdani42/nvim-web-devicons"}
+    requires = {"nvim-lua/plenary.nvim" }
+  }
   use {
     "nvim-telescope/telescope.nvim",
-    requires = { "nvim-lua/plenary.nvim" }
+    requires = {"nvim-lua/plenary.nvim"}
   }
-  use { "glepnir/dashboard-nvim" }
+  use {"glepnir/dashboard-nvim"}
+  use {"sbdchd/neoformat"} -- Autoformat the code
+  use {"windwp/nvim-autopairs"} -- Autopairing parentheses, quotes
+
+  -- Colorscheme
+  use {"catppuccin/nvim", as = "catppuccin"}
+
+  use {"RRethy/vim-illuminate"} -- Highlight the words on the cursor
+  use {"lukas-reineke/indent-blankline.nvim"} -- Indent lines
 end)
