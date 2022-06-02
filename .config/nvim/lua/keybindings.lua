@@ -2,7 +2,7 @@ local api = vim.api
 local cmd = vim.cmd
 local g   = vim.g
 
-function _G.custom_map(mode, lhs, rhs, opts)
+function custom_map(mode, lhs, rhs, opts)
   local options = {noremap = true}
   if opts then options = vim.tbl_extend("force", options, opts) end
   api.nvim_set_keymap(mode, lhs, rhs, options)
@@ -43,31 +43,8 @@ vim.api.nvim_exec([[
   cnoreabbrev Qall qall
 ]], false)
 
-local scopes = {o = vim.o, b = vim.bo, w = vim.wo}
-function opt(scope, key, value)
-  scopes[scope][key] = value
-  if scope ~= "o" then scopes["o"][key] = value end
-end
-
-local indent = 2
-cmd "syntax enable"
-cmd "filetype plugin indent on"
-opt("b", "expandtab", true)
-opt("b", "smartindent", true)
-opt("b", "tabstop", indent)
-opt("b", "shiftwidth", indent)
-opt("o", "hidden", true)
-opt("o", "splitbelow", true)
-opt("o", "splitright", true)
-opt("o", "clipboard","unnamed,unnamedplus")
-opt("o", "laststatus", 2)
-opt("o", "cmdheight", 2)
-opt("o", "cmdheight", 2)
-g.shada = "$XDG_DATA_HOME/nvim/shada/main.shada"
-
-function _G.copy_mode()
+function copy_mode()
   vim.api.nvim_command("Gitsigns toggle_signs")
-  vim.api.nvim_command("IndentBlanklineToggle")
 end
 
 custom_map("n", "<leader>cp", ":lua copy_mode()<CR>")
