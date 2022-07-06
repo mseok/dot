@@ -8,6 +8,12 @@ function custom_map(mode, lhs, rhs, opts)
   api.nvim_set_keymap(mode, lhs, rhs, options)
 end
 
+local scopes = {o = vim.o, b = vim.bo, w = vim.wo}
+function toggle(scope, key)
+  local value = scopes[scope][key]
+  if type(value) == "boolean" then scopes[scope][key] = not(value) end
+end
+
 -- Leader
 g.mapleader = " "
 
@@ -30,6 +36,13 @@ custom_map("n", "<C-n>", ":bn<CR>", {noremap = true})
 custom_map("n", "<C-p>", ":bp<CR>", {noremap = true})
 custom_map("n", "<leader>bd", ":bd<CR>", {noremap = true})
 
+-- Dashboard
+custom_map("n", "<leader>nf", ":DashboardNewFile<CR>", {noremap = true})
+
+-- Telescope
+custom_map("n", "<leader>fh", ":Telescope oldfiles hidden=true<CR>", {noremap = true})
+custom_map("n", "<leader>ff", ":Telescope find_files hidden=true<CR>", {noremap = true})
+
 vim.api.nvim_exec([[
   cnoreabbrev W! w!
   cnoreabbrev Q! q!
@@ -48,3 +61,4 @@ function copy_mode()
 end
 
 custom_map("n", "<leader>cp", ":lua copy_mode()<CR>")
+custom_map("n", "<leader>sb", ":lua toggle('w', 'scrollbind')<CR>")

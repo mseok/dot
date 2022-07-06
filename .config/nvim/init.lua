@@ -35,7 +35,7 @@ require("keybindings")
 require("autocmds")
 
 local function directory_exist(dir_path)
-  local f = io.popen('[ -d "' .. dir_path .. '" ] && echo -n y')
+  local f = io.popen('[ -d "' .. dir_path .. '" ] && echo y')
   local result = f:read(1)
   f:close()
   return result == "y"

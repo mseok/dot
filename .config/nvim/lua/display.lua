@@ -15,6 +15,6 @@ opt("o", "hidden", true)
 opt("o", "splitbelow", true)
 opt("o", "splitright", true)
 opt("o", "clipboard","unnamed,unnamedplus")
-opt("o", "laststatus", 2)
+opt("o", "laststatus", 3)
 opt("o", "cmdheight", 2)
 vim.g.shada = "$XDG_DATA_HOME/nvim/shada/main.shada"
