@@ -28,4 +28,3 @@ dashboard.custom_center = {
     shortcut = '<Space> f d'
   },
 }
-
