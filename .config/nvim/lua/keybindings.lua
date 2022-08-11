@@ -14,27 +14,37 @@ function toggle(scope, key)
   if type(value) == "boolean" then scopes[scope][key] = not(value) end
 end
 
+function toggle_term()
+  local winheight = vim.fn.winheight(0)
+  local termsize = (winheight / 3)
+  cmd("bel split | resize " .. termsize .. " | term")
+end
+
 -- Leader
 g.mapleader = " "
 
+-- Gitsings
 custom_map("n", "<leader>gh", ":Gitsigns preview_hunk<CR>")
 custom_map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
 custom_map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
-custom_map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.lua<CR>")
+-- custom_map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.lua<CR>")
+
+-- Open dot files
 custom_map("n", "<leader>,v", ":vsplit $HOME/dot/.config/nvim/init.lua<CR>")
 custom_map("n", "<leader>,s", ":split $HOME/dot/.config/nvim/init.lua<CR>")
-custom_map("n", "<leader><leader>", ":Explore<CR>")
-custom_map("n", "<leader>g", ":Gitsigns preview_hunk<CR>")
-custom_map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
-custom_map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
-custom_map("n", "Y", "y$")
-custom_map("x", "K", ":move '<-2<CR>gv-gv")
-custom_map("x", "K", ":move '>+1<CR>gv-gv")
+
+-- Terminal
+custom_map("t", "<ESC>", "<C-\\><C-n>")
+custom_map("n", "gt", ":lua toggle_term()<CR>")
 
 -- Buffer
 custom_map("n", "<C-n>", ":bn<CR>", {noremap = true})
 custom_map("n", "<C-p>", ":bp<CR>", {noremap = true})
 custom_map("n", "<leader>bd", ":bd<CR>", {noremap = true})
+custom_map("n", "<leader><leader>", ":Explore<CR>")
+custom_map("x", "K", ":move '<-2<CR>gv-gv")
+custom_map("x", "K", ":move '>+1<CR>gv-gv")
+custom_map("n", "<C-g>", ":lua print(vim.fn.expand('%:p'))<CR>")
 
 -- Dashboard
 custom_map("n", "<leader>nf", ":DashboardNewFile<CR>", {noremap = true})

@@ -52,5 +52,5 @@ packer.startup(function()
   use {"catppuccin/nvim", as = "catppuccin"}
 
   use {"RRethy/vim-illuminate"} -- Highlight the words on the cursor
-  use {"machakann/vim-sandwich"}
+  use {"tpope/vim-surround"}
 end)

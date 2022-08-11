@@ -7,6 +7,7 @@ function _G.save_and_execute()
   elseif filetype == "bash" then
     vim.cmd("!bash %")
   elseif filetype == "lua" then
+    print("sourced " .. vim.fn.expand("%:p"))
     vim.cmd("luafile %")
   end
 end
