@@ -7,7 +7,7 @@ cmp.setup({
       require("luasnip").lsp_expand(args.body)
     end,
   },
-	mapping = {
+  mapping = {
     ["<C-u>"] = cmp.mapping.scroll_docs(-4),
     ["<C-d>"] = cmp.mapping.scroll_docs(4),
     ["<C-y>"] = cmp.mapping.confirm({ select = true }),
@@ -39,13 +39,19 @@ cmp.setup({
     },
     { name = "luasnip" },
   },
-  experimental = {
-    custom_menu = true,
-  },
+  enabled = function()
+    local context = require "cmp.config.context"
+    if vim.api.nvim_get_mode().mode == "c" then
+      return true
+    else
+      return not context.in_treesitter_capture("comment")
+      and not context.in_syntax_group("Comment")
+    end
+  end
 })
 
-cmp.setup.cmdline('/', {
+cmp.setup.cmdline("/", {
   sources = {
-    { name = 'buffer' }
+    { name = "buffer" }
   }
 })

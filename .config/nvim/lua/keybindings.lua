@@ -20,6 +20,14 @@ function toggle_term()
   cmd("bel split | resize " .. termsize .. " | term")
 end
 
+function autosize_netrw()
+  cmd("tabe")
+  local winwidth = vim.fn.winwidth(0)
+  local termsize = (winwidth / 5)
+  cmd("tabclose")
+  cmd("leftabove vs . | vert resize " .. termsize)
+end
+
 -- Leader
 g.mapleader = " "
 
@@ -27,7 +35,6 @@ g.mapleader = " "
 custom_map("n", "<leader>gh", ":Gitsigns preview_hunk<CR>")
 custom_map("n", "<leader>gp", ":Gitsigns prev_hunk<CR>")
 custom_map("n", "<leader>gn", ":Gitsigns next_hunk<CR>")
--- custom_map("n", "<C-s>", ":source $HOME/dot/.config/nvim/init.lua<CR>")
 
 -- Open dot files
 custom_map("n", "<leader>,v", ":vsplit $HOME/dot/.config/nvim/init.lua<CR>")
@@ -41,7 +48,6 @@ custom_map("n", "gt", ":lua toggle_term()<CR>")
 custom_map("n", "<C-n>", ":bn<CR>", {noremap = true})
 custom_map("n", "<C-p>", ":bp<CR>", {noremap = true})
 custom_map("n", "<leader>bd", ":bd<CR>", {noremap = true})
-custom_map("n", "<leader><leader>", ":Explore<CR>")
 custom_map("x", "K", ":move '<-2<CR>gv-gv")
 custom_map("x", "K", ":move '>+1<CR>gv-gv")
 custom_map("n", "<C-g>", ":lua print(vim.fn.expand('%:p'))<CR>")
@@ -52,6 +58,11 @@ custom_map("n", "<leader>nf", ":DashboardNewFile<CR>", {noremap = true})
 -- Telescope
 custom_map("n", "<leader>fh", ":Telescope oldfiles hidden=true<CR>", {noremap = true})
 custom_map("n", "<leader>ff", ":Telescope find_files hidden=true<CR>", {noremap = true})
+custom_map("n", "<leader>fd", ":Telescope find_files hidden=true cwd=$HOME/dot/.config/nvim<CR>", {noremap = true})
+
+-- netrw
+custom_map("n", "<leader>dd", ":Lexplore %:p:h<CR>")
+custom_map("n", "<leader>da", ":Lexplore <CR>")
 
 vim.api.nvim_exec([[
   cnoreabbrev W! w!
