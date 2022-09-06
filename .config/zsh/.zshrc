@@ -11,10 +11,26 @@ zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'
 autoload colors && colors
 export CONDA_CHANGEPS1=false
 NEWLINE=$'\n'
-PROMPT=""
-PROMPT+="%b%F{244}${CONDA_DEFAULT_ENV} %f"
-PROMPT+="%b%F{218}%~%f ${NEWLINE}"
-PROMPT+="%(?.%B%F{green}:).%B%F{red}:() %f%b"
+
+act() {
+  if [[ ! -z $(type mamba) || ! -z $(type micromamba) ]]; then
+    mamba activate $1
+    PROMPT=""
+    PROMPT+="%b%F{244}${CONDA_DEFAULT_ENV} %f"
+    PROMPT+="%b%F{218}%~%f ${NEWLINE}"
+    PROMPT+="%(?.%B%F{green}:).%B%F{red}:() %f%b"
+  elif [[ ! -z $(type conda) ]]; then
+    conda activate $1
+    PROMPT=""
+    PROMPT+="%b%F{244}${CONDA_DEFAULT_ENV} %f"
+    PROMPT+="%b%F{218}%~%f ${NEWLINE}"
+    PROMPT+="%(?.%B%F{green}:).%B%F{red}:() %f%b"
+  else
+    >&2 echo ERROR! 'conda' or 'mamba' not found!
+    exit -1
+  fi
+}
+act ${CONDA_DEFAULT_ENV}
 
 # Basic Aliases
 alias la="ls -a"
@@ -47,3 +63,5 @@ bindkey "^[[H" beginning-of-line
 bindkey "^[[F" end-of-line
 
 export PATH=$HOME/dot/bin:$PATH
+
+set -o vi

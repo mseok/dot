@@ -2,18 +2,26 @@ export TERM=xterm-256color
 export EDITOR="nvim"
 
 export CONDA_CHANGEPS1=false
-# $CONDA_DEFAULT_ENV
-smiley() {
-  if [ "$?" == "0" ]; then
-    echo -e '\033[0;32m:) \033[0m'
+
+act() {
+  if [[ ! -z $(type mamba) || ! -z $(type micromamba) ]]; then
+    mamba activate $1
+    PS1=""
+    PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
+    PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
+    PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
+  elif [[ ! -z $(type conda) ]]; then
+    conda activate $1
+    PS1=""
+    PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
+    PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
+    PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
   else
-    echo -e '\033[0;31m:( \033[0m'
+    >&2 echo ERROR! Command 'reduce' not found!
+    exit -1
   fi
 }
-PS1=""
-PS1+="\[\033[38;5;244m${CONDA_DEFAULT_ENV}\[\033[0m "
-PS1+="\[\033[38;5;218m\w\[\033[0m\n"
-PS1+='$(smiley)'
+act ${CONDA_DEFAULT_ENV}
 
 # Basic Aliases
 alias la="ls -a"
@@ -42,3 +50,5 @@ if { [ -n "$TMUX" ]; } then
 fi
 
 export PATH=$HOME/dot/bin:$PATH
+
+set -o vi
