@@ -23,3 +23,4 @@ vim.g.shada = "$XDG_DATA_HOME/nvim/shada/main.shada"
 vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 20
 vim.g.netrw_localcopydircmd = "cp -r"
+vim.g.netrw_altv=1

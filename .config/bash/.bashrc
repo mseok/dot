@@ -10,12 +10,16 @@ act() {
     PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
     PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
     PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
+    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib64:${LD_LIBRARY_PATH}
   elif [[ ! -z $(type conda) ]]; then
     conda activate $1
     PS1=""
     PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
     PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
     PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
+    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib64:${LD_LIBRARY_PATH}
   else
     >&2 echo ERROR! Command 'reduce' not found!
     exit -1
@@ -39,6 +43,11 @@ alias gp="git push"
 alias ga="git add ."
 alias gcm="git commit -m "
 alias glog="git log --graph --abbrev-commit --pretty=oneline"
+
+alias top="top -d 1"
+alias Wc="wc"
+alias Grep="grep"
+alias ssh="ssh -X -Y"
 
 source $HOME/dot/completion/git-completion.bash
 source $HOME/dot/completion/git-prompt.sh

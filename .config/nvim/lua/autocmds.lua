@@ -4,7 +4,7 @@ function _G.save_and_execute()
   local filetype = vim.bo.filetype
   if filetype == "python" then
     vim.cmd("!python %")
-  elseif filetype == "bash" then
+  elseif filetype == "bash" or filetype == "sh" then
     vim.cmd("!bash %")
   elseif filetype == "lua" then
     print("sourced " .. vim.fn.expand("%:p"))
@@ -41,7 +41,7 @@ local autocmd_dict = {
       end
     },
     {
-      pattern = "bash",
+      pattern = "bash,sh",
       callback = function()
         vim.api.nvim_set_keymap("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
       end

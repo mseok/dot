@@ -50,6 +50,10 @@ packer.startup(function()
 
   -- Colorscheme
   use {"catppuccin/nvim", as = "catppuccin"}
+  use {
+    "m-demare/hlargs.nvim",
+    requires = { "nvim-treesitter/nvim-treesitter" }
+  }
 
   use {"RRethy/vim-illuminate"} -- Highlight the words on the cursor
   use {"tpope/vim-surround"}

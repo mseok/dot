@@ -18,6 +18,7 @@ if [ $is_zoomed -gt 0 ]; then
 	tmux resize-pane -Z
 	if [[ "${cmd%m}" == *"vi"* ]]; then
 		sleep 0.05
+    tmux send-keys Escape
 		tmux send-keys C-w =
 	fi
 fi
