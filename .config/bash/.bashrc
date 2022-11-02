@@ -4,7 +4,15 @@ export EDITOR="nvim"
 export CONDA_CHANGEPS1=false
 
 act() {
-  if [[ ! -z $(type mamba) || ! -z $(type micromamba) ]]; then
+  if [[ ! -z $(type micromamba) ]]; then
+    micromamba activate $1
+    PS1=""
+    PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
+    PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
+    PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
+    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib64:${LD_LIBRARY_PATH}
+  elif [[ ! -z $(type mamba) ]]; then
     mamba activate $1
     PS1=""
     PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"

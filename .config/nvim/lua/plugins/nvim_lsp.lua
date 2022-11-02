@@ -43,19 +43,7 @@ local on_attach = function(_, bufnr)
 end
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require("cmp_nvim_lsp").update_capabilities(capabilities, {snippetSupport = false})
-
--- Lua LSP setting
-local system_name
-if vim.fn.has("mac") == 1 then
-  system_name = "macOS"
-elseif vim.fn.has("unix") == 1 then
-  system_name = "Linux"
-elseif vim.fn.has("win32") == 1 then
-  system_name = "Windows"
-else
-  print("Unsupported system for sumneko")
-end
+capabilities = require("cmp_nvim_lsp").default_capabilities(capabilities, {snippetSupport = false})
 
 -- Use a loop to conveniently call "setup" on multiple servers and
 -- map buffer local keybindings when the language server attaches

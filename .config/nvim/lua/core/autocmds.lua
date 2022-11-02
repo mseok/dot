@@ -1,14 +1,17 @@
--- Autocmd
+local api = vim.api
+local cmd = vim.cmd
+local keymap = vim.keymap
+
 function _G.save_and_execute()
-  vim.cmd("silent! write")
+  cmd("silent! write")
   local filetype = vim.bo.filetype
   if filetype == "python" then
-    vim.cmd("!python %")
+    cmd("!python %")
   elseif filetype == "bash" or filetype == "sh" then
-    vim.cmd("!bash %")
+    cmd("!bash %")
   elseif filetype == "lua" then
     print("sourced " .. vim.fn.expand("%:p"))
-    vim.cmd("luafile %")
+    cmd("luafile %")
   end
 end
 
@@ -17,13 +20,13 @@ local autocmd_dict = {
     {
       pattern = "markdown,txt",
       callback = function()
-        vim.api.nvim_win_set_option(0, "spell", true)
+        api.nvim_win_set_option(0, "spell", true)
       end,
     },
     {
       pattern = "help,lspinfo,qf,startuptime",
       callback = function()
-        vim.api.nvim_set_keymap("n", "q", "<cmd>close<CR>", {silent = true})
+        keymap.set("n", "q", "<cmd>close<CR>", {silent = true})
       end,
     },
     {
@@ -31,26 +34,35 @@ local autocmd_dict = {
       callback = function()
         vim.bo.tabstop = 4
         vim.bo.shiftwidth = 4
-        vim.api.nvim_set_keymap("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
+        keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
+        keymap.set("n", "<leader>nf", "<cmd>Neoformat black<CR>", {noremap=true})
       end
     },
     {
       pattern = "lua",
       callback = function()
-        vim.api.nvim_set_keymap("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
+        keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
       end
     },
     {
       pattern = "bash,sh",
       callback = function()
-        vim.api.nvim_set_keymap("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
+        keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
       end
     },
+  },
+  BufReadPost = {
+    {
+      pattern = "*",
+      callback = function()
+        api.nvim_exec([[if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif]], false)
+      end
+    }
   }
 }
 
 for event, opt_tbls in pairs(autocmd_dict) do
   for _, opt_tbl in pairs(opt_tbls) do
-    vim.api.nvim_create_autocmd(event, opt_tbl)
+    api.nvim_create_autocmd(event, opt_tbl)
   end
 end

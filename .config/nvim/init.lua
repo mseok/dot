@@ -1,13 +1,10 @@
+-- In case $XDG_CONFIG_HOME not set as default
 local function getCurrentDir()
    local str = debug.getinfo(2, "S").source:sub(2)
    return str:match("(.*/)")
 end
 package.path = package.path .. ";" .. getCurrentDir() .. "lua/?.lua"
 package.path = package.path .. ";" .. getCurrentDir() .. "lua/?/init.lua"
-
-if vim.fn.has("autocmd") then
-	vim.api.nvim_exec([[au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif]], false)
-end
 
 local disabled_built_ins = {
   "gzip",
@@ -29,10 +26,6 @@ local disabled_built_ins = {
 for _, plugin in pairs(disabled_built_ins) do
   vim.g["loaded_" .. plugin] = 1
 end
-
-require("display")
-require("keybindings")
-require("autocmds")
 
 local function directory_exist(dir_path)
   local f = io.popen('[ -d "' .. dir_path .. '" ] && echo y')
@@ -57,7 +50,11 @@ local function requirePath(path)
   for file in files:lines() do
     local req_file = file:gmatch('%/lua%/(.+).lua$'){0}:gsub('/', '.')
     status_ok, _ = pcall(require, req_file)
+    if not status_ok then
+      print(req_file .. ' file not found!')
+    end
   end
 end
+
+requirePath("core")
 requirePath("plugins")
-requirePath("colors")
