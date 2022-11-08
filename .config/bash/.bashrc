@@ -1,39 +1,62 @@
 export TERM=xterm-256color
 export EDITOR="nvim"
 
-export CONDA_CHANGEPS1=false
+if [[ ! -z $(type micromamba) ]]; then
+  micromamba config set changeps1 False
+elif [[ ! -z $(type conda) ]]; then
+  conda config --set changeps1 False
+fi
 
-act() {
-  if [[ ! -z $(type micromamba) ]]; then
-    micromamba activate $1
-    PS1=""
-    PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
-    PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
-    PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
-    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
-    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib64:${LD_LIBRARY_PATH}
-  elif [[ ! -z $(type mamba) ]]; then
-    mamba activate $1
-    PS1=""
-    PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
-    PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
-    PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
-    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
-    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib64:${LD_LIBRARY_PATH}
-  elif [[ ! -z $(type conda) ]]; then
-    conda activate $1
-    PS1=""
-    PS1+="\[\033[38;5;111m\]\h\[\033[0m\] \[\033[38;5;218m\]\w\[\033[0m\]\n"
-    PS1+="\[\033[38;5;244m\]${CONDA_DEFAULT_ENV}\[\033[0m\] "
-    PS1+="\$(x=\$?;[[ \"\$x\" == '0' ]] && echo \"\[\033[0;32m\]:) \[\033[0m\]\" || echo \"\[\033[0;31m\]:( \[\033[0m\]\")"
-    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
-    export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib64:${LD_LIBRARY_PATH}
+precmd_conda_info() {
+  if [[ -n $CONDA_PREFIX ]]; then
+    if [[ $(basename $CONDA_PREFIX) == ".mamba" ]]; then
+      local CONDA_ENV="base "
+    else
+      local CONDA_ENV="$(basename $CONDA_PREFIX) "
+    fi
   else
-    >&2 echo ERROR! Command 'reduce' not found!
-    exit -1
+    local CONDA_ENV=""
+  fi
+
+  local NEWLINE=$'\n'
+  RET=$?
+}
+
+PROMPT_COMMAND=__prompt_command    # Function to generate PS1 after CMDs
+
+__prompt_command() {
+  local EXIT="$?"                # This needs to be first
+
+  # Color
+  local BLUE='\[\033[38;5;111m\]'
+  local PINK='\[\033[38;5;218m\]'
+  local GRAY='\[\033[38;5;244m\]'
+
+  local GREEN='\[\033[0;32m\]'
+  local RED='\[\033[0;31m\]'
+  local NORMAL='\[\033[0m\]'
+
+  PS1=""
+
+  if [[ -n $CONDA_PREFIX ]]; then
+    if [[ $(basename $CONDA_PREFIX) == ".mamba" ]]; then
+      local CONDA_ENV="base "
+    else
+      local CONDA_ENV="$(basename $CONDA_PREFIX) "
+    fi
+  else
+    local CONDA_ENV=""
+  fi
+
+  PS1+="${BLUE}\h${NORMAL} ${PINK}\w${NORMAL}\n"
+  PS1+="${GRAY}${CONDA_ENV}${NORMAL}"
+
+  if [ $EXIT != 0 ]; then
+    PS1+="${RED}:( ${NORMAL}"
+  else
+    PS1+="${GREEN}:) ${NORMAL}"
   fi
 }
-act ${CONDA_DEFAULT_ENV}
 
 # Basic Aliases
 alias la="ls -a"

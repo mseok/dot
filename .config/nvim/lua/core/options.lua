@@ -20,6 +20,7 @@ opt.termguicolors = true
 opt.background = "dark"
 opt.number = true
 opt.relativenumber = true
+opt.laststatus = 2
 
 -- backspace
 opt.backspace = "indent,eol,start" 

@@ -9,28 +9,34 @@ zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'
 
 # Prompt Settings
 autoload colors && colors
-export CONDA_CHANGEPS1=false
-NEWLINE=$'\n'
+if [[ ! -z $(type micromamba) ]]; then
+  micromamba config set changeps1 False
+elif [[ ! -z $(type conda) ]]; then
+  conda config --set changeps1 False
+fi
 
-act() {
-  if [[ ! -z $(type mamba) || ! -z $(type micromamba) ]]; then
-    mamba activate $1
-    PROMPT=""
-    PROMPT+="%b%F{244}${CONDA_DEFAULT_ENV} %f"
-    PROMPT+="%b%F{218}%~%f ${NEWLINE}"
-    PROMPT+="%(?.%B%F{green}:).%B%F{red}:() %f%b"
-  elif [[ ! -z $(type conda) ]]; then
-    conda activate $1
-    PROMPT=""
-    PROMPT+="%b%F{244}${CONDA_DEFAULT_ENV} %f"
-    PROMPT+="%b%F{218}%~%f ${NEWLINE}"
-    PROMPT+="%(?.%B%F{green}:).%B%F{red}:() %f%b"
+setopt prompt_subst
+
+function precmd_conda_info() {
+  if [[ -n $CONDA_PREFIX ]]; then
+    if [[ $(basename $CONDA_PREFIX) == ".mamba" ]]; then
+      local CONDA_ENV="base "
+    else
+      local CONDA_ENV="$(basename $CONDA_PREFIX) "
+    fi
   else
-    >&2 echo ERROR! 'conda' or 'mamba' not found!
-    exit -1
+    local CONDA_ENV=""
   fi
+
+  local NEWLINE=$'\n'
+  local PROMPT=""
+  PROMPT+="%b%F{244}${CONDA_ENV}"
+  PROMPT+="%f%b%F{218}%~%f ${NEWLINE}"
+  PROMPT+="%(?.%B%F{green}:).%B%F{red}:() %f%b"
+  echo "$PROMPT"
 }
-act ${CONDA_DEFAULT_ENV}
+
+PROMPT='$(precmd_conda_info)'
 
 # Basic Aliases
 alias la="ls -a"

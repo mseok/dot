@@ -1,4 +1,5 @@
 local nvim_lsp = require("lspconfig")
+local coq = require("coq")
 
 vim.cmd [[autocmd! ColorScheme * highlight FloatBorder guifg=white]]
 vim.cmd [[autocmd! ColorScheme * highlight NormalFloat guibg=NONE]]
@@ -55,4 +56,7 @@ for _, lsp in ipairs(servers) do
     capabilities = capabilities,
     handlers = handlers,
   }
+  -- nvim_lsp[lsp].setup {
+  --   coq.lsp_ensure_capabilities()
+  -- }
 end
