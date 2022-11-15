@@ -61,7 +61,7 @@ __prompt_command() {
 # Basic Aliases
 alias la="ls -a"
 alias ll="ls -l"
-alias vi="nvim -u $HOME/dot/.config/nvim/init.lua"
+alias vi="nvim"
 alias sb="source $HOME/.bashrc"
 alias ta="tmux a -t"
 alias tn="tmux new -s"

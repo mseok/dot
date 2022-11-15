@@ -7,6 +7,7 @@ require("telescope").setup{
     grep_previewer = previewers.vim_buffer_vimgrep.new,
     qflist_previewer = previewers.vim_buffer_qflist.new,
     buffer_previewer_maker = previewers.buffer_previewer_maker,
+    file_ignore_patterns = {".git"},
     mappings = {
       i = {
         ["<C-h>"] = "select_horizontal",

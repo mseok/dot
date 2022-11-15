@@ -25,6 +25,9 @@ opt.laststatus = 2
 -- backspace
 opt.backspace = "indent,eol,start" 
 
+-- Time in milliseconds to wait for a mapped sequence to complete.
+opt.timeoutlen = 300
+
 -- split windows
 opt.splitbelow = true
 opt.splitright = true

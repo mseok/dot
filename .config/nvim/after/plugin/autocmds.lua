@@ -2,19 +2,6 @@ local api = vim.api
 local cmd = vim.cmd
 local keymap = vim.keymap
 
-function _G.save_and_execute()
-  cmd("silent! write")
-  local filetype = vim.bo.filetype
-  if filetype == "python" then
-    cmd("!python %")
-  elseif filetype == "bash" or filetype == "sh" then
-    cmd("!bash %")
-  elseif filetype == "lua" then
-    print("sourced " .. vim.fn.expand("%:p"))
-    cmd("luafile %")
-  end
-end
-
 local autocmd_dict = {
   FileType = {
     {
@@ -32,22 +19,20 @@ local autocmd_dict = {
     {
       pattern = "python",
       callback = function()
-        vim.bo.tabstop = 4
-        vim.bo.shiftwidth = 4
-        keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
+        keymap.set("n", "<leader>s", "<cmd>lua require('utils').save_and_execute()<CR>", {noremap=true})
         keymap.set("n", "<leader>nf", "<cmd>Neoformat black<CR>", {noremap=true})
       end
     },
     {
       pattern = "lua",
       callback = function()
-        keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
+        keymap.set("n", "<leader>s", "<cmd>lua require('utils').save_and_execute()<CR>", {noremap=true})
       end
     },
     {
       pattern = "bash,sh",
       callback = function()
-        keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", {noremap=true})
+        keymap.set("n", "<leader>s", "<cmd>lua require('utils').save_and_execute()<CR>", {noremap=true})
       end
     },
   },

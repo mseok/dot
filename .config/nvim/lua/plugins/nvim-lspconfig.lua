@@ -1,5 +1,4 @@
 local nvim_lsp = require("lspconfig")
-local coq = require("coq")
 
 vim.cmd [[autocmd! ColorScheme * highlight FloatBorder guifg=white]]
 vim.cmd [[autocmd! ColorScheme * highlight NormalFloat guibg=NONE]]
@@ -35,7 +34,7 @@ local on_attach = function(_, bufnr)
   local opts = { noremap=true, silent=true }
 
   -- See `:help vim.lsp.*` for documentation on any of the below functions
-  buf_set_keymap("n", "<C-f>", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+  buf_set_keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
   buf_set_keymap("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
   buf_set_keymap("i", "<C-k>", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
   buf_set_keymap("n", "<leader>r", "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
@@ -56,7 +55,4 @@ for _, lsp in ipairs(servers) do
     capabilities = capabilities,
     handlers = handlers,
   }
-  -- nvim_lsp[lsp].setup {
-  --   coq.lsp_ensure_capabilities()
-  -- }
 end
