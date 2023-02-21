@@ -9,9 +9,9 @@ zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'
 
 # Prompt Settings
 autoload colors && colors
-if [[ ! -z $(type micromamba) ]]; then
+if [[ $(type micromamba) != *"found"* ]]; then
   micromamba config set changeps1 False
-elif [[ ! -z $(type conda) ]]; then
+elif [[ $(type conda) != *"found"* ]]; then
   conda config --set changeps1 False
 fi
 
