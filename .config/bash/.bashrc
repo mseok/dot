@@ -1,9 +1,15 @@
 export TERM=xterm-256color
 export EDITOR="nvim"
 
-if [[ ! -z $(type micromamba) ]]; then
+if [[ -z $_HOME ]]; then
+	export _HOME=$HOME
+fi
+
+if command -v micromamba &> /dev/null 
+then
   micromamba config set changeps1 False
-elif [[ ! -z $(type conda) ]]; then
+elif command -v conda &> /dev/null
+then
   conda config --set changeps1 False
 fi
 
@@ -62,7 +68,7 @@ __prompt_command() {
 alias la="ls -a"
 alias ll="ls -l"
 alias vi="nvim"
-alias sb="source $HOME/.bashrc"
+alias sb="source $_HOME/.bashrc"
 alias ta="tmux a -t"
 alias tn="tmux new -s"
 alias tl="tmux ls"
@@ -80,15 +86,15 @@ alias Wc="wc"
 alias Grep="grep"
 alias ssh="ssh -X -Y"
 
-source $HOME/dot/completion/git-completion.bash
-source $HOME/dot/completion/git-prompt.sh
+source $_HOME/dot/completion/git-completion.bash
+source $_HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux
 if { [ -n "$TMUX" ]; } then
-    tmux source $HOME/dot/.config/tmux/.tmux.conf
+    tmux source $_HOME/dot/.config/tmux/.tmux.conf
 fi
 
-export PATH=$HOME/dot/bin:$PATH
+export PATH=$_HOME/dot/bin:$PATH
 
 set -o vi
