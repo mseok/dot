@@ -30,9 +30,6 @@ return {
         keymap.set("n", "<leader>nc", function()
             neogen.generate({ type = "class" })
         end)
-        keymap.set("n", "<leader>nd", function()
-            neogen.generate({ type = "typedef" })
-        end)
 
     end,
 }

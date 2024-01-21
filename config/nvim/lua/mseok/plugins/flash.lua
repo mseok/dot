@@ -12,6 +12,10 @@ return {
                     enabled = false
                 }
             },
+            char = {
+                enabled = true,
+                jump_labels = true
+            }
         })
 
         vim.keymap.set("n", "s", flash.jump)
