@@ -1,3 +1,5 @@
+vim.g.map_leader = " "
+
 vim.opt.mouse = ""
 vim.g.autoformat = false
 
@@ -11,14 +13,14 @@ vim.opt.expandtab = true
 
 vim.opt.smartindent = true
 
-vim.wo.wrap = false
+vim.wo.wrap = true
 
 vim.opt.swapfile = false
 vim.opt.backup = false
 vim.opt.undodir = os.getenv("HOME") .."/.vim/undodir"
 vim.opt.undofile = true
 
-vim.opt.hlsearch = false
+vim.opt.hlsearch = true
 vim.opt.incsearch = true
 
 vim.opt.termguicolors = true
@@ -31,3 +33,6 @@ vim.opt.updatetime = 50
 
 vim.opt.splitbelow = true
 vim.opt.splitright = true
+
+vim.g.netrw_browse_split = false
+vim.g.netrw_winsize = 25

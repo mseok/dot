@@ -22,3 +22,6 @@ vim.keymap.set("v", "<leader>d", "\"_d")
 vim.keymap.set("n", "<leader>bp", "<cmd>bp<CR>")
 vim.keymap.set("n", "<leader>bn", "<cmd>bn<CR>")
 vim.keymap.set("n", "<leader>bx", "<cmd>bd<CR>")
+
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")

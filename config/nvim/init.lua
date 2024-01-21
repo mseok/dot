@@ -1,1 +1,2 @@
-require("config")
+require("mseok/core")
+require("mseok/lazy")
