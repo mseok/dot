@@ -6,6 +6,8 @@ return {
         "L3MON4D3/LuaSnip",
     },
 
+    event = "VeryLazy",
+
     config = function()
         local neogen = require("neogen")
         neogen.setup({

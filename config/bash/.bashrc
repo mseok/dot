@@ -92,7 +92,7 @@ export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux
 if { [ -n "$TMUX" ]; } then
-    tmux source $_HOME/dot/.config/tmux/.tmux.conf
+    tmux source $_HOME/dot/config/tmux/.tmux.conf
 fi
 
 export PATH=$_HOME/dot/bin:$PATH
