@@ -1,8 +1,10 @@
 export TERM=xterm-256color
 export EDITOR="nvim"
 
-if [[ -z $_HOME ]]; then
-	export _HOME=$HOME
+if [[ -d "$HOME/mseok" ]]; then
+    export _HOME=$HOME/mseok
+else
+    export _HOME=$HOME
 fi
 
 if command -v micromamba &> /dev/null 
