@@ -24,6 +24,7 @@ return {
             lua = { "stylua" },
             python = { "isort", "black" },
             bash = { "shfmt" },
+            zsh = { "beautysh" },
             sh = { "shfmt" },
         },
         -- Set up format-on-save

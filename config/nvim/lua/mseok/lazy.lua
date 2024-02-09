@@ -34,4 +34,4 @@ require("lazy").setup({ { import = "mseok.plugins" } }, {
         notify = false,
     },
 })
-vim.keymap.set("n", "<leader>l", "<cmd>Lazy<CR>", { silent = true })
+vim.keymap.set("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "lazy.nvim", silent = true })

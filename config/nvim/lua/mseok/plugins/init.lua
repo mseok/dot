@@ -5,6 +5,10 @@ return {
         name = "catppuccin",
         config = function()
             -- load the colorscheme here
+            require("catppuccin").setup({
+                transparent_background = true
+            })
+            vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#000000" }) --nvim-notify
             vim.cmd([[colorscheme catppuccin-mocha]])
         end,
     },

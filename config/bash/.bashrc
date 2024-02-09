@@ -2,16 +2,14 @@ export TERM=xterm-256color
 export EDITOR="nvim"
 
 if [[ -d "$HOME/mseok" ]]; then
-    export _HOME=$HOME/mseok
+  export _HOME=$HOME/mseok
 else
-    export _HOME=$HOME
+  export _HOME=$HOME
 fi
 
-if command -v micromamba &> /dev/null 
-then
+if command -v micromamba &>/dev/null; then
   micromamba config set changeps1 False
-elif command -v conda &> /dev/null
-then
+elif command -v conda &>/dev/null; then
   conda config --set changeps1 False
 fi
 
@@ -30,10 +28,10 @@ precmd_conda_info() {
   RET=$?
 }
 
-PROMPT_COMMAND=__prompt_command    # Function to generate PS1 after CMDs
+PROMPT_COMMAND=__prompt_command # Function to generate PS1 after CMDs
 
 __prompt_command() {
-  local EXIT="$?"                # This needs to be first
+  local EXIT="$?" # This needs to be first
 
   # Color
   local BLUE='\[\033[38;5;111m\]'
@@ -93,8 +91,9 @@ source $_HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux
-if { [ -n "$TMUX" ]; } then
-    tmux source $_HOME/dot/config/tmux/.tmux.conf
+if command -v tmux &>/dev/null; then
+  tmux set-environment -g _HOME $_HOME &>/dev/null
+  tmux source $_HOME/dot/config/tmux/.tmux.conf &>/dev/null
 fi
 
 export PATH=$_HOME/dot/bin:$PATH
