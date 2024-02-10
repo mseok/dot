@@ -33,5 +33,10 @@ require("lazy").setup({ { import = "mseok.plugins" } }, {
     change_detection = {
         notify = false,
     },
+    install = {
+        -- install missing plugins on startup. This doesn't increase startup time.
+        missing = true,
+        -- try to load one of these colorschemes when starting an installation during startup
+        colorscheme = { "catppuccin" },
+    },
 })
-vim.keymap.set("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "lazy.nvim", silent = true })

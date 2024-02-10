@@ -22,16 +22,15 @@ return {
         })
 
         local keymap = vim.keymap
-
-        keymap.set("n", "<leader>nf", function()
+        keymap.set("n", "<leader>cgc", function()
             neogen.generate({ type = "func" })
-        end)
-        keymap.set("n", "<leader>nt", function()
+        end, { desc = "Class comment" })
+        keymap.set("n", "<leader>cgf", function()
             neogen.generate({ type = "type" })
-        end)
-        keymap.set("n", "<leader>nc", function()
+        end, { desc = "Function comment" })
+        keymap.set("n", "<leader>cgt", function()
             neogen.generate({ type = "class" })
-        end)
+        end, { desc = "Type comment" })
 
     end,
 }

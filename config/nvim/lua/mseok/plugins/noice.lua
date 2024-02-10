@@ -27,11 +27,4 @@ return {
         "MunifTanjim/nui.nvim",
         "rcarriga/nvim-notify",
     },
-
-    keys = {
-        { "<leader>snl", function() require("noice").cmd("last") end, desc = "Noice Last Message" },
-        { "<leader>snh", function() require("noice").cmd("history") end, desc = "Noice History" },
-        { "<leader>sna", function() require("noice").cmd("all") end, desc = "Noice All" },
-        { "<leader>snd", function() require("noice").cmd("dismiss") end, desc = "Dismiss All" },
-    },
 }

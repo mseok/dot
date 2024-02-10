@@ -42,6 +42,8 @@ return {
             mapping = cmp.mapping.preset.insert({
                 ["<C-p>"] = cmp.mapping.select_prev_item(), -- previous suggestion
                 ["<C-n>"] = cmp.mapping.select_next_item(), -- next suggestion
+                ["<C-f>"] = cmp.mapping.scroll_docs(-4),
+                ["<C-d>"] = cmp.mapping.scroll_docs(4),
                 ["<C-y>"] = cmp.mapping.confirm({ select = true }),
                 ["<C-space>"] = cmp.mapping.complete(),
                 ["<C-e>"] = cmp.mapping.abort(), -- close completion window
@@ -63,13 +65,14 @@ return {
                 end, { "i", "s" }),
             }),
             -- sources for autocompletion
-            sources = cmp.config.sources({
+            sources = {
+                { name = "otter "}, -- otter for quarto
+                { name = "copilot" }, -- file system paths
                 { name = "nvim_lsp" },
                 { name = "luasnip" }, -- snippets
                 { name = "buffer" }, -- text within current buffer
                 { name = "path" }, -- file system paths
-                { name = "copilot" }, -- file system paths
-            }),
+            },
         })
     end,
 }

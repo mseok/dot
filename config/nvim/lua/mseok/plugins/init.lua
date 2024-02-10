@@ -32,7 +32,7 @@ return {
         "mbbill/undotree",
         event = "VeryLazy",
         config = function()
-            vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle)
+            vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle, { desc = "Undo tree" })
         end
     },
     {
@@ -40,4 +40,16 @@ return {
         event = "InsertEnter",
         opts = {} -- this is equalent to setup({}) function
     },
+    {
+        "LunarVim/bigfile.nvim",
+    },
+    {
+        "folke/trouble.nvim",
+        event = "VeryLazy",
+        config = function()
+            require("trouble").setup({
+                icons = false,
+            })
+        end,
+    }
 }
