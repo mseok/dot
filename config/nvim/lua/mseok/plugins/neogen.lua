@@ -1,12 +1,14 @@
 return {
     "danymat/neogen",
 
+    lazy = true,
+
+    cmd = "Neogen",
+
     dependencies = {
         "nvim-treesitter/nvim-treesitter",
         "L3MON4D3/LuaSnip",
     },
-
-    event = "VeryLazy",
 
     config = function()
         local neogen = require("neogen")

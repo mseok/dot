@@ -68,11 +68,6 @@ return {
                 c = { ":GitConflictRefresh<CR>", "conflict" },
                 g = { ":Neogit<CR>", "neogit" },
                 s = { ":Gitsigns<CR>", "gitsigns" },
-                d = {
-                    name = "diff",
-                    o = { ":DiffviewOpen<CR>", "open" },
-                    c = { ":DiffviewClose<CR>", "close" },
-                },
                 b = {
                     name = "blame",
                     b = { ":GitBlameToggle<CR>", "toggle" },

@@ -4,6 +4,8 @@ return {
 
         dev = false,
 
+        ft = { "quarto", "qmd" },
+
         dependencies = {
             {
                 "jmbuhr/otter.nvim",
@@ -32,6 +34,9 @@ return {
     -- like ipython, R, bash
     {
         "jpalardy/vim-slime",
+
+        ft = { "quarto", "qmd" },
+
         init = function()
             vim.b["quarto_is_" .. "python" .. "_chunk"] = false
             Quarto_is_in_python_chunk = function()

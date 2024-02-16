@@ -1,7 +1,7 @@
 return {
     "stevearc/conform.nvim",
 
-    event = { "VeryLazy" },
+    lazy = true,
 
     cmd = { "ConformInfo" },
 
