@@ -20,7 +20,7 @@ return {
 
         local luasnip = require("luasnip")
 
-        -- require("copilot_cmp").setup()
+        require("copilot_cmp").setup()
 
         local has_words_before = function()
             unpack = unpack or table.unpack
