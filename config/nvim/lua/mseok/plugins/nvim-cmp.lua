@@ -1,7 +1,9 @@
 return {
     "hrsh7th/nvim-cmp",
 
-    event = "InsertEnter",
+    branch = "main",
+
+    -- event = "InsertEnter",
 
     dependencies = {
         "hrsh7th/cmp-buffer", -- source for text in buffer
@@ -18,11 +20,7 @@ return {
 
         local luasnip = require("luasnip")
 
-        require("copilot_cmp").setup()
-
-        -- loads vscode style snippets from installed plugins (e.g. friendly-snippets)
-        require("luasnip.loaders.from_vscode").lazy_load()
-        luasnip.filetype_extend("python", { "pydoc" })
+        -- require("copilot_cmp").setup()
 
         local has_words_before = function()
             unpack = unpack or table.unpack
@@ -36,7 +34,7 @@ return {
             },
             snippet = {
                 expand = function(args)
-                    require("luasnip").lsp_expand(args.body)
+                    luasnip.lsp_expand(args.body)
                 end,
             },
             mapping = cmp.mapping.preset.insert({
@@ -66,7 +64,7 @@ return {
             }),
             -- sources for autocompletion
             sources = {
-                { name = "otter "}, -- otter for quarto
+                { name = "otter" }, -- otter for quarto
                 { name = "copilot" }, -- file system paths
                 { name = "nvim_lsp" },
                 { name = "luasnip" }, -- snippets
@@ -74,5 +72,10 @@ return {
                 { name = "path" }, -- file system paths
             },
         })
+
+        -- loads vscode style snippets from installed plugins (e.g. friendly-snippets)
+        require("luasnip.loaders.from_vscode").lazy_load()
+        luasnip.filetype_extend("python", { "pydoc" })
+        luasnip.filetype_extend("quarto", { "markdown" })
     end,
 }
