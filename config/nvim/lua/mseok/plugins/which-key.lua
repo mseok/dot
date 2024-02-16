@@ -122,7 +122,7 @@ return {
                 l = { ":Lazy<CR>", "Lazy" },
                 m = { ":Mason<CR>", "Mason" },
                 s = { ":e $MYVIMRC | :cd %:p:h | split . | wincmd k<CR>", "Settings" },
-                h = { ':execute " " . expand("<cword>")<CR>', "help" },
+                h = { ':execute "h " .. expand("<cword>")<CR>', "help" },
             },
         }, { mode = "n", prefix = "<leader>" })
     end
