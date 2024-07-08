@@ -12,7 +12,7 @@ return {
     config = function()
         require("mason").setup()
         require("mason-lspconfig").setup({
-            ensure_installed = {"lua_ls", "jedi_language_server", "marksman"},
+            ensure_installed = {"lua_ls", "jedi_language_server", "bashls"},
         })
 
         vim.diagnostic.config({
@@ -76,24 +76,6 @@ return {
             keymap.set("n", "<leader>ls", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
         end
 
-        local on_attach_qmd = function(client, bufnr)
-            local function buf_set_keymap(...)
-                vim.api.nvim_buf_set_keymap(bufnr, ...)
-            end
-            local function buf_set_option(...)
-                vim.api.nvim_buf_set_option(bufnr, ...)
-            end
-
-            buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
-
-            buf_set_keymap("n", "gh", "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
-            buf_set_keymap("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts)
-            buf_set_keymap("n", "[d", "<cmd>lua vim.diagnostic.goto_prev()<CR>", opts)
-            buf_set_keymap("n", "]d", "<cmd>lua vim.diagnostic.goto_next()<CR>", opts)
-            buf_set_keymap("n", "<leader>ll", "<cmd>lua vim.lsp.codelens.run()<cr>", opts)
-            client.server_capabilities.document_formatting = true
-        end
-
         local lsp_flags = {
             allow_incremental_sync = true,
             debounce_text_changes = 150,
@@ -118,14 +100,6 @@ return {
         end
         capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = false
         -- local capabilities = cmp_nvim_lsp.default_capabilities()
-
-        -- configure markdown server
-        lspconfig["marksman"].setup({
-            on_attach = on_attach_qmd,
-            capabilities = capabilities,
-            filetypes = { "markdown", "quarto" },
-            root_dir = util.root_pattern(".git", ".marksman.toml", "_quarto.yml"),
-        })
 
         -- configure python server
         lspconfig["jedi_language_server"].setup({

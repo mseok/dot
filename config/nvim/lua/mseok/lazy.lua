@@ -20,9 +20,6 @@ require("lazy").setup({ { import = "mseok.plugins" } }, {
         rtp = {
             disabled_plugins = {
                 "gzip",
-                -- "matchit",
-                -- "matchparen",
-                -- "netrwPlugin",
                 "tarPlugin",
                 "tohtml",
                 "tutor",

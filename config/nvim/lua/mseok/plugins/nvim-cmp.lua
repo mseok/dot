@@ -64,7 +64,6 @@ return {
             }),
             -- sources for autocompletion
             sources = {
-                { name = "otter" }, -- otter for quarto
                 { name = "copilot" }, -- file system paths
                 { name = "nvim_lsp" },
                 { name = "luasnip" }, -- snippets
@@ -76,6 +75,5 @@ return {
         -- loads vscode style snippets from installed plugins (e.g. friendly-snippets)
         require("luasnip.loaders.from_vscode").lazy_load()
         luasnip.filetype_extend("python", { "pydoc" })
-        luasnip.filetype_extend("quarto", { "markdown" })
     end,
 }

@@ -5,6 +5,11 @@ vim.keymap.set("n", "<C-u>", "<C-u>zz")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 
+vim.keymap.set("n", "<C-Up>", "<cmd>resize +2<cr>", { desc = "Increase Window Height" })
+vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease Window Height" })
+vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease Window Width" })
+vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase Window Width" })
+
 -- Paste with no register deletion
 vim.keymap.set("x", "<leader>p", "\"_dP")
 
@@ -27,5 +32,17 @@ vim.keymap.set("n", "]b", "<cmd>bn<CR>", { desc = "buffer next" })
 vim.keymap.set("n", "[t", "<cmd>tabprevious<CR>", { desc = "tab previous" })
 vim.keymap.set("n", "]t", "<cmd>tabNext<CR>", { desc = "tab next" })
 
+-- Add undo break-points
+vim.keymap.set("i", ",", ",<c-g>u")
+vim.keymap.set("i", ".", ".<c-g>u")
+vim.keymap.set("i", ";", ";<c-g>u")
+
+-- better indenting
+vim.keymap.set("v", "<", "<gv")
+vim.keymap.set("v", ">", ">gv")
+
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
+
+-- terminal
+vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")

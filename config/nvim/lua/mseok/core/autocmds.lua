@@ -23,8 +23,12 @@ vim.api.nvim_create_autocmd("FileType", {
     end,
 })
 
+local function augroup(name)
+    return vim.api.nvim_create_augroup("_" .. name, { clear = true })
+end
+
 vim.api.nvim_create_autocmd("BufReadPost", {
-    group = vim.api.nvim_create_augroup("last_loc", { clear = true }),
+    group = augroup("last_loc"),
     callback = function(event)
         local exclude = { "gitcommit" }
         local buf = event.buf
@@ -42,10 +46,57 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 
 -- Highlight on yank
 vim.api.nvim_create_autocmd("TextYankPost", {
-    group = vim.api.nvim_create_augroup("highlight_yank", { clear = true }),
+    group = augroup("highlight_yank"),
     callback = function()
         vim.highlight.on_yank()
     end,
+})
+
+-- resize splits if window got resized
+vim.api.nvim_create_autocmd({ "VimResized" }, {
+    group = augroup("resize_splits"),
+    callback = function()
+        local current_tab = vim.fn.tabpagenr()
+        vim.cmd("tabdo wincmd =")
+        vim.cmd("tabnext " .. current_tab)
+    end,
+})
+
+-- make it easier to close man-files when opened inline
+vim.api.nvim_create_autocmd("FileType", {
+    group = augroup("man_unlisted"),
+    pattern = { "man" },
+    callback = function(event)
+        vim.bo[event.buf].buflisted = false
+    end,
+})
+
+-- wrap and check for spell in text filetypes
+vim.api.nvim_create_autocmd("FileType", {
+  group = augroup("wrap_spell"),
+  pattern = { "*.txt", "*.tex", "*.typ", "gitcommit", "markdown" },
+  callback = function()
+    vim.opt_local.wrap = true
+    vim.opt_local.spell = true
+  end,
+})
+
+-- Set filetype for .env and .env.* files
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  group = augroup("env_filetype"),
+  pattern = { "*.env", ".env.*" },
+  callback = function()
+    vim.opt_local.filetype = "sh"
+  end,
+})
+
+-- Set filetype for .toml files
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  group = augroup("toml_filetype"),
+  pattern = { "*.tomg-config*" },
+  callback = function()
+    vim.opt_local.filetype = "toml"
+  end,
 })
 
 function _G.save_and_execute()

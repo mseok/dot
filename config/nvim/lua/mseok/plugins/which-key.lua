@@ -30,23 +30,22 @@ return {
         -- refer to the configuration section below
     },
 
-    config = function ()
+    config = function()
         local wk = require("which-key")
 
         wk.register({
             c = {
                 name = "code",
-                c = { ":SlimeConfig<CR>", "slime config" },
                 n = { ":vsplit term://$SHELL<CR>", "new terminal" },
                 p = { ":vsplit term://python<CR>", "new python terminal" },
                 g = {
-                    name = "Comments"
+                    name = "Comments",
+                    c = { "<cmd>Neogen class<CR>", "class" },
+                    f = { "<cmd>Neogen func<CR>", "func" },
+                    t = { "<cmd>Neogen type<CR>", "type" },
+                    F = { "<cmd>Neogen file<CR>", "file" }
                 }
             },
-            ["coo"] = { "o# %%<CR>", "new code chunk below" },
-            ["cOo"] = { "O# %%<CR>", "new code chunk above" },
-            ["cob"] = { "o```{bash}<CR>```<esc>O", "bash code chunk" },
-            ["cop"] = { "o```{python}<CR>```<esc>O", "python code chunk" },
             f = {
                 name = "find (telescope)",
                 f = { "<cmd>Telescope find_files<CR>", "files" },
@@ -83,32 +82,16 @@ return {
                 d = { ":Noice dismiss<CR>", "Dismiss All" },
             },
             o = {
-                name = "otter & code",
-                a = { require("otter").dev_setup, "otter activate" },
-                ["o"] = { "o# %%<CR>", "new code chunk below" },
-                ["O"] = { "O# %%<CR>", "new code chunk above" },
-                ["b"] = { "o```{bash}<CR>```<esc>O", "bash code chunk" },
-                ["p"] = { "o```{python}<CR>```<esc>O", "python code chunk" },
-            },
-            q = {
-                name = "quarto",
-                a = { ":QuartoActivate<CR>", "activate" },
-                p = { ":lua require'quarto'.quartoPreview()<CR>", "preview" },
-                q = { ":lua require'quarto'.quartoClosePreview()<CR>", "close" },
-                h = { ":QuartoHelp ", "help" },
-                r = {
-                    name = "run",
-                    r = { ":QuartoSendAbove<CR>", "to cursor" },
-                    a = { ":QuartoSendAll<CR>", "all" },
-                },
-                e = { ":lua require'otter'.export()<CR>", "export" },
-                E = { ":lua require'otter'.export(true)<CR>", "export overwrite" },
+                name = "Outline",
+                t = { "<cmd>AerialToggle!<CR>", "Toggle" },
+                n = { "<cmd>AerialPrev<CR>", "Prev" },
+                p = { "<cmd>AerialNext<CR>", "Next" },
             },
             t = {
                 name = "trouble",
                 t = { require("trouble").toggle, "toggle" },
-                n = { require("trouble").next({skip_groups = true, jump = true}), "next" },
-                p = { require("trouble").previous({skip_groups = true, jump = true}), "previous" },
+                -- n = { require("trouble").next({skip_groups = true, jump = true}), "next" },
+                -- p = { require("trouble").prev({skip_groups = true, jump = true}), "previous" },
             },
             v = {
                 name = "vim",

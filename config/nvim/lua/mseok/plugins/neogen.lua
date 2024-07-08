@@ -15,22 +15,11 @@ return {
             languages = {
                 python = {
                     template = {
-                        annotation_convention = "numpydoc" -- for a full list of annotation_conventions, see supported-languages below,
+                        -- for a full list of annotation_conventions, see supported-languages below,
+                        annotation_convention = "numpydoc"
                     }
                 },
             }
         })
-
-        local keymap = vim.keymap
-        keymap.set("n", "<leader>cgc", function()
-            neogen.generate({ type = "func" })
-        end, { desc = "Class comment" })
-        keymap.set("n", "<leader>cgf", function()
-            neogen.generate({ type = "type" })
-        end, { desc = "Function comment" })
-        keymap.set("n", "<leader>cgt", function()
-            neogen.generate({ type = "class" })
-        end, { desc = "Type comment" })
-
     end,
 }
