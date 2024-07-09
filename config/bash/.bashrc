@@ -1,12 +1,6 @@
 export TERM=xterm-256color
 export EDITOR="nvim"
 
-if [[ -d "$HOME/mseok" ]]; then
-  export _HOME=$HOME/mseok
-else
-  export _HOME=$HOME
-fi
-
 if command -v micromamba &>/dev/null; then
   micromamba config set changeps1 False
 elif command -v conda &>/dev/null; then
@@ -68,7 +62,7 @@ __prompt_command() {
 alias la="ls -a"
 alias ll="ls -l"
 alias vi="nvim"
-alias sb="source $_HOME/.bashrc"
+alias sb="source $HOME/.bashrc"
 alias ta="tmux a -t"
 alias tn="tmux new -s"
 alias tl="tmux ls"
@@ -86,16 +80,16 @@ alias Wc="wc"
 alias Grep="grep"
 alias ssh="ssh -X -Y"
 
-source $_HOME/dot/completion/git-completion.bash
-source $_HOME/dot/completion/git-prompt.sh
+source $HOME/dot/completion/git-completion.bash
+source $HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
 
 # Tmux
 if command -v tmux &>/dev/null; then
-  tmux set-environment -g _HOME $_HOME &>/dev/null
-  tmux source $_HOME/dot/config/tmux/.tmux.conf &>/dev/null
+  # tmux set-environment -g HOME $HOME &>/dev/null
+  tmux source $HOME/dot/config/tmux/.tmux.conf &>/dev/null
 fi
 
-export PATH=$_HOME/dot/bin:$PATH
+export PATH=$HOME/dot/bin:$PATH
 
 set -o vi
