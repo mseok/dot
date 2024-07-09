@@ -13,15 +13,7 @@ vim.opt.expandtab = true
 vim.opt.smartindent = true
 vim.wo.wrap = true
 
-vim.g.clipboard = {
-    name = 'OSC 52',
-    copy = {
-        ['+'] = require('vim.ui.clipboard.osc52').copy('+'),
-    },
-    paste = {
-        ['+'] = require('vim.ui.clipboard.osc52').paste('+'),
-    },
-}
+vim.opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
 vim.opt.cursorline = true         -- Enable highlighting of the current line
 
 vim.opt.swapfile = false
