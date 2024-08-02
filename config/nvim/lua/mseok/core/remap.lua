@@ -41,8 +41,8 @@ vim.keymap.set("i", ";", ";<c-g>u")
 vim.keymap.set("v", "<", "<gv")
 vim.keymap.set("v", ">", ">gv")
 
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
-vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
-
 -- terminal
 vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
+
+-- goto current file's directory
+vim.keymap.set("n", "<leader>cd", vim.cmd("cd " .. vim.fn.expand('%:p:h')))

@@ -9,9 +9,34 @@ return {
                 transparent_background = true
             })
             vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#000000" }) --nvim-notify
-            vim.cmd([[colorscheme catppuccin-mocha]])
+            vim.cmd([[colorscheme catppuccin-frappe]])
         end,
     },
+
+    {
+        "folke/todo-comments.nvim",
+        dependencies = { "nvim-lua/plenary.nvim" },
+        opts = {
+            -- your configuration comes here
+            -- or leave it empty to use the default settings
+            -- refer to the configuration section below
+        }
+    },
+
+    -- {
+    --     "f-person/auto-dark-mode.nvim",
+    --     opts = {
+    --         update_interval = 1000,
+    --         set_dark_mode = function()
+    --             vim.api.nvim_set_option_value("background", "dark", {})
+    --             vim.cmd("colorscheme catppuccin-frappe")
+    --         end,
+    --         set_light_mode = function()
+    --             vim.api.nvim_set_option_value("background", "light", {})
+    --             vim.cmd("colorscheme catppuccin-latte")
+    --         end,
+    --     },
+    -- },
 
     {
         "nvim-lua/plenary.nvim",
