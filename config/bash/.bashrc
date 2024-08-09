@@ -26,6 +26,7 @@ alias glog="git log --graph --abbrev-commit --pretty=oneline"
 
 alias top="top -d 1"
 alias Wc="wc"
+alias grep="grep --color=auto"
 alias Grep="grep"
 alias ssh="ssh -X -Y"
 

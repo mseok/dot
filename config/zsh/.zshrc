@@ -30,6 +30,8 @@ alias ga="git add ."
 alias gcm="git commit -m "
 alias glog="git log --graph --abbrev-commit --pretty=oneline"
 
+alias grep="grep --color=auto"
+
 zstyle ':completion:*:*:git:*' script $HOME/dot/completion/git-completion.bash
 source $HOME/dot/completion/git-prompt.sh
 fpath=(~/.zsh $fpath)
