@@ -1,0 +1,11 @@
+"$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
+
+[manager]
+linemode    = "size"
+show_hidden = true
+sort_by     = "natural"
+
+[preview]
+tab_size   = 2
+max_width  = 1000
+max_height = 1000

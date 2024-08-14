@@ -1,10 +1,14 @@
-export TERM=xterm-256color
+if [ -n "$TMUX" ]; then
+    export TERM=tmux-256color
+else
+    export TERM=xterm-256color
+fi
 export EDITOR="nvim"
 
 if command -v micromamba &>/dev/null; then
-  micromamba config set changeps1 False
+    micromamba config set changeps1 False
 elif command -v conda &>/dev/null; then
-  conda config --set changeps1 False
+    conda config --set changeps1 False
 fi
 
 # Basic Aliases
@@ -33,12 +37,6 @@ alias ssh="ssh -X -Y"
 source $HOME/dot/completion/git-completion.bash
 source $HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
-
-# Tmux
-if command -v tmux &>/dev/null; then
-  # tmux set-environment -g HOME $HOME &>/dev/null
-  tmux source $HOME/dot/config/tmux/.tmux.conf &>/dev/null
-fi
 
 export PATH=$HOME/dot/bin:$PATH
 
