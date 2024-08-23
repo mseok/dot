@@ -33,75 +33,56 @@ return {
     config = function()
         local wk = require("which-key")
 
-        wk.register({
-            c = {
-                name = "code",
-                n = { ":vsplit term://$SHELL<CR>", "new terminal" },
-                p = { ":vsplit term://python<CR>", "new python terminal" },
-                g = {
-                    name = "Comments",
-                    c = { "<cmd>Neogen class<CR>", "class" },
-                    f = { "<cmd>Neogen func<CR>", "func" },
-                    t = { "<cmd>Neogen type<CR>", "type" },
-                    F = { "<cmd>Neogen file<CR>", "file" }
-                }
-            },
-            f = {
-                name = "find (telescope)",
-                f = { "<cmd>Telescope find_files<CR>", "files" },
-                h = { "<cmd>Telescope help_tags<CR>", "help" },
-                k = { "<cmd>Telescope keymaps<CR>", "keymaps" },
-                r = { "<cmd>Telescope oldfiles<CR>", "old files" },
-                g = { "<cmd>Telescope live_grep<CR>", "grep" },
-                b = { "<cmd>Telescope current_buffer_fuzzy_find<CR>", "fuzzy" },
-                m = { "<cmd>Telescope marks<CR>", "marks" },
-                M = { "<cmd>Telescope man_pages<CR>", "man pages" },
-                s = { "<cmd>Telescope lsp_document_symbols<CR>", "symbols" },
-                d = { "<cmd>Telescope buffers<CR>", "buffers" },
-                q = { "<cmd>Telescope quickfix<CR>", "quickfix" },
-                l = { "<cmd>Telescope loclist<CR>", "loclist" },
-                j = { "<cmd>Telescope jumplist<CR>", "marks" },
-            },
-            g = {
-                name = "git",
-                c = { ":GitConflictRefresh<CR>", "conflict" },
-                g = { ":Neogit<CR>", "neogit" },
-                s = { ":Gitsigns<CR>", "gitsigns" },
-                b = {
-                    name = "blame",
-                    b = { ":GitBlameToggle<CR>", "toggle" },
-                    o = { ":GitBlameOpenCommitURL<CR>", "open" },
-                    c = { ":GitBlameCopyCommitURL<CR>", "copy" },
-                },
-            },
-            n = {
-                name = "noice",
-                l = { ":Noice last<CR>", "Noice Last Message" },
-                h = { ":Noice history<CR>", "Noice History" },
-                a = { ":Noice all<CR>", "Noice All" },
-                d = { ":Noice dismiss<CR>", "Dismiss All" },
-            },
-            o = {
-                name = "Outline",
-                t = { "<cmd>AerialToggle!<CR>", "Toggle" },
-                n = { "<cmd>AerialPrev<CR>", "Prev" },
-                p = { "<cmd>AerialNext<CR>", "Next" },
-            },
-            t = {
-                name = "trouble",
-                t = { require("trouble").toggle, "toggle" },
-                -- n = { require("trouble").next({skip_groups = true, jump = true}), "next" },
-                -- p = { require("trouble").prev({skip_groups = true, jump = true}), "previous" },
-            },
-            v = {
-                name = "vim",
-                t = { toggle_light_dark_theme, "switch theme" },
-                c = { ":Telescope colorscheme<CR>", "colortheme" },
-                l = { ":Lazy<CR>", "Lazy" },
-                m = { ":Mason<CR>", "Mason" },
-                s = { ":e $MYVIMRC | :cd %:p:h | split . | wincmd k<CR>", "Settings" },
-                h = { ':execute "h " .. expand("<cword>")<CR>', "help" },
-            },
-        }, { mode = "n", prefix = "<leader>" })
+        wk.add({
+            -- Terminal
+            { "<leader>c",   group = "code" },
+            { "<leader>cf",  "<cmd>vsplit term://$SHELL<CR>",                            desc = "new terminal" },
+            { "<leader>cp",  "<cmd>vsplit term://python<CR>",                            desc = "new python terminal" },
+
+            -- Comment
+            { "<leader>cg",  group = "Comments" },
+            { "<leader>cgc", "<cmd>Neogen class<CR>",                                    desc = "class" },
+            { "<leader>cgf", "<cmd>Neogen func<CR>",                                     desc = "func" },
+            { "<leader>cgt", "<cmd>Neogen func<CR>",                                     desc = "type" },
+            { "<leader>cgf", "<cmd>Neogen func<CR>",                                     desc = "file" },
+
+            -- Telescope
+            { "<leader>f",   group = "Find (telescope)" },
+            { "<leader>cf",  "<cmd>Telescope find_files<CR>",                            desc = "files" },
+            { "<leader>ch",  "<cmd>Telescope help_tags<CR>",                             desc = "help" },
+            { "<leader>ck",  "<cmd>Telescope keymaps<CR>",                               desc = "keymaps" },
+            { "<leader>cr",  "<cmd>Telescope oldfiles<CR>",                              desc = "old files" },
+            { "<leader>cg",  "<cmd>Telescope live_grep<CR>",                             desc = "grep" },
+            { "<leader>cb",  "<cmd>Telescope current_buffer_fuzzy_find<CR>",             desc = "fuzzy" },
+            { "<leader>cm",  "<cmd>Telescope marks<CR>",                                 desc = "marks" },
+            { "<leader>cM",  "<cmd>Telescope man_pages<CR>",                             desc = "man pages" },
+            { "<leader>cs",  "<cmd>Telescope lsp_document_symbols<CR>",                  desc = "symbols" },
+            { "<leader>cd",  "<cmd>Telescope buffers<CR>",                               desc = "buffers" },
+            { "<leader>cq",  "<cmd>Telescope quickfix<CR>",                              desc = "quickfix" },
+            { "<leader>cl",  "<cmd>Telescope loclist<CR>",                               desc = "loclist" },
+            { "<leader>cj",  "<cmd>Telescope jumplist<CR>",                              desc = "marks" },
+
+            -- Noice
+            { "<leader>n",   group = "Noice (Notice)" },
+            { "<leader>nl",  "<cmd>Noice last<CR>",                                      desc = "Noice Last Message" },
+            { "<leader>nh",  "<cmd>Noice history<CR>",                                   desc = "Noice History" },
+            { "<leader>na",  "<cmd>Noice all<CR>",                                       desc = "Noice All" },
+            { "<leader>nd",  "<cmd>Noice dismiss<CR>",                                   desc = "Dismiss All" },
+
+            -- Outline
+            { "<leader>o",   group = "Outline" },
+            { "<leader>ot",  "<cmd>AerialToggle!<CR>",                                   desc = "Toggle" },
+            { "<leader>on",  "<cmd>AerialPrev<CR>",                                      desc = "Prev" },
+            { "<leader>op",  "<cmd>AerialNext<CR>",                                      desc = "Next" },
+
+            -- Vim
+            { "<leader>v",   group = "Vim" },
+            { "<leader>vt",  toggle_light_dark_theme,                                    desc = "switch theme" },
+            { "<leader>vc",  "<cmd>Telescope colorscheme<CR>",                           desc = "colortheme" },
+            { "<leader>vl",  "<cmd>Lazy<CR>",                                            desc = "Lazy" },
+            { "<leader>vm",  "<cmd>Mason<CR>",                                           desc = "Mason" },
+            { "<leader>vs",  "<cmd>e $MYVIMRC | <cmd>cd %:p:h | split . | wincmd k<CR>", desc = "Settings" },
+            { "<leader>vh",  '<cmd>execute "h " .. expand("<cword>")<CR>',               desc = "help" },
+        })
     end
 }
