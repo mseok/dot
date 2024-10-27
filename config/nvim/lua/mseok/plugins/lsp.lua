@@ -12,7 +12,7 @@ return {
     config = function()
         require("mason").setup()
         require("mason-lspconfig").setup({
-            ensure_installed = {"lua_ls", "jedi_language_server", "bashls"},
+            ensure_installed = { "lua_ls", "jedi_language_server", "bashls" },
         })
 
         vim.diagnostic.config({
@@ -76,12 +76,12 @@ return {
         }
 
         vim.lsp.handlers["textDocument/publishDiagnostics"] =
-        vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-            virtual_text = true,
-            signs = true,
-            underline = true,
-            update_in_insert = false,
-        })
+            vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
+                virtual_text = true,
+                signs = true,
+                underline = true,
+                update_in_insert = false,
+            })
 
         -- used to enable autocompletion (assign to every lsp server config)
         local capabilities = vim.lsp.protocol.make_client_capabilities()
@@ -102,7 +102,7 @@ return {
             flags = lsp_flags,
             root_dir = function(fname)
                 return util.root_pattern(".git", "setup.py", "setup.cfg", "pyproject.toml", "requirements.txt")(
-                fname
+                    fname
                 ) or util.path.dirname(fname)
             end,
         })
@@ -118,20 +118,20 @@ return {
             capabilities = capabilities,
             on_attach = on_attach,
             settings = { -- custom settings for lua
-            Lua = {
-                -- make the language server recognize "vim" global
-                diagnostics = {
-                    globals = { "vim" },
-                },
-                workspace = {
-                    -- make language server aware of runtime files
-                    library = {
-                        [vim.fn.expand("$VIMRUNTIME/lua")] = true,
-                        [vim.fn.stdpath("config") .. "/lua"] = true,
+                Lua = {
+                    -- make the language server recognize "vim" global
+                    diagnostics = {
+                        globals = { "vim" },
+                    },
+                    workspace = {
+                        -- make language server aware of runtime files
+                        library = {
+                            [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+                            [vim.fn.stdpath("config") .. "/lua"] = true,
+                        },
                     },
                 },
             },
-        },
-    })
-end,
+        })
+    end,
 }
