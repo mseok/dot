@@ -68,6 +68,9 @@ return {
 
             opts.desc = "Restart LSP"
             keymap.set("n", "<leader>ls", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
+
+            opts.desc = "Signature Help"
+            keymap.set("i", "<C-k>", vim.lsp.buf.signature_help, opts) -- show signature help
         end
 
         local lsp_flags = {
