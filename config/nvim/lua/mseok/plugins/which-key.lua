@@ -16,8 +16,8 @@ end
 
 local function open_netrw_at_vimrcdir()
     local vimrc_dir = vim.fn.fnamemodify(vim.fn.getenv('MYVIMRC'), ':p:h')
+    vim.cmd('Ex ' .. vimrc_dir)
     vim.cmd('cd ' .. vimrc_dir)
-    vim.cmd('Ex')
 end
 
 local function execute_and_store_command_output()

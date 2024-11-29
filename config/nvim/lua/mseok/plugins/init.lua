@@ -9,9 +9,46 @@ return {
                 transparent_background = true
             })
             vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#000000" }) --nvim-notify
-            vim.cmd([[colorscheme catppuccin-frappe]])
+            -- vim.cmd([[colorscheme catppuccin-frappe]])
         end,
     },
+
+    {
+        "rose-pine/neovim",
+        priority = 1000, -- make sure to load this before all the other start plugins
+        name = "rose-pine",
+        config = function()
+            -- load the colorscheme here
+            require("rose-pine").setup({
+                styles = {
+                    bold = true,
+                    italic = true,
+                    transparency = true,
+                },
+            })
+            vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#000000" }) --nvim-notify
+            vim.cmd([[colorscheme rose-pine]])
+        end,
+    },
+
+    -- {
+    --     "slugbyte/lackluster.nvim",
+    --     lazy = false,
+    --     priority = 1000,
+    --     init = function()
+    --         -- vim.cmd.colorscheme("lackluster")
+    --         vim.cmd.colorscheme("lackluster-hack") -- my favorite
+    --         -- vim.cmd.colorscheme("lackluster-mint")
+    --     end,
+    --     config = function()
+    --         -- load the colorscheme here
+    --         require("lackluster").setup({
+    --             tweak_background = {
+    --                 normal = 'default', -- main background
+    --             }
+    --         })
+    --     end
+    -- },
 
     {
         "folke/todo-comments.nvim",
