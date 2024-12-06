@@ -12,7 +12,7 @@ return {
     config = function()
         require("mason").setup()
         require("mason-lspconfig").setup({
-            ensure_installed = { "lua_ls", "jedi_language_server", "bashls" },
+            ensure_installed = { "lua_ls", "jedi_language_server", "pyright", "bashls" },
         })
 
         vim.diagnostic.config({
@@ -99,7 +99,18 @@ return {
         -- local capabilities = cmp_nvim_lsp.default_capabilities()
 
         -- configure python server
-        lspconfig["jedi_language_server"].setup({
+        -- lspconfig["jedi_language_server"].setup({
+        --     capabilities = capabilities,
+        --     on_attach = on_attach,
+        --     flags = lsp_flags,
+        --     root_dir = function(fname)
+        --         return util.root_pattern(".git", "setup.py", "setup.cfg", "pyproject.toml", "requirements.txt")(
+        --             fname
+        --         ) or util.path.dirname(fname)
+        --     end,
+        -- })
+        -- configure python server
+        lspconfig["pyright"].setup({
             capabilities = capabilities,
             on_attach = on_attach,
             flags = lsp_flags,
