@@ -9,7 +9,7 @@ return {
                 transparent_background = true
             })
             vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#000000" }) --nvim-notify
-            -- vim.cmd([[colorscheme catppuccin-frappe]])
+            vim.cmd([[colorscheme catppuccin-frappe]])
         end,
     },
 
@@ -27,7 +27,7 @@ return {
                 },
             })
             vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#000000" }) --nvim-notify
-            vim.cmd([[colorscheme rose-pine]])
+            -- vim.cmd([[colorscheme rose-pine]])
         end,
     },
 

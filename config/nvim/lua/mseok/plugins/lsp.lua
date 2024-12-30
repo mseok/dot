@@ -12,7 +12,7 @@ return {
     config = function()
         require("mason").setup()
         require("mason-lspconfig").setup({
-            ensure_installed = { "lua_ls", "jedi_language_server", "pyright", "bashls" },
+            ensure_installed = { "lua_ls", "basedpyright", "bashls" },
         })
 
         vim.diagnostic.config({
@@ -96,21 +96,9 @@ return {
             capabilities.workspace.didChangeWatchedFiles = {}
         end
         capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = false
-        -- local capabilities = cmp_nvim_lsp.default_capabilities()
 
         -- configure python server
-        -- lspconfig["jedi_language_server"].setup({
-        --     capabilities = capabilities,
-        --     on_attach = on_attach,
-        --     flags = lsp_flags,
-        --     root_dir = function(fname)
-        --         return util.root_pattern(".git", "setup.py", "setup.cfg", "pyproject.toml", "requirements.txt")(
-        --             fname
-        --         ) or util.path.dirname(fname)
-        --     end,
-        -- })
-        -- configure python server
-        lspconfig["pyright"].setup({
+        lspconfig["basedpyright"].setup({
             capabilities = capabilities,
             on_attach = on_attach,
             flags = lsp_flags,
@@ -119,6 +107,24 @@ return {
                     fname
                 ) or util.path.dirname(fname)
             end,
+            settings = {
+                basedpyright = {
+                    analysis = {
+                        diagnosticMode = "openFilesOnly",
+                        exclude = { "data*/", "storage*/", "wandb*/", "nogit*/", "outputs*/", "sample*/", "analysis*/" },
+                        pythonVersion = "3.10",
+                        typeCheckingMode = "standard",
+
+                        diagnosticSeverityOverrides = {
+                            reportImplicitStringConcatenation = false,
+                            reportGeneralTypeIssues = "warning",
+                            reportDeprecated = "warning",
+                            reportUnusedVariable = false,
+                            reportUnusedImport = false,
+                        },
+                    },
+                },
+            },
         })
 
         -- configure bash server
