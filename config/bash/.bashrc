@@ -38,6 +38,9 @@ source $HOME/dot/completion/git-completion.bash
 source $HOME/dot/completion/git-prompt.sh
 export GIT_PS1_SHOWDIRTYSTATE=1
 
+# slurm alias
+source $HOME/dot/bin/slurm-commands.sh
+
 export PATH=$HOME/dot/bin:$PATH
 
 set -o vi

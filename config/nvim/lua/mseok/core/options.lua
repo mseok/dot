@@ -37,3 +37,18 @@ vim.opt.splitright = true
 
 vim.g.netrw_browse_split = false
 vim.g.netrw_winsize = 25
+
+vim.keymap.set("n", "<leader>y", '"+y', { desc = "yank to system clipboard" })
+vim.keymap.set("v", "<leader>y", '"+y', { desc = "yank to system clipboard in visual mode. You can combinate this like Vjj<leadyer>y." })
+
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+  },
+  paste = {
+    ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
+  },
+}

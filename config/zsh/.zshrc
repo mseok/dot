@@ -47,6 +47,9 @@ fi
 bindkey "^[[H" beginning-of-line
 bindkey "^[[F" end-of-line
 
+# slurm alias
+source $HOME/dot/bin/slurm-commands.sh
+
 export PATH=$HOME/dot/bin:$PATH
 
 set -o vi
