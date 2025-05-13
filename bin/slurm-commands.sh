@@ -2,8 +2,18 @@
 
 qq() {
   local width TAB=$'\t'
-  width=$(squeue -h -o "%j" | awk 'length>m{m=length} END{print m}')
-  squeue --sort=i -o "%i${TAB}%${width}j${TAB}%u${TAB}%T${TAB}%M${TAB}%D${TAB}%R" | column -s $'\t' -t
+
+  # Calculate width based on filtered jobs by passing arguments ($@) here too
+  # Added quoting "$@" which is good practice
+  # Added handling for case where no jobs match the filter
+  width=$(squeue -h -o "%j" "$@" | awk 'length>m{m=length} END{print m}')
+  if [[ -z "$width" ]]; then
+    width=10 # Default width if no jobs found
+  fi
+
+  # Pass function arguments "$@" to the main squeue command
+  # Place "$@" before your fixed options like --sort and -o
+  squeue "$@" --sort=i -o "%i${TAB}%${width}j${TAB}%u${TAB}%T${TAB}%M${TAB}%D${TAB}%R${TAB}%P${TAB}%Q" | column -s $'\t' -t
 }
 
 __scancel() {
