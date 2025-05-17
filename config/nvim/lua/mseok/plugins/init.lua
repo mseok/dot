@@ -12,75 +12,15 @@ return {
             vim.cmd([[colorscheme catppuccin-frappe]])
         end,
     },
-
-    {
-        "rose-pine/neovim",
-        priority = 1000, -- make sure to load this before all the other start plugins
-        name = "rose-pine",
-        config = function()
-            -- load the colorscheme here
-            require("rose-pine").setup({
-                styles = {
-                    bold = true,
-                    italic = true,
-                    transparency = true,
-                },
-            })
-            vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#000000" }) --nvim-notify
-            -- vim.cmd([[colorscheme rose-pine]])
-        end,
-    },
-
-    -- {
-    --     "slugbyte/lackluster.nvim",
-    --     lazy = false,
-    --     priority = 1000,
-    --     init = function()
-    --         -- vim.cmd.colorscheme("lackluster")
-    --         vim.cmd.colorscheme("lackluster-hack") -- my favorite
-    --         -- vim.cmd.colorscheme("lackluster-mint")
-    --     end,
-    --     config = function()
-    --         -- load the colorscheme here
-    --         require("lackluster").setup({
-    --             tweak_background = {
-    --                 normal = 'default', -- main background
-    --             }
-    --         })
-    --     end
-    -- },
-
     {
         "folke/todo-comments.nvim",
         dependencies = { "nvim-lua/plenary.nvim" },
-        opts = {
-            -- your configuration comes here
-            -- or leave it empty to use the default settings
-            -- refer to the configuration section below
-        }
     },
-
-    -- {
-    --     "f-person/auto-dark-mode.nvim",
-    --     opts = {
-    --         update_interval = 1000,
-    --         set_dark_mode = function()
-    --             vim.api.nvim_set_option_value("background", "dark", {})
-    --             vim.cmd("colorscheme catppuccin-frappe")
-    --         end,
-    --         set_light_mode = function()
-    --             vim.api.nvim_set_option_value("background", "light", {})
-    --             vim.cmd("colorscheme catppuccin-latte")
-    --         end,
-    --     },
-    -- },
-
     {
         "nvim-lua/plenary.nvim",
         name = "plenary",
         priority = 1000
     },
-
     -- Plugins that do not need many settings
     {
         "zbirenbaum/copilot.lua",
@@ -104,6 +44,28 @@ return {
     },
     {
         "LunarVim/bigfile.nvim",
+    },
+    {
+        "hat0uma/csvview.nvim",
+        ---@module "csvview"
+        ---@type CsvView.Options
+        opts = {
+            parser = { comments = { "#", "//" } },
+            keymaps = {
+                -- Text objects for selecting fields
+                textobject_field_inner = { "if", mode = { "o", "x" } },
+                textobject_field_outer = { "af", mode = { "o", "x" } },
+                -- Excel-like navigation:
+                -- Use <Tab> and <S-Tab> to move horizontally between fields.
+                -- Use <Enter> and <S-Enter> to move vertically between rows and place the cursor at the end of the field.
+                -- Note: In terminals, you may need to enable CSI-u mode to use <S-Tab> and <S-Enter>.
+                jump_next_field_end = { "<Tab>", mode = { "n", "v" } },
+                jump_prev_field_end = { "<S-Tab>", mode = { "n", "v" } },
+                jump_next_row = { "<Enter>", mode = { "n", "v" } },
+                jump_prev_row = { "<S-Enter>", mode = { "n", "v" } },
+            },
+        },
+        cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
     },
     {
         "folke/trouble.nvim",
@@ -142,13 +104,5 @@ return {
             },
         },
     },
-    {
-        'stevearc/aerial.nvim',
-        opts = {},
-        -- Optional dependencies
-        dependencies = {
-            "nvim-treesitter/nvim-treesitter",
-            "nvim-tree/nvim-web-devicons"
-        },
-    }
 }
+

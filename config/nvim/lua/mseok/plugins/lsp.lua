@@ -6,7 +6,6 @@ return {
     dependencies = {
         "williamboman/mason.nvim",
         "williamboman/mason-lspconfig.nvim",
-        "hrsh7th/cmp-nvim-lsp",
     },
 
     config = function()
@@ -24,9 +23,6 @@ return {
         -- import lspconfig plugin
         local lspconfig = require("lspconfig")
         local util = require("lspconfig.util")
-
-        -- import cmp-nvim-lsp plugin
-        local cmp_nvim_lsp = require("cmp_nvim_lsp")
 
         local keymap = vim.keymap -- for conciseness
 
@@ -78,28 +74,8 @@ return {
             debounce_text_changes = 150,
         }
 
-        vim.lsp.handlers["textDocument/publishDiagnostics"] =
-            vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics, {
-                virtual_text = true,
-                signs = true,
-                underline = true,
-                update_in_insert = false,
-            })
-
-        -- used to enable autocompletion (assign to every lsp server config)
-        local capabilities = vim.lsp.protocol.make_client_capabilities()
-        capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
-        capabilities.textDocument.completion.completionItem.snippetSupport = true
-        -- See https://github.com/neovim/neovim/issues/23291
-        if capabilities.workspace == nil then
-            capabilities.workspace = {}
-            capabilities.workspace.didChangeWatchedFiles = {}
-        end
-        capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = false
-
         -- configure python server
         lspconfig["basedpyright"].setup({
-            capabilities = capabilities,
             on_attach = on_attach,
             flags = lsp_flags,
             root_dir = function(fname)
@@ -129,19 +105,17 @@ return {
 
         -- configure bash server
         lspconfig["bashls"].setup({
-            capabilities = capabilities,
             on_attach = on_attach,
         })
 
         -- configure lua server (with special settings)
         lspconfig["lua_ls"].setup({
-            capabilities = capabilities,
             on_attach = on_attach,
             settings = { -- custom settings for lua
                 Lua = {
                     -- make the language server recognize "vim" global
                     diagnostics = {
-                        globals = { "vim" },
+                        globals = { "vim", "require" },
                     },
                     workspace = {
                         -- make language server aware of runtime files
@@ -155,3 +129,4 @@ return {
         })
     end,
 }
+

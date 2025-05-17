@@ -21,3 +21,4 @@ return {
         end, { desc = "search for WORD under cursor" })
     end,
 }
+

@@ -109,6 +109,7 @@ function _G.save_and_execute()
     end
 end
 
+local esc = vim.api.nvim_replace_termcodes("<Esc>", true, true, true)
 local autocmd_dict = {
     FileType = {
         {
@@ -117,6 +118,7 @@ local autocmd_dict = {
                 vim.bo.tabstop = 4
                 vim.bo.shiftwidth = 4
                 vim.api.nvim_set_keymap("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", { noremap = true })
+                vim.fn.setreg("l", 'yoprint("DEBUG: ' .. esc .. 'pa:' .. esc .. 'A", ' .. esc .. "pA)" .. esc)
             end,
         },
         {

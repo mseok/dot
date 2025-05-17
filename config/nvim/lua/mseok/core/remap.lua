@@ -46,3 +46,6 @@ vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
 
 -- goto current file's directory
 vim.keymap.set("n", "<leader>cd", vim.cmd("cd " .. vim.fn.expand('%:p:h')))
+
+-- faster netrw
+vim.keymap.set('n', '<leader>e', ':Explore<CR>', { noremap = true, silent = true, desc = "Open Netrw file explorer" })

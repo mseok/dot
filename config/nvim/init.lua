@@ -1,2 +1,2 @@
-require("mseok/core")
-require("mseok/lazy")
+require("mseok")
+vim.lsp.set_log_level("off")

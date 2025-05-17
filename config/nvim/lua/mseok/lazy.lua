@@ -39,3 +39,4 @@ require("lazy").setup({ { import = "mseok.plugins" } }, {
         colorscheme = { "catppuccin-frappe" },
     },
 })
+
