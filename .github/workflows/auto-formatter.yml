@@ -90,3 +90,4 @@ jobs:
           commit_message: "style: Auto-format code by GitHub Action"
           branch: ${{ github.head_ref }} # Pushes to the PR branch
           file_pattern: '*.py *.pyi *.sh *.bash *.lua *.json *.yml *.yaml *.toml'
+        continue-on-error: true
