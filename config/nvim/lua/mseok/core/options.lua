@@ -43,10 +43,10 @@ vim.opt.foldopen = "mark,percent,quickfix,search,tag,undo"
 
 vim.keymap.set("n", "<leader>y", '"+y', { desc = "yank to system clipboard" })
 vim.keymap.set(
-	"v",
-	"<leader>y",
-	'"+y',
-	{ desc = "yank to system clipboard in visual mode. You can combinate this like Vjj<leadyer>y." }
+  "v",
+  "<leader>y",
+  '"+y',
+  { desc = "yank to system clipboard in visual mode. You can combinate this like Vjj<leadyer>y." }
 )
 
 local function paste()
@@ -70,29 +70,29 @@ vim.g.clipboard = {
 
 -- statusline
 function _G.current_mode()
-	local modes = {
-		["n"] = "NORMAL",
-		["i"] = "INSERT",
-		["v"] = "VISUAL",
-		["V"] = "V-LINE",
-		[""] = "V-BLOCK",
-		["c"] = "COMMAND",
-		["R"] = "REPLACE",
-		["s"] = "SELECT",
-		["S"] = "S-LINE",
-		[""] = "S-BLOCK",
-		["t"] = "TERMINAL",
-	}
-	local mode_code = vim.fn.mode()
-	return " " .. (modes[mode_code] or mode_code) .. " "
+  local modes = {
+    ["n"] = "NORMAL",
+    ["i"] = "INSERT",
+    ["v"] = "VISUAL",
+    ["V"] = "V-LINE",
+    [""] = "V-BLOCK",
+    ["c"] = "COMMAND",
+    ["R"] = "REPLACE",
+    ["s"] = "SELECT",
+    ["S"] = "S-LINE",
+    [""] = "S-BLOCK",
+    ["t"] = "TERMINAL",
+  }
+  local mode_code = vim.fn.mode()
+  return " " .. (modes[mode_code] or mode_code) .. " "
 end
 
 function _G.macro_recording()
-	local reg = vim.fn.reg_recording()
-	if reg ~= "" then
-		return "Recording @" .. reg
-	end
-	return ""
+  local reg = vim.fn.reg_recording()
+  if reg ~= "" then
+    return "Recording @" .. reg
+  end
+  return ""
 end
 
 vim.o.statusline = "%{v:lua.current_mode()}%f %y %m %= %{v:lua.macro_recording()} %l:%c %p%%"

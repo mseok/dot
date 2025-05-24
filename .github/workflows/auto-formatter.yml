@@ -1,0 +1,91 @@
+name: Auto Format Code
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+      - master
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: "Install Python formatters (Ruff for Python, TOML)"
+        run: pip install ruff
+
+      - name: "Set up Node.js (for Prettier: JSON, YAML, Markdown etc.)"
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Or any active LTS version
+
+      - name: Install Prettier
+        run: npm install --global prettier
+
+      - name: Install shfmt (Bash formatter)
+        run: |
+          SHFMT_VERSION="v3.8.0"
+          OS_TYPE=$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH_TYPE=$(uname -m)
+          if [ "$ARCH_TYPE" == "x86_64" ]; then ARCH_TYPE="amd64"; fi
+          if [ "$ARCH_TYPE" == "aarch64" ]; then ARCH_TYPE="arm64"; fi
+          wget "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_${OS_TYPE}_${ARCH_TYPE}" -O /usr/local/bin/shfmt
+          chmod +x /usr/local/bin/shfmt
+        shell: bash
+
+      - name: Install StyLua (Lua formatter)
+        run: |
+          STYLYA_VERSION="2.1.0" # Check for the latest version
+          OS_TYPE=$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH_TYPE=$(uname -m)
+          if [ "$OS_TYPE" == "linux" ] && [ "$ARCH_TYPE" == "x86_64" ]; then
+            STYLYA_ASSET_SUFFIX="linux.zip"
+          elif [ "$OS_TYPE" == "darwin" ] && [ "$ARCH_TYPE" == "x86_64" ]; then
+            STYLYA_ASSET_SUFFIX="macos.zip"
+          elif [ "$OS_TYPE" == "darwin" ] && [ "$ARCH_TYPE" == "arm64" ]; then
+            STYLYA_ASSET_SUFFIX="macos-aarch64.zip" # Example, verify actual asset name
+            # If not available, you might need to build from source or use an alternative like a brew install on a macOS runner
+          else
+            echo "Unsupported OS/Arch for precompiled StyLua: $OS_TYPE/$ARCH_TYPE. Consider building from source."
+            echo "Skipping StyLua installation."
+            touch /tmp/skip_stylua # Create a marker file
+          fi
+
+          if [ ! -f /tmp/skip_stylua ]; then
+            wget "https://github.com/JohnnyMorganz/StyLua/releases/download/v${STYLYA_VERSION}/stylua-${STYLYA_ASSET_SUFFIX}" -O stylua.zip
+            unzip stylua.zip -d /usr/local/bin/
+            chmod +x /usr/local/bin/stylua
+          fi
+        shell: bash
+
+      - name: Format Python files (.py, .pyi) with Ruff
+        run: ruff format .
+
+      - name: Format TOML files with Ruff
+        run: ruff format pyproject.toml || echo "No pyproject.toml found or no changes needed."
+
+      - name: Format Bash files (.sh, .bash) with shfmt
+        run: find . -type f \( -name "*.sh" -o -name "*.bash" \) -print0 | xargs -0 -r shfmt -i 2 -w -s
+
+      - name: Format Lua files (.lua) with StyLua
+        run: find . -name "*.lua" -print0 | xargs -0 -r stylua
+
+      - name: Format JSON, YAML files with Prettier
+        run: prettier --write "**/*.{json,yml,yaml}" --ignore-unknown
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: Auto-format code by GitHub Action"
+          branch: ${{ github.head_ref }} # Pushes to the PR branch
+          file_pattern: '*.py *.pyi *.sh *.bash *.lua *.json *.yml *.yaml *.toml'
