@@ -9,16 +9,16 @@ dump() {
 }
 
 refresh_all() {
-    tmux list-sessions -F '#S' | while read -r session; do
-        # List all windows in the session
-        tmux list-windows -t "$session" -F '#I' | while read -r window; do
-            # List all panes in the window
-            tmux list-panes -t "$session:$window" -F '#P' | while read -r pane; do
-                # Send the source ~/.bashrc command to each pane
-                tmux send-keys -t "$session:$window.$pane" "source ~/.bashrc" C-m
-            done
-        done
+  tmux list-sessions -F '#S' | while read -r session; do
+    # List all windows in the session
+    tmux list-windows -t "$session" -F '#I' | while read -r window; do
+      # List all panes in the window
+      tmux list-panes -t "$session:$window" -F '#P' | while read -r pane; do
+        # Send the source ~/.bashrc command to each pane
+        tmux send-keys -t "$session:$window.$pane" "source ~/.bashrc" C-m
+      done
     done
+  done
 }
 
 save() {
@@ -62,10 +62,10 @@ restore() {
 }
 
 case "$1" in
-save | restore | refresh_all )
-  $1
-  ;;
-* )
-  echo "valid commands: save, restore, refresh_all" >&2
-  exit 1
+  save | restore | refresh_all )
+    $1
+    ;;
+  * )
+    echo "valid commands: save, restore, refresh_all" >&2
+    exit 1
 esac
