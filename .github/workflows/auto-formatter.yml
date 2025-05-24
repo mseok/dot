@@ -49,9 +49,9 @@ jobs:
           OS_TYPE=$(uname -s | tr '[:upper:]' '[:lower:]')
           ARCH_TYPE=$(uname -m)
           if [ "$OS_TYPE" == "linux" ] && [ "$ARCH_TYPE" == "x86_64" ]; then
-            STYLYA_ASSET_SUFFIX="linux.zip"
+            STYLYA_ASSET_SUFFIX="linux-x86_64.zip"
           elif [ "$OS_TYPE" == "darwin" ] && [ "$ARCH_TYPE" == "x86_64" ]; then
-            STYLYA_ASSET_SUFFIX="macos.zip"
+            STYLYA_ASSET_SUFFIX="macos-x86_64.zip"
           elif [ "$OS_TYPE" == "darwin" ] && [ "$ARCH_TYPE" == "arm64" ]; then
             STYLYA_ASSET_SUFFIX="macos-aarch64.zip" # Example, verify actual asset name
             # If not available, you might need to build from source or use an alternative like a brew install on a macOS runner
