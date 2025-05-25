@@ -135,3 +135,11 @@ for event, opt_tbls in pairs(autocmd_dict) do
     vim.api.nvim_create_autocmd(event, opt_tbl)
   end
 end
+
+-- LSP (use previous gd convention instead of C-](tagfunc))
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = vim.api.nvim_create_augroup("LspConfig", {}),
+  callback = function(ev)
+    vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = ev.buf, desc="Go to definition" })
+  end,
+})

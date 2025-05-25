@@ -27,6 +27,14 @@ return {
       },
     },
 
+    keys = {
+      { "<leader>aa", "<cmd>CodeCompanionActions<cr>", mode = { "n", "v" }, desc = "CodeCompanion Actions" },
+      { "<leader>ac", "<cmd>CodeCompanionChat<cr>", mode = "n", desc = "CodeCompanion Chat" },
+      { "<leader>ac", "<cmd>CodeCompanionChat<cr>", mode = "v", desc = "CodeCompanion Chat with selection" },
+      { "<leader>ai", "<cmd>CodeCompanion<cr>", mode = { "n", "v" }, desc = "CodeCompanion Inline" },
+      { "<leader>at", "<cmd>CodeCompanionChat Toggle<cr>", mode = "n", desc = "Toggle CodeCompanion Chat" },
+    },
+
     opts = {
       language = "English",
       adapters = {
@@ -35,9 +43,9 @@ return {
             schema = {
               model = {
                 -- default = "o4-mini"
-                default = "claude-3.7-sonnet",
+                -- default = "claude-3.7-sonnet",
                 -- default = "Gemini-2.0-Flash"
-                -- default = "claude-4-sonnet", -- not supported yet
+                default = "claude-sonnet-4",
               },
             },
           })
