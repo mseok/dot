@@ -9,6 +9,7 @@ local function set_python_path(path)
     bufnr = vim.api.nvim_get_current_buf(),
     name = "pyright",
   })
+
   for _, client in ipairs(clients) do
     if client.settings then
       client.settings.python = vim.tbl_deep_extend("force", client.settings.python, { pythonPath = path })

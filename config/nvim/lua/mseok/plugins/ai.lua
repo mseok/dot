@@ -4,7 +4,10 @@ return {
     cmd = "Copilot",
     event = "InsertEnter",
     config = function()
-      require("copilot").setup({})
+      require("copilot").setup({
+        -- copilot_model = "gpt-4.1",
+        copilot_model = "claude-sonnet-4",
+      })
     end,
   },
 
@@ -63,8 +66,15 @@ return {
         diff = {
           enabled = true,
           close_chat_at = 240,
-          layout = "horizontal",
-          opts = { "internal", "filler", "closeoff", "algorithm:patience", "followwrap", "linematch:120" },
+          layout = "vertical",
+          opts = {
+            "internal",
+            "filler",
+            "closeoff",
+            "algorithm:patience",
+            "followwrap",
+            "linematch:120"
+          },
           provider = "default",
         },
       },

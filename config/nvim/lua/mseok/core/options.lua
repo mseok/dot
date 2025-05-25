@@ -41,10 +41,6 @@ vim.g.netrw_winsize = 25
 
 vim.opt.foldopen = "mark,percent,quickfix,search,tag,undo"
 
--- Tab completion for AI
-vim.g.ai_cmp = false
-vim.g.copilot_settings = { selectedCompletionModel = "claude-3.7-sonnet" }
-
 vim.keymap.set("n", "<leader>y", '"+y', { desc = "yank to system clipboard" })
 vim.keymap.set(
   "v",
