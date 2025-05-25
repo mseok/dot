@@ -1,9 +1,10 @@
 local PACKAGES = {
   -- LSP
   "lua-language-server",
-  "basedpyright",
+  "pyright",
   "yaml-language-server",
   "bash-language-server",
+  "copilot-language-server",
   -- Format & Linter
   "stylua",
   "ruff",

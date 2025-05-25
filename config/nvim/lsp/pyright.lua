@@ -1,17 +1,17 @@
 ---@brief
 ---
---- https://detachhead.github.io/basedpyright
+--- https://github.com/microsoft/pyright
 ---
---- `basedpyright`, a static type checker and language server for python
+--- `pyright`, a static type checker and language server for python
 
 local function set_python_path(path)
   local clients = vim.lsp.get_clients({
     bufnr = vim.api.nvim_get_current_buf(),
-    name = "basedpyright",
+    name = "pyright",
   })
   for _, client in ipairs(clients) do
     if client.settings then
-      client.settings.python = vim.tbl_deep_extend("force", client.settings.python or {}, { pythonPath = path })
+      client.settings.python = vim.tbl_deep_extend("force", client.settings.python, { pythonPath = path })
     else
       client.config.settings = vim.tbl_deep_extend("force", client.config.settings, { python = { pythonPath = path } })
     end
@@ -20,7 +20,7 @@ local function set_python_path(path)
 end
 
 return {
-  cmd = { "basedpyright-langserver", "--stdio" },
+  cmd = { "pyright-langserver", "--stdio" },
   filetypes = { "python" },
   root_markers = {
     "pyproject.toml",
@@ -32,37 +32,42 @@ return {
     ".git",
   },
   settings = {
-    basedpyright = {
+    python = {
       analysis = {
         autoSearchPaths = true,
         useLibraryCodeForTypes = true,
         diagnosticMode = "openFilesOnly",
-        exclude = { "data*/", "storage*/", "wandb*/", "nogit*/", "outputs*/", "sample*/", "analysis*/" },
-        pythonVersion = "3.10",
-        typeCheckingMode = "standard",
-
-        diagnosticSeverityOverrides = {
-          reportImplicitStringConcatenation = false,
-          reportGeneralTypeIssues = "warning",
-          reportDeprecated = "warning",
-          reportUnusedVariable = false,
-          reportUnusedImport = false,
-        },
       },
+      typeCheckingMode = "standard",
+      exclude = {
+        "data*/",
+        "storage*/",
+        "wandb*/",
+        "nogit*/",
+        "outputs*/",
+        "sample*/",
+      },
+      diagnosticSeverityOverrides = {
+        reportImplicitStringConcatenation = false,
+        reportGeneralTypeIssues = "warning",
+        reportDeprecated = "warning",
+        reportUnusedVariable = false,
+        reportUnusedImport = false,
+      },
+      stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs",
     },
   },
   on_attach = function(client, bufnr)
     vim.api.nvim_buf_create_user_command(bufnr, "LspPyrightOrganizeImports", function()
       client:exec_cmd({
-        command = "basedpyright.organizeimports",
+        command = "pyright.organizeimports",
         arguments = { vim.uri_from_bufnr(bufnr) },
       })
     end, {
       desc = "Organize Imports",
     })
-
-    vim.api.nvim_buf_create_user_command(0, "LspPyrightSetPythonPath", set_python_path, {
-      desc = "Reconfigure basedpyright with the provided python path",
+    vim.api.nvim_buf_create_user_command(bufnr, "LspPyrightSetPythonPath", set_python_path, {
+      desc = "Reconfigure pyright with the provided python path",
       nargs = 1,
       complete = "file",
     })

@@ -2,7 +2,6 @@ return {
   "saghen/blink.cmp",
   -- optional: provides snippets for the snippet source
   dependencies = {
-    "rafamadriz/friendly-snippets",
     {
       "fang2hou/blink-copilot",
       opts = {
@@ -43,7 +42,11 @@ return {
     },
 
     enabled = function()
-      return vim.tbl_contains({ "lua", "markdown", "python", "bash", "html" }, vim.bo.filetype)
+      return not vim.tbl_contains({
+        "txt",
+        "csv",
+        "tsv",
+      }, vim.bo.filetype)
     end,
 
     -- (Default) Only show the documentation popup when manually triggered
