@@ -21,14 +21,9 @@ return {
     name = "plenary",
     priority = 1000,
   },
-  -- Plugins that do not need many settings
   {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "InsertEnter",
-    config = function()
-      require("copilot").setup({})
-    end,
+    "microsoft/python-type-stubs",
+    cond = false,
   },
   {
     "mbbill/undotree",
