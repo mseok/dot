@@ -3,6 +3,7 @@ return {
     "catppuccin/nvim",
     priority = 1000, -- make sure to load this before all the other start plugins
     name = "catppuccin",
+    enabled = not vim.g.vscode,  -- Disable in VS Code
     config = function()
       -- load the colorscheme here
       require("catppuccin").setup({
@@ -15,6 +16,7 @@ return {
   {
     "folke/todo-comments.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
+    enabled = not vim.g.vscode,  -- Disable in VS Code
   },
   {
     "nvim-lua/plenary.nvim",
@@ -28,6 +30,7 @@ return {
   {
     "mbbill/undotree",
     event = "VeryLazy",
+    enabled = not vim.g.vscode,  -- Disable in VS Code
     config = function()
       vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle, { desc = "Undo tree" })
     end,
@@ -36,9 +39,11 @@ return {
     "windwp/nvim-autopairs",
     event = "InsertEnter",
     opts = {}, -- this is equalent to setup({}) function
+    enabled = not vim.g.vscode,  -- Disable in VS Code
   },
   {
     "LunarVim/bigfile.nvim",
+    enabled = not vim.g.vscode,  -- Disable in VS Code
   },
   {
     "hat0uma/csvview.nvim",
@@ -61,11 +66,13 @@ return {
       },
     },
     cmd = { "CsvViewEnable", "CsvViewDisable", "CsvViewToggle" },
+    enabled = not vim.g.vscode,  -- Disable in VS Code
   },
   {
     "folke/trouble.nvim",
     opts = {}, -- for default options, refer to the configuration section for custom setup.
     cmd = "Trouble",
+    enabled = not vim.g.vscode,  -- Disable in VS Code
     keys = {
       {
         "<leader>xx",

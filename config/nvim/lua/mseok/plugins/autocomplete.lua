@@ -18,6 +18,8 @@ return {
   -- If you use nix, you can build from source using latest nightly rust with:
   -- build = 'nix run .#build-plugin',
 
+  enabled = not vim.g.vscode,  -- Disable in VS Code
+
   ---@module 'blink.cmp'
   ---@type blink.cmp.Config
   opts = {

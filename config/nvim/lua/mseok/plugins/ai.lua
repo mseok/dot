@@ -3,6 +3,7 @@ return {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
     event = "InsertEnter",
+    enabled = not vim.g.vscode,  -- Disable in VS Code - VS Code has its own Copilot
     config = function()
       require("copilot").setup({
         -- copilot_model = "gpt-4.1",
@@ -20,6 +21,8 @@ return {
       "CodeCompanionChat",
       "CodeCompanionCmd",
     },
+
+    enabled = not vim.g.vscode,  -- Disable in VS Code
 
     dependencies = {
       "nvim-lua/plenary.nvim",

@@ -6,6 +6,8 @@ return {
   },
 
   tag = "0.1.5",
+  
+  enabled = not vim.g.vscode,  -- Disable in VS Code
 
   config = function()
     require("telescope").setup({})

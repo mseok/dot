@@ -2,6 +2,8 @@ return {
   "stevearc/conform.nvim",
 
   lazy = true,
+  
+  enabled = not vim.g.vscode,  -- Disable in VS Code
 
   cmd = { "ConformInfo" },
 

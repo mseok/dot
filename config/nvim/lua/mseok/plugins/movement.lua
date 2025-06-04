@@ -4,6 +4,8 @@ return {
     "folke/flash.nvim",
 
     event = "VeryLazy",
+    
+    enabled = not vim.g.vscode,  -- Disable in VS Code
 
     opts = {
       modes = {
@@ -27,6 +29,7 @@ return {
   {
     "ThePrimeagen/harpoon",
     branch = "harpoon2",
+    enabled = not vim.g.vscode,  -- Disable in VS Code
     config = function()
       local harpoon = require("harpoon")
 

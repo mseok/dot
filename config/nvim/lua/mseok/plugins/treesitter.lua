@@ -3,6 +3,8 @@ return {
 
   build = ":TSUpdate",
 
+  enabled = not vim.g.vscode,  -- Disable in VS Code
+
   dependencies = {
     "nvim-treesitter/nvim-treesitter-textobjects",
   },

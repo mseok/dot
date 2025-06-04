@@ -1,0 +1,13 @@
+model: openai/claude-3.7-sonnet-thought
+weak-model: openai/gpt-4.1
+show-model-warnings: false
+max-chat-history-tokens: 64000
+dark-mode: true
+lint: false
+auto-lint: false
+auto-commits: false
+read:
+ - ~/.aider/conventions/functional-programming/CONVENTIONS.md
+ - ~/.aider/conventions/bash-scripts/CONVENTIONS.md
+vim: true
+

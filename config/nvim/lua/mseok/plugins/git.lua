@@ -2,10 +2,12 @@ return {
   {
     "lewis6991/gitsigns.nvim",
     opts = {},
+    enabled = not vim.g.vscode,  -- Disable in VS Code
   },
   {
     "f-person/git-blame.nvim",
     event = "VeryLazy",
+    enabled = not vim.g.vscode,  -- Disable in VS Code
     opts = {
       enabled = true,
       message_template = " <summary> • <date> • <author> • <<sha>>", -- template for the blame message, check the Message template section for more options
