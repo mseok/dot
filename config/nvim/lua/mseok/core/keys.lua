@@ -22,7 +22,7 @@ local function tree()
 
   local start_row, start_col, end_row, end_col = node:range()
 
-  vim.api.nvim_win_set_cursor(0, { start_row + 1, start_col - 1 })
+  vim.api.nvim_win_set_cursor(0, { start_row + 1, start_col })
   vim.cmd("normal! v") -- start visual mode
   vim.api.nvim_win_set_cursor(0, { end_row + 1, end_col - 1 })
 end

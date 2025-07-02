@@ -124,37 +124,24 @@ else
   end
 
   local esc = vim.api.nvim_replace_termcodes("<Esc>", true, true, true)
-  local autocmd_dict = {
-    FileType = {
-      {
-        pattern = "python",
-        callback = function()
-          vim.bo.tabstop = 4
-          vim.bo.shiftwidth = 4
-          vim.api.nvim_set_keymap("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", { noremap = true })
-          vim.fn.setreg("l", 'yoprint("DEBUG: ' .. esc .. "pa:" .. esc .. 'A", ' .. esc .. "pA)" .. esc)
-        end,
-      },
-      {
-        pattern = "bash",
-        callback = function()
-          vim.api.nvim_set_keymap("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", { noremap = true })
-        end,
-      },
-    },
-  }
+  -- Python filetype settings
+  vim.api.nvim_create_autocmd("FileType", {
+    group = augroup("python_settings"),
+    pattern = "python",
+    callback = function()
+      vim.bo.tabstop = 4
+      vim.bo.shiftwidth = 4
+      vim.keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", { noremap = true, buffer = true })
+      vim.fn.setreg("l", 'yoprint("DEBUG: ' .. esc .. "pa:" .. esc .. 'A", ' .. esc .. "pA)" .. esc)
+    end,
+  })
 
-  for event, opt_tbls in pairs(autocmd_dict) do
-    for _, opt_tbl in pairs(opt_tbls) do
-      vim.api.nvim_create_autocmd(event, opt_tbl)
-    end
-  end
-
-  -- LSP (use previous gd convention instead of C-](tagfunc))
-  vim.api.nvim_create_autocmd("LspAttach", {
-    group = vim.api.nvim_create_augroup("LspConfig", {}),
-    callback = function(ev)
-      vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = ev.buf, desc="Go to definition" })
+  -- Bash filetype settings
+  vim.api.nvim_create_autocmd("FileType", {
+    group = augroup("bash_settings"),
+    pattern = "bash",
+    callback = function()
+      vim.keymap.set("n", "<C-s>", "<cmd>lua save_and_execute()<CR>", { noremap = true, buffer = true })
     end,
   })
 end
