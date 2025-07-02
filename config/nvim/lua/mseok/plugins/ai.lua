@@ -6,8 +6,6 @@ return {
     enabled = not vim.g.vscode, -- Disable in VS Code - VS Code has its own Copilot
     config = function()
       require("copilot").setup({
-        copilot_model = "gpt-4.1",
-        -- copilot_model = "claude-sonnet-4",
       })
     end,
   },
