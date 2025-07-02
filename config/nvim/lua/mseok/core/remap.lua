@@ -95,6 +95,8 @@ else
   -- goto current file's directory
   vim.keymap.set("n", "<leader>cd", vim.cmd("cd " .. vim.fn.expand("%:p:h")))
 
-  -- faster netrw
-  vim.keymap.set("n", "<leader>e", ":Explore<CR>", { noremap = true, silent = true, desc = "Open Netrw file explorer" })
+  vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Navigate to left window" })
+  vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Navigate to bottom window" })
+  vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Navigate to top window" })
+  vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Navigate to right window" })
 end
