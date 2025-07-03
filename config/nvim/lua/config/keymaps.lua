@@ -99,4 +99,6 @@ else
   vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Navigate to bottom window" })
   vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Navigate to top window" })
   vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Navigate to right window" })
+
+  vim.keymap.set("n", "<C-c>", "<cmd>noh<CR>", { desc = "Unset highlight" })
 end
