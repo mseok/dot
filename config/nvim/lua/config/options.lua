@@ -43,10 +43,10 @@ vim.opt.foldopen = "mark,percent,quickfix,search,tag,undo"
 
 vim.keymap.set("n", "<leader>y", '"+y', { desc = "yank to system clipboard" })
 vim.keymap.set(
-"v",
-"<leader>y",
-'"+y',
-{ desc = "yank to system clipboard in visual mode. You can combinate this like Vjj<leadyer>y." }
+  "v",
+  "<leader>y",
+  '"+y',
+  { desc = "yank to system clipboard in visual mode. You can combinate this like Vjj<leadyer>y." }
 )
 
 -- Settings that should apply in both VS Code and regular Neovim
@@ -58,3 +58,22 @@ vim.g.snacks_animate = false
 vim.g.ai_cmp = false
 vim.g.lazyvim_python_lsp = "pyright"
 vim.g.lazyvim_python_ruff = "ruff"
+
+local function paste()
+  return {
+    vim.fn.split(vim.fn.getreg(""), "\n"),
+    vim.fn.getregtype(""),
+  }
+end
+
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+    ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+  },
+  paste = {
+    ["+"] = paste,
+    ["*"] = paste,
+  },
+}
