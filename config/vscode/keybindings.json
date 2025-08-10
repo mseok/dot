@@ -1,0 +1,71 @@
+// Place your key bindings in this file to override the defaults
+[
+    {
+        "key": "cmd+i",
+        "command": "composerMode.agent"
+    },
+    {
+        "key": "escape",
+        "command": "workbench.action.focusActiveEditorGroup",
+        "when": "inputFocus && (sideBarFocus || view == 'workbench.view.extensions' || view == 'workbench.view.search')"
+    },
+    {
+        "key": "cmd+t",
+        "command": "workbench.action.createTerminalEditor"
+    },
+    {
+        "key": "ctrl+tab",
+        "command": "workbench.action.nextEditor"
+    },
+    {
+        "key": "ctrl+shift+tab",
+        "command": "workbench.action.previousEditor"
+    },
+    {
+        "key": "ctrl+u",
+        "command": "runCommands",
+        "args": {
+            "commands": [
+                {
+                    "command": "editorScroll",
+                    "args": {
+                        "to": "up",
+                        "by": "halfPage"
+                    }
+                },
+                {
+                    "command": "cursorMove",
+                    "args": {
+                        "to": "viewPortCenter"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "key": "ctrl+d",
+        "command": "runCommands",
+        "args": {
+            "commands": [
+                {
+                    "command": "editorScroll",
+                    "args": {
+                        "to": "down",
+                        "by": "halfPage"
+                    }
+                },
+                {
+                    "command": "cursorMove",
+                    "args": {
+                        "to": "viewPortCenter"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "key": "shift+k",
+        "command": "-editor.action.showHover",
+        "when": "editorHoverVisible && editorTextFocus && neovim.init && neovim.mode == 'normal'"
+    },
+]

@@ -1,0 +1,24 @@
+{
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "window.commandCenter": true,
+    "workbench.colorTheme": "Default High Contrast",
+    "vscode-neovim.afterInitConfig": [
+        "echo 'Config successfully updated!'"
+    ],
+    "extensions.experimental.affinity": {
+        "asvetliakov.vscode-neovim": 1
+    },
+    "editor.accessibilitySupport": "on",
+    "editor.fontSize": 16,
+    "workbench.settings.applyToAllProfiles": [
+        "editor.fontSize",
+        "editor.fontFamily"
+    ],
+    "editor.fontFamily": "JetBrainsMono Nerd Font",
+    "terminal.integrated.fontLigatures.enabled": true,
+    "editor.fontLigatures": true,
+    "editor.hover.enabled": false,
+    "editor.hover.sticky": false,
+    "files.simpleDialog.enable": true,
+    "terminal.integrated.defaultLocation": "editor"
+}

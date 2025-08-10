@@ -8,41 +8,6 @@ vim.keymap.set("n", "N", "Nzzzv")
 
 -- VS Code specific setup
 if vim.g.vscode then
-  -- Add VS Code specific remaps here if needed
-  -- general keymaps
-  vim.keymap.set(
-    { "n", "v" },
-    "<leader>t",
-    "<cmd>lua require('vscode').action('workbench.action.terminal.toggleTerminal')<CR>"
-  )
-  vim.keymap.set(
-    { "n", "v" },
-    "<leader>b",
-    "<cmd>lua require('vscode').action('editor.debug.action.toggleBreakpoint')<CR>"
-  )
-  vim.keymap.set({ "n", "v" }, "<leader>a", "<cmd>lua require('vscode').action('editor.action.quickFix')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>sp", "<cmd>lua require('vscode').action('workbench.actions.view.problems')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>nd", "<cmd>lua require('vscode').action('notifications.clearAll')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>ff", "<cmd>lua require('vscode').action('workbench.action.quickOpen')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>cp", "<cmd>lua require('vscode').action('workbench.action.showCommands')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>pr", "<cmd>lua require('vscode').action('code-runner.run')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>cf", "<cmd>lua require('vscode').action('editor.action.formatDocument')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>hp", "<cmd>lua require('vscode').action('editor.action.closePnael')<CR>")
-
-  -- harpoon keymaps
-  vim.keymap.set({ "n", "v" }, "<leader>h", "<cmd>lua require('vscode').action('vscode-harpoon.addEditor')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>H", "<cmd>lua require('vscode').action('vscode-harpoon.editorQuickPick')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>he", "<cmd>lua require('vscode').action('vscode-harpoon.editEditors')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h1", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor1')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h2", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor2')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h3", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor3')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h4", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor4')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h5", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor5')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h6", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor6')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h7", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor7')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h8", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor8')<CR>")
-  vim.keymap.set({ "n", "v" }, "<leader>h9", "<cmd>lua require('vscode').action('vscode-harpoon.gotoEditor9')<CR>")
-
   -- project manager keymaps
   vim.keymap.set({ "n", "v" }, "<leader>pa", "<cmd>lua require('vscode').action('projectManager.saveProject')<CR>")
   vim.keymap.set(
