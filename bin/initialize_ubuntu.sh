@@ -201,7 +201,7 @@ copy_dot_configs() {
     fi
 
     # Copy claude code
-    if [[ ! -d "$HOME/.config/claude" ]]; then
+    if [[ ! -d "$HOME/.claude" ]]; then
       cp -r "$src_dir/claude" "$HOME/.claude"
       log "Copied $src_dir/claude to $HOME/.claude"
     fi
