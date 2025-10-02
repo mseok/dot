@@ -1,0 +1,8 @@
+[credential]
+	helper = store
+[user]
+	name = mseok
+	email = mshmjp02@gmail.com
+[init]
+	defaultBranch = main
+	templateDir = /home/mseok/.config/git/template

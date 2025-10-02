@@ -1,0 +1,32 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash(rg:*)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "WebFetch",
+      "WebSearch",
+      "mcp__context7"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/pre-commit-once.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "printf \"\\033[01;32m%s@%s\\033[00m:\\033[01;34m%s\\033[00m\" \"$(whoami)\" \"$(hostname -s)\" \"$(pwd)\""
+  },
+  "alwaysThinkingEnabled": false
+}
