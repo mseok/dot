@@ -8,7 +8,7 @@ if vim.g.vscode then
       vim.highlight.on_yank()
     end,
   })
-  
+
   -- Add any VS Code specific autocmds here
 else
   function _G.save_and_execute()
@@ -47,12 +47,19 @@ else
       vim.api.nvim_create_autocmd(event, opt_tbl)
     end
   end
-
-  -- LSP (use previous gd convention instead of C-](tagfunc))
-  vim.api.nvim_create_autocmd("LspAttach", {
-    group = vim.api.nvim_create_augroup("LspConfig", {}),
-    callback = function(ev)
-      vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = ev.buf, desc="Go to definition" })
-    end,
-  })
 end
+
+
+vim.api.nvim_create_autocmd("BufReadPost", {
+  callback = function()
+    local mark_pos = vim.api.nvim_buf_get_mark(0, '"')
+    local line = mark_pos[1]
+    local col = mark_pos[2]
+    local line_count = vim.api.nvim_buf_line_count(0)
+
+    if line > 0 and line <= line_count then
+      -- Set the cursor to the exact position stored in the '"' mark
+      vim.api.nvim_win_set_cursor(0, {line, col})
+    end
+  end,
+})
