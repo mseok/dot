@@ -1,4 +1,4 @@
-vim.g.map_leader = " "
+vim.g.mapleader = " "
 
 vim.opt.mouse = ""
 vim.g.autoformat = false

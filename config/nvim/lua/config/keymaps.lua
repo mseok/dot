@@ -53,7 +53,9 @@ vim.keymap.set("n", "<leader>dm", ":delmarks ")
 vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
 
 -- goto current file's directory
-vim.keymap.set("n", "<leader>cd", vim.cmd("cd " .. vim.fn.expand("%:p:h")))
+vim.keymap.set("n", "<leader>cd", function()
+	vim.cmd("cd " .. vim.fn.expand("%:p:h"))
+end, { desc = "Change to current file's directory" })
 
 vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Navigate to left window" })
 vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Navigate to bottom window" })
