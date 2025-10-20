@@ -63,5 +63,3 @@ vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Navigate to top window" })
 vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Navigate to right window" })
 
 vim.keymap.set("n", "<C-c>", "<cmd>noh<CR>", { desc = "Unset highlight" })
-
-vim.keymap.set("n", "<leader>o", "<cmd>source %<CR>", { desc = "Source " .. vim.fn.expand("$MYVIMRC") })
