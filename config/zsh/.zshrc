@@ -49,6 +49,7 @@ bindkey "^[[F" end-of-line
 
 # slurm alias
 source $HOME/dot/bin/slurm-commands.sh
+source $HOME/dot/bin/utilities.sh
 
 export PATH=$HOME/dot/bin:$PATH
 
