@@ -10,7 +10,7 @@ local lsp_configs = {
     ruff = dofile(vim.fn.stdpath("config") .. "/lsp/ruff.lua"),
     lua_ls = dofile(vim.fn.stdpath("config") .. "/lsp/lua_ls.lua"),
     bashls = dofile(vim.fn.stdpath("config") .. "/lsp/bashls.lua"),
-    copilot = dofile(vim.fn.stdpath("config") .. "/lsp/copilot.lua"),
+    copilot_ls = dofile(vim.fn.stdpath("config") .. "/lsp/copilot_ls.lua"),
 }
 
 for name, config in pairs(lsp_configs) do
@@ -22,7 +22,7 @@ vim.lsp.enable({
     "ruff",
     "lua_ls",
     "bashls",
-    "copilot",
+    "copilot_ls",
 })
 
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -31,9 +31,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { buffer = args.buf })
         vim.keymap.set('n', '<leader>cf', vim.lsp.buf.format, { buffer = args.buf })
 		local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
-
-		-- Note: Inline completion for Copilot works automatically via inlineCompletionProvider
-		-- No explicit enabling needed in Neovim 0.12.0-dev
 
 		if client:supports_method('textDocument/completion') then
 			-- Optional: trigger autocompletion on EVERY keypress. May be slow!

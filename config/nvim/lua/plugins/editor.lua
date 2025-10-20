@@ -1,3 +1,5 @@
+local map = vim.keymap.set
+
 -- Treesitter configuration (using new API for nvim-treesitter main branch)
 -- Install parsers asynchronously (will be no-op if already installed)
 require('nvim-treesitter').install({ "python", "bash", "lua", "vim", "vimdoc", "query" })
@@ -30,7 +32,7 @@ require("oil").setup({
 		border = "rounded",
 	},
 })
-vim.keymap.set("n", "<leader>e", "<cmd>Oil<CR>")
+map("n", "<leader>e", "<cmd>Oil<CR>")
 
 -- Telescope
 local telescope = require("telescope")
@@ -61,13 +63,14 @@ telescope.setup({
 
 -- Telescope keymaps
 local builtin = require("telescope.builtin")
-vim.keymap.set("n", "<leader>ff", builtin.find_files)
-vim.keymap.set("n", "<leader>fr", builtin.oldfiles)
-vim.keymap.set("n", "<leader>fh", builtin.help_tags)
-vim.keymap.set("n", "<leader>fm", builtin.man_pages)
-vim.keymap.set("n", "<leader>fg", builtin.live_grep)
-vim.keymap.set("n", "<leader>fb", builtin.buffers)
-vim.keymap.set("n", "<leader>r", builtin.registers)
+
+map("n", "<leader>ff", builtin.find_files)
+map("n", "<leader>fr", builtin.oldfiles)
+map("n", "<leader>fh", builtin.help_tags)
+map("n", "<leader>fm", builtin.man_pages)
+map("n", "<leader>fg", builtin.live_grep)
+map("n", "<leader>fb", builtin.buffers)
+map("n", "<leader>r", builtin.registers)
 
 -- Marks
 require("marks").setup {
