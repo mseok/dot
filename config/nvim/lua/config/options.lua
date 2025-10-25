@@ -15,6 +15,7 @@ vim.wo.wrap = true
 
 vim.opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
 vim.opt.cursorline = true -- Enable highlighting of the current line
+vim.opt.wildmode = "full"
 
 vim.opt.swapfile = false
 vim.opt.backup = false

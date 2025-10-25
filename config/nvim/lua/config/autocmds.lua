@@ -54,3 +54,13 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     end
   end,
 })
+
+-- Automatically change directory to the file's directory
+vim.api.nvim_create_autocmd("BufEnter", {
+  callback = function()
+    local path = vim.fn.expand("%:p:h")
+    if vim.fn.isdirectory(path) == 1 then
+      vim.cmd("lcd " .. path)
+    end
+  end,
+})
