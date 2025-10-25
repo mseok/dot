@@ -10,6 +10,7 @@ local lsp_configs = {
     ruff = dofile(vim.fn.stdpath("config") .. "/lsp/ruff.lua"),
     lua_ls = dofile(vim.fn.stdpath("config") .. "/lsp/lua_ls.lua"),
     bashls = dofile(vim.fn.stdpath("config") .. "/lsp/bashls.lua"),
+    copilot = dofile(vim.fn.stdpath("config") .. "/lsp/copilot.lua"),
 }
 
 for name, config in pairs(lsp_configs) do
@@ -21,6 +22,7 @@ vim.lsp.enable({
     "ruff",
     "lua_ls",
     "bashls",
+    "copilot",
 })
 
 vim.api.nvim_create_autocmd('LspAttach', {

@@ -7,10 +7,10 @@ vim.pack.add({
 	{ src = "https://github.com/nvim-lua/plenary.nvim" },
 	{ src = "https://github.com/neovim/nvim-lspconfig" },
 	{ src = "https://github.com/mason-org/mason.nvim" },
-	{ src = "https://github.com/zbirenbaum/copilot.lua" },
-	{ src = "https://github.com/copilotlsp-nvim/copilot-lsp" },
 	{ src = "https://github.com/nvim-mini/mini.pairs" },
 	{ src = "https://github.com/Saghen/blink.cmp" },
+	{ src = "https://github.com/folke/sidekick.nvim" },
+	{ src = "https://github.com/zbirenbaum/copilot.lua" },
 })
 
 local function pack_clean()
