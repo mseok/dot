@@ -9,16 +9,11 @@ require("blink.cmp").setup({
     ["<C-y>"] = { "accept", "fallback" },
     ["<C-e>"] = { "hide", "fallback" },
     ["<Tab>"] = {
-      -- jump forward in snippets if possible
+      -- 1. jump forward in snippets if possible
       function(cmp)
         return cmp.snippet_active() and cmp.snippet_forward()
       end,
-      -- invoke your sidekick’s jump/apply
-      function(cmp)
-        local ok, sidekick = pcall(require, "sidekick")
-        return ok and sidekick.nes_jump_or_apply()
-      end,
-      -- accept Copilot ghost text if visible
+      -- 2. accept Copilot ghost text if visible (prioritize in insert mode)
       function(cmp)
         local ok, s = pcall(require, "copilot.suggestion")
         if ok and s.is_visible() then
@@ -26,7 +21,12 @@ require("blink.cmp").setup({
           return true
         end
       end,
-      -- otherwise fall back
+      -- 3. invoke sidekick's NES jump/apply if available
+      function(cmp)
+        local ok, sidekick = pcall(require, "sidekick")
+        return ok and sidekick.nes_jump_or_apply()
+      end,
+      -- 4. otherwise fall back to normal tab
       "fallback",
     },
   },
