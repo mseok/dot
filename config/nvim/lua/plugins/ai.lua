@@ -19,6 +19,17 @@ require("copilot").setup({
   },
 })
 
+-- Auto-attach Copilot to buffers
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = "*",
+  callback = function(args)
+    local ok, copilot = pcall(require, "copilot.client")
+    if ok then
+      copilot.buf_attach(args.buf)
+    end
+  end,
+})
+
 require("sidekick").setup({
   nes = {
     ---@type boolean|fun(buf:integer):boolean?

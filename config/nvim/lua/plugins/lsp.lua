@@ -1,7 +1,7 @@
 -- LSP configuration
 require("mason").setup({})
 
-local servers = { "pyright", "ruff", "lua_ls", "bashls", "copilot" }
+local servers = { "pyright", "ruff", "lua_ls", "bashls" }
 require("mason-lspconfig").setup({
   ensure_installed = servers,
   automatic_installation = true, -- automatically install missing servers

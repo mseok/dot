@@ -2,9 +2,9 @@ vim.pack.add({
   { src = "https://github.com/folke/tokyonight.nvim" },
   { src = "https://github.com/chentoast/marks.nvim" },
   { src = "https://github.com/stevearc/oil.nvim" },
-  { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "master", build = ":TSUpdate", lazy = false },
+  { src = "https://github.com/nvim-treesitter/nvim-treesitter",             version = "master",       build = ":TSUpdate", lazy = false },
   { src = "https://github.com/nvim-treesitter/nvim-treesitter-textobjects", after = "nvim-treesitter" },
-  { src = "https://github.com/nvim-telescope/telescope.nvim",   version = "0.1.8" },
+  { src = "https://github.com/nvim-telescope/telescope.nvim",               version = "0.1.8" },
   { src = "https://github.com/nvim-lua/plenary.nvim" },
   { src = "https://github.com/neovim/nvim-lspconfig" },
   { src = "https://github.com/mason-org/mason.nvim" },
@@ -41,7 +41,8 @@ local function pack_clean()
   end
 end
 
-vim.keymap.set("n", "<leader>pc", pack_clean)
+vim.api.nvim_create_user_command("PackClean", pack_clean, {})
+vim.keymap.set("n", "<leader>pc", pack_clean, { desc = "Clean unused plugins" })
 
 -- Load plugin configurations
 require("plugins.ui")
