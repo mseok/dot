@@ -14,6 +14,20 @@ vim.opt.smartindent = true
 vim.wo.wrap = true
 
 vim.opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
+vim.g.clipboard = {
+  name = "OSC 52",
+  copy = {
+    ["+"] = function(lines)
+      require("vim.ui.clipboard.osc52").copy("+")(lines)
+    end,
+  },
+  paste = {
+    ["+"] = function()
+      return require("vim.ui.clipboard.osc52").paste("+")
+    end,
+  },
+}
+
 vim.opt.cursorline = true -- Enable highlighting of the current line
 vim.opt.wildmode = "full"
 

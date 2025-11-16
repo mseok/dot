@@ -42,7 +42,7 @@ local function pack_clean()
 end
 
 vim.api.nvim_create_user_command("PackClean", pack_clean, {})
-vim.keymap.set("n", "<leader>pc", pack_clean, { desc = "Clean unused plugins" })
+vim.keymap.set("n", "<leader>cp", pack_clean, { desc = "Clean unused plugins" })
 
 -- Load plugin configurations
 require("plugins.ui")
