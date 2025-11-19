@@ -39,22 +39,24 @@ vim.opt.undofile = true
 vim.opt.hlsearch = true
 vim.opt.incsearch = true
 
-vim.opt.termguicolors = true
+if not vim.g.vscode then
+  vim.opt.termguicolors = true
 
-vim.opt.scrolloff = 8
-vim.opt.signcolumn = "yes"
-vim.opt.isfname:append("@-@")
+  vim.opt.scrolloff = 8
+  vim.opt.signcolumn = "yes"
+  vim.opt.isfname:append("@-@")
 
-vim.opt.showmode = true
-vim.opt.updatetime = 50
+  vim.opt.showmode = true
+  vim.opt.updatetime = 50
 
-vim.opt.splitbelow = true
-vim.opt.splitright = true
+  vim.opt.splitbelow = true
+  vim.opt.splitright = true
 
-vim.g.netrw_browse_split = false
-vim.g.netrw_winsize = 25
+  vim.g.netrw_browse_split = false
+  vim.g.netrw_winsize = 25
 
-vim.opt.foldopen = "mark,percent,quickfix,search,tag,undo"
+  vim.opt.foldopen = "mark,percent,quickfix,search,tag,undo"
+end
 
 -- Settings that should apply in both VS Code and regular Neovim
 vim.opt.ignorecase = true
