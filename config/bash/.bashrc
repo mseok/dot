@@ -44,3 +44,13 @@ source $HOME/dot/bin/slurm-commands.sh
 export PATH=$HOME/dot/bin:$PATH
 
 set -o vi
+
+agy() {
+    local agy_bin=$(find ~/.antigravity-server/bin -name "agy" -path "*/remote-cli/agy" 2>/dev/null | head -n 1)
+    if [ -n "$agy_bin" ]; then
+        VSCODE_IPC_HOOK_CLI=$(ls -tr /run/user/$UID/vscode-ipc-* | tail -n 1) "$agy_bin" "$@"
+    else
+        echo "Error: agy executable not found"
+        return 1
+    fi
+}

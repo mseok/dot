@@ -1,24 +1,28 @@
 {
-    "github.copilot.nextEditSuggestions.enabled": true,
-    "window.commandCenter": true,
-    "workbench.colorTheme": "Default High Contrast",
-    "vscode-neovim.afterInitConfig": [
-        "echo 'Config successfully updated!'"
-    ],
+    "workbench.colorTheme": "Tokyo Night Light",
+    "editor.accessibilitySupport": "off",
     "extensions.experimental.affinity": {
         "asvetliakov.vscode-neovim": 1
     },
-    "editor.accessibilitySupport": "on",
     "editor.fontSize": 16,
-    "workbench.settings.applyToAllProfiles": [
-        "editor.fontSize",
-        "editor.fontFamily"
-    ],
     "editor.fontFamily": "JetBrainsMono Nerd Font",
     "terminal.integrated.fontLigatures.enabled": true,
     "editor.fontLigatures": true,
     "editor.hover.enabled": false,
     "editor.hover.sticky": false,
+    "editor.scrollBeyondLastLine": false, // recommended by neovim
+    "editor.lineNumbers": "relative",
     "files.simpleDialog.enable": true,
-    "terminal.integrated.defaultLocation": "editor"
+    "workbench.activityBar.location": "hidden",
+    "workbench.editor.showTabs": "none",
+    "workbench.editor.pinnedTabsOnSeparateRow": false,
+    "workbench.startupEditor": "none",
+    "terminal.integrated.allowChords": false,
+    "terminal.integrated.defaultLocation": "editor",
+    "terminal.integrated.commandsToSkipShell": [
+        "workbench.action.terminal.toggleTerminal",
+        "workbench.action.focusActiveEditorGroup",
+        "workbench.action.terminal.focus"
+    ],
+    "vscode-neovim.neovimExecutablePaths.linux": "nvim"
 }
