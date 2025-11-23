@@ -16,11 +16,6 @@ if not vim.g.vscode then
   vim.keymap.set("n", "<C-Down>", "<cmd>resize -2<cr>", { desc = "Decrease Window Height" })
   vim.keymap.set("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease Window Width" })
   vim.keymap.set("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase Window Width" })
-else
-  vim.keymap.set("n", "<leader>b", "<cmd>call VSCodeNotify('workbench.action.showAllEditors')<CR>", { desc = "Show all editors" })
-  vim.keymap.set({"n", "v"}, "<leader>ff", "<cmd>lua require('vscode').action('workbench.action.quickOpen')<CR>", { desc = "Open file" })
-  vim.keymap.set({"n", "v"}, "<leader>fb", "<cmd>lua require('vscode').action('workbench.action.showAllEditors')<CR>", { desc = "Open file buffer" })
-  vim.keymap.set({"n", "v"}, "<leader>fr", "<cmd>lua require('vscode').action('workbench.action.showAllEditorsByMostRecentlyUsed')<CR>", { desc = "Open file recent" })
 end
 
 -- Paste with no register deletion

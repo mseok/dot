@@ -13,7 +13,11 @@ vim.opt.expandtab = true
 vim.opt.smartindent = true
 vim.wo.wrap = true
 
-vim.opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
+if vim.g.vscode then
+  vim.opt.clipboard = ""
+else
+  vim.opt.clipboard = vim.env.SSH_TTY and "" or "unnamedplus"
+end
 vim.g.clipboard = {
   name = "OSC 52",
   copy = {
@@ -56,6 +60,7 @@ if not vim.g.vscode then
   vim.g.netrw_winsize = 25
 
   vim.opt.foldopen = "mark,percent,quickfix,search,tag,undo"
+else
 end
 
 -- Settings that should apply in both VS Code and regular Neovim
