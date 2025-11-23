@@ -1,5 +1,5 @@
-// Place your key bindings in this file to override the defaults
 [
+    // windows
     {
         "key": "cmd+1",
         "command": "workbench.action.openEditorAtIndex1"
@@ -42,6 +42,10 @@
         "args": {
             "commands": [
                 {
+                    "command": "vscode-neovim.send",
+                    "args": "<C-u>"
+                },
+                {
                     "command": "editorScroll",
                     "args": {
                         "to": "up",
@@ -55,13 +59,18 @@
                     }
                 }
             ]
-        }
+        },
+        "when": "editorTextFocus"
     },
     {
         "key": "ctrl+d",
         "command": "runCommands",
         "args": {
             "commands": [
+                {
+                    "command": "vscode-neovim.send",
+                    "args": "<C-d>"
+                },
                 {
                     "command": "editorScroll",
                     "args": {
@@ -76,22 +85,54 @@
                     }
                 }
             ]
-        }
+        },
+        "when": "editorTextFocus"
     },
     {
         "key": "ctrl+l",
-        "command": "workbench.action.nextEditor",
-        "when": "editorTextFocus | terminalFocus"
+        "command": "workbench.action.nextEditorInGroup",
     },
     {
         "key": "ctrl+h",
-        "command": "workbench.action.previousEditor",
-        "when": "editorTextFocus | terminalFocus"
+        "command": "workbench.action.previousEditorInGroup",
+    },
+    // {
+    //     "key": "space q",
+    //     "command": "workbench.action.closeActiveEditor",
+    //     "when": "!editorTextFocus && !terminalFocus && !inputFocus && !inChatInput && !webviewFocus && !sideBarFocus && !auxiliaryBarFocus"
+    // },
+    // yank options
+    {
+        "key": "space y",
+        "command": "runCommands",
+        "args": {
+            "commands": [
+                {
+                    "command": "vscode-neovim.send",
+                    "args": "\"+y"
+                }
+            ]
+        },
+        "when": "(neovim.mode != insert && editorTextFocus)"
+    },
+    // extensions
+    {
+        "key": "ctrl+u",
+        "command": "editorScroll",
+        "args": {
+            "to": "up",
+            "by": "halfPage"
+        },
+        "when": "activeEditor == 'workbench.editor.extension'"
     },
     {
-        "key": "cmd+ctrl+p",
-        "command": "workbench.action.showAllEditors",
-        "when": "editorTextFocus | terminalFocus"
+        "key": "ctrl+d",
+        "command": "editorScroll",
+        "args": {
+            "to": "down",
+            "by": "halfPage"
+        },
+        "when": "activeEditor == 'workbench.editor.extension'"
     },
     // hover
     {
@@ -119,6 +160,46 @@
         "command": "editor.action.hideHover",
         "when": "editorHoverFocused"
     },
+    {
+        "key": "space f f",
+        "command": "workbench.action.quickOpen",
+        "when": "!terminalFocus && neovim.mode == normal && editorTextFocus"
+    },
+    {
+        "key": "space f b",
+        "command": "workbench.action.showAllEditors",
+        "when": "!terminalFocus && neovim.mode == normal && editorTextFocus"
+    },
+    {
+        "key": "space f r",
+        "command": "workbench.action.openRecent",
+        "when": "!terminalFocus && neovim.mode == normal && editorTextFocus"
+    },
+    // terminal
+    {
+        "key": "ctrl+shift+t",
+        "command": "workbench.action.createTerminalEditor"
+    },
+    {
+        "key": "ctrl+`",
+        "command": "runCommands",
+        "args": {
+            "commands": [
+                {
+                    "command": "workbench.action.toggleMaximizedPanel",
+                },
+                {
+                    "command": "workbench.action.terminal.focus",
+                }
+            ]
+        },
+        "when": "!terminalFocus"
+    },
+    {
+        "key": "ctrl+`",
+        "command": "workbench.action.togglePanel",
+        "when": "terminalFocus"
+    },
     // remove unnecessary parts
     {
         "key": "ctrl+l",
@@ -134,5 +215,5 @@
         "key": "ctrl+l",
         "command": "-vscode-neovim.send",
         "when": "editorTextFocus && neovim.ctrlKeysInsert.l && neovim.init && neovim.mode == 'insert' && editorLangId not in 'neovim.editorLangIdExclusions'"
-    }
+    },
 ]

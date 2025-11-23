@@ -1,28 +1,57 @@
 {
-    "workbench.colorTheme": "Tokyo Night Light",
+    "breadcrumbs.enabled": false, // full path name in the top
     "editor.accessibilitySupport": "off",
-    "extensions.experimental.affinity": {
-        "asvetliakov.vscode-neovim": 1
+    "editor.codeActionsOnSave": {
+        "source.addMissingImports": "always",
+        "source.organizeImports": "explicit"
     },
     "editor.fontSize": 16,
     "editor.fontFamily": "JetBrainsMono Nerd Font",
-    "terminal.integrated.fontLigatures.enabled": true,
     "editor.fontLigatures": true,
     "editor.hover.enabled": false,
     "editor.hover.sticky": false,
     "editor.scrollBeyondLastLine": false, // recommended by neovim
+    "editor.minimap.enabled": false,
     "editor.lineNumbers": "relative",
+    "extensions.experimental.affinity": {
+        "asvetliakov.vscode-neovim": 1
+    },
+    "extensions.autoUpdate": "onlyEnabledExtensions",
+    "extensions.ignoreRecommendations": false,
+    "explorer.compactFolders": false,
+    "explorer.confirmDragAndDrop": false,
+    "explorer.confirmDelete": false,
+    "explorer.decorations.badges": false,
     "files.simpleDialog.enable": true,
-    "workbench.activityBar.location": "hidden",
-    "workbench.editor.showTabs": "none",
-    "workbench.editor.pinnedTabsOnSeparateRow": false,
-    "workbench.startupEditor": "none",
+    "files.exclude": {
+        "**/.git/**": true,
+        "**/.DS_Store": true,
+        "**/__pycache__/**": true,
+    },
+    "files.watcherExclude": {
+        "**/.venv/**": true,
+        "**/__pycache__/**": true,
+        "**/.git/objects/**": true
+    },
+    "python.analysis.exclude": [
+        "**/site-packages/**"
+    ],
+    "remote.autoForwardPortsSource": "hybrid",
+    "security.workspace.trust.untrustedFiles": "open",
+    "terminal.integrated.fontLigatures.enabled": true,
     "terminal.integrated.allowChords": false,
-    "terminal.integrated.defaultLocation": "editor",
     "terminal.integrated.commandsToSkipShell": [
         "workbench.action.terminal.toggleTerminal",
         "workbench.action.focusActiveEditorGroup",
         "workbench.action.terminal.focus"
     ],
-    "vscode-neovim.neovimExecutablePaths.linux": "nvim"
+    "vscode-neovim.neovimExecutablePaths.linux": "nvim",
+    "workbench.activityBar.location": "hidden",
+    "workbench.editor.showTabs": "single",
+    "workbench.editor.pinnedTabsOnSeparateRow": false,
+    "workbench.editor.pinnedTabSizing": "normal",
+    "workbench.startupEditor": "terminal",
+    "workbench.statusBar.visible": false,
+    "workbench.tips.enabled": false,
+    "workbench.tree.enableStickyScroll": false,
 }
