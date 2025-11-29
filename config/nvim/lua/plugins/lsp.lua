@@ -1,7 +1,8 @@
 -- LSP configuration
 require("mason").setup({})
 
-local servers = { "pyright", "ruff", "lua_ls", "bashls" }
+-- local servers = { "pyright", "ruff", "lua_ls", "bashls" }
+local servers = { "ty", "ruff", "lua_ls", "bashls" }
 require("mason-lspconfig").setup({
   ensure_installed = servers,
   automatic_installation = true, -- automatically install missing servers
@@ -12,10 +13,11 @@ vim.keymap.set("n", "<leader>m", "<cmd>Mason<CR>")
 
 -- Register LSP configs from lsp/ directory
 local lsp_configs = {
-  pyright = dofile(vim.fn.stdpath("config") .. "/lsp/pyright.lua"),
+  -- pyright = dofile(vim.fn.stdpath("config") .. "/lsp/pyright.lua"),
   ruff = dofile(vim.fn.stdpath("config") .. "/lsp/ruff.lua"),
   lua_ls = dofile(vim.fn.stdpath("config") .. "/lsp/lua_ls.lua"),
   bashls = dofile(vim.fn.stdpath("config") .. "/lsp/bashls.lua"),
+  ty = dofile(vim.fn.stdpath("config") .. "/lsp/ty.lua"),
 }
 
 for name, config in pairs(lsp_configs) do
@@ -23,10 +25,11 @@ for name, config in pairs(lsp_configs) do
 end
 
 vim.lsp.enable({
-  "pyright",
+  -- "pyright",
   "ruff",
   "lua_ls",
   "bashls",
+  "ty",
 })
 
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -34,14 +37,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
     vim.keymap.set('n', 'gd', vim.lsp.buf.definition, { buffer = args.buf })
     vim.keymap.set('n', '<leader>cf', vim.lsp.buf.format, { buffer = args.buf })
-    local client = assert(vim.lsp.get_client_by_id(args.data.client_id))
-
-    if client:supports_method('textDocument/completion') then
-      -- Optional: trigger autocompletion on EVERY keypress. May be slow!
-      local chars = {}; for i = 32, 126 do table.insert(chars, string.char(i)) end
-      client.server_capabilities.completionProvider.triggerCharacters = chars
-      vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
-    end
   end,
 })
 

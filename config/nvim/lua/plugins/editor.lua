@@ -38,17 +38,6 @@ require("nvim-treesitter.configs").setup({
   },
 })
 
--- Enable treesitter highlighting and indentation using Neovim's built-in features
-vim.api.nvim_create_autocmd('FileType', {
-  callback = function(args)
-    local bufnr = args.buf
-    -- Enable treesitter highlighting for this buffer
-    pcall(vim.treesitter.start, bufnr)
-    -- Enable treesitter-based indentation for this buffer
-    vim.bo[bufnr].indentexpr = "v:lua.require('nvim-treesitter.indent').get_indent()"
-  end,
-})
-
 -- Oil file manager
 require("oil").setup({
   lsp_file_methods = {
@@ -108,7 +97,7 @@ map("n", "<leader>r", builtin.registers)
 
 -- Marks
 require("marks").setup {
-  builtin_marks = { "<", ">", "^" },
+  builtin_marks = {},
   refresh_interval = 250,
   sign_priority = { lower = 10, upper = 15, builtin = 8, bookmark = 20 },
   excluded_filetypes = {},

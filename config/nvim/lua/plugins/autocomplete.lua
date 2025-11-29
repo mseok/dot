@@ -7,10 +7,10 @@ require("blink.cmp").setup({
     implementation = "lua",
   },
   keymap = {
-    ["<C-n>"] = { "select_next", "fallback" },
-    ["<C-p>"] = { "select_prev", "fallback" },
-    ["<C-y>"] = { "accept", "fallback" },
-    ["<C-e>"] = { "hide", "fallback" },
+    ['<C-p>'] = { 'select_prev', 'fallback_to_mappings' },
+    ['<C-n>'] = { 'select_next', 'fallback_to_mappings' },
+    ['<C-y>'] = { 'select_and_accept', 'fallback' },
+    ['<C-e>'] = { 'cancel', 'fallback' },
     ["<Tab>"] = {
       -- 1. jump forward in snippets if possible
       function(cmp)
@@ -37,7 +37,7 @@ require("blink.cmp").setup({
     menu = {
       auto_show = true,
     },
-    keyword_length = 1,
+    -- keyword_length = 1,
   },
 })
 
