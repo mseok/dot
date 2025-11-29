@@ -20,28 +20,27 @@ local is_ssh = vim.env.SSH_TTY ~= nil or vim.env.SSH_CONNECTION ~= nil
 local is_mac = vim.fn.has("macunix") == 1
 
 if is_mac and not is_ssh then
-  -- CASE A: Local Mac (Fixes your current crash)
-  vim.opt.clipboard = ""
-elseif is_ssh then
-  -- CASE B: SSH Environment
+  -- [CASE 1] Local Mac
+  vim.g.clipboard = {
+    name = 'macOS-clipboard',
+    copy = { ['+'] = 'pbcopy', ['*'] = 'pbcopy' },
+    paste = { ['+'] = 'pbpaste', ['*'] = 'pbpaste' },
+    cache_enabled = 0,
+  }
   vim.opt.clipboard = "unnamedplus"
+else
+  vim.opt.clipboard = ""
+  -- [CASE 2] SSH/Linux
+  local osc = require("vim.ui.clipboard.osc52")
   vim.g.clipboard = {
     name = "OSC 52",
     copy = {
-      ["+"] = function(lines)
-        require("vim.ui.clipboard.osc52").copy("+")(lines)
-      end,
+      ["+"] = osc.copy("+"),
     },
     paste = {
-      ["+"] = function()
-        return require("vim.ui.clipboard.osc52").paste("+")
-      end,
+      ["+"] = osc.paste("+"),
     },
   }
-else
-  -- CASE C: Linux Local (Optional fallback)
-  -- Standard behavior for local Linux machines
-  vim.opt.clipboard = "unnamedplus"
 end
 
 vim.opt.cursorline = true -- Enable highlighting of the current line

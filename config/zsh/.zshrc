@@ -54,3 +54,12 @@ source $HOME/dot/bin/utilities.sh
 export PATH=$HOME/dot/bin:$PATH
 
 set -o vi
+
+uv() {
+    if [[ "$1" == "add" || "$1" == "remove" || "$1" == "sync" ]]; then
+        export VIRTUAL_ENV=$CONDA_PREFIX
+        command uv "$@" --active
+    else
+        command uv "$@"
+    fi
+}

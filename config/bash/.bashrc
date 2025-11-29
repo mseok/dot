@@ -54,3 +54,12 @@ agy() {
         return 1
     fi
 }
+
+uv() {
+    if [[ "$1" == "add" || "$1" == "remove" || "$1" == "sync" ]]; then
+        export VIRTUAL_ENV=$CONDA_PREFIX
+        command uv "$@" --active
+    else
+        command uv "$@"
+    fi
+}
