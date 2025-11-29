@@ -73,7 +73,7 @@ install_base_packages() {
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential curl git ca-certificates pkg-config \
     unzip zip tar wget xz-utils \
-    python3.10-venv \
+    python3-venv \
     ripgrep fd-find \
     software-properties-common
   # fd on Ubuntu is 'fdfind' binary; create user-friendly alias if missing

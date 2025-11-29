@@ -95,6 +95,8 @@ map("n", "<leader>fg", builtin.live_grep)
 map("n", "<leader>fb", builtin.buffers)
 map("n", "<leader>r", builtin.registers)
 
+map("n", "<leader>x", "<cmd>lua vim.diagnostic.setloclist()<CR>")
+
 -- Marks
 require("marks").setup {
   builtin_marks = {},
