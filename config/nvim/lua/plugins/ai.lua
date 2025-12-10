@@ -8,9 +8,9 @@ require("copilot").setup({
     auto_trigger = true,
     hide_during_completion = false,
     keymap = {
-      accept = false,    -- accept ghost text
-      next = "<M-]>",    -- cycle ghost suggestions
-      prev = "<M-[>",
+      accept = "<C-y>",  -- accept suggestion with ctrl+y
+      next = "<C-n>",    -- next suggestion with ctrl+n
+      prev = "<C-p>",    -- previous suggestion with ctrl+p
       dismiss = "<C-]>", -- dismiss ghost
     },
   },
@@ -33,7 +33,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 require("sidekick").setup({
   nes = {
     ---@type boolean|fun(buf:integer):boolean?
-    enabled = true,
+    enabled = false,  -- Disable Next Edit Suggestions
   },
   -- Work with AI cli tools directly from within Neovim
   cli = {
@@ -98,12 +98,3 @@ require("sidekick").setup({
   },
 })
 
--- Tab keymap for Next Edit Suggestions in normal mode
-vim.keymap.set("n", "<Tab>", function()
-  -- if there is a next edit, jump to it, otherwise apply it if any
-  if require("sidekick").nes_jump_or_apply() then
-    return -- jumped or applied
-  end
-  -- fall back to normal tab
-  return "<Tab>"
-end, { expr = true, desc = "Goto/Apply Next Edit Suggestion" })

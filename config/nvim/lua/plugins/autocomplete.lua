@@ -9,14 +9,14 @@ require("blink.cmp").setup({
   keymap = {
     ['<C-p>'] = { 'select_prev', 'fallback_to_mappings' },
     ['<C-n>'] = { 'select_next', 'fallback_to_mappings' },
-    ['<C-y>'] = { 'select_and_accept', 'fallback' },
+    ['<C-y>'] = { 'select_and_accept', 'fallback_to_mappings' },
     ['<C-e>'] = { 'cancel', 'fallback' },
     ["<Tab>"] = {
       -- 1. jump forward in snippets if possible
       function(cmp)
         return cmp.snippet_active() and cmp.snippet_forward()
       end,
-      -- 2. accept Copilot ghost text if visible (prioritize in insert mode)
+      -- 2. accept Copilot ghost text if visible (highest priority after snippets)
       function(cmp)
         local ok, s = pcall(require, "copilot.suggestion")
         if ok and s.is_visible() then
@@ -24,12 +24,7 @@ require("blink.cmp").setup({
           return true
         end
       end,
-      -- 3. invoke sidekick's NES jump/apply if available
-      function(cmp)
-        local ok, sidekick = pcall(require, "sidekick")
-        return ok and sidekick.nes_jump_or_apply()
-      end,
-      -- 4. otherwise fall back to normal tab
+      -- 3. otherwise fall back to normal tab
       "fallback",
     },
   },
