@@ -59,8 +59,8 @@ on-focus-changed = 'move-mouse window-lazy-center'
 #                 See: https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
 [workspace-to-monitor-force-assignment]
 1 = 'main'
-2 = 'built-in'
-3 = ['sidecar display (airplay)', 'sidecar display']
+8 = 'built-in'
+9 = ['sidecar display (airplay)', 'sidecar display']
 
 [gaps]
 inner.horizontal = 12
@@ -127,44 +127,48 @@ alt-shift-minus = 'resize smart -50'
 alt-shift-equal = 'resize smart +50'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace
-alt-t = 'workspace T'
-alt-i = 'workspace I'
-alt-w = 'workspace W'
-alt-s = 'workspace S'
-alt-o = 'workspace O'
-alt-n = 'workspace N'
-alt-z = 'workspace Z'
-alt-e = 'workspace E'
-alt-c = 'workspace C'
-alt-g = 'workspace G'
-alt-m = 'workspace M'
-alt-p = 'workspace P'
-alt-v = 'workspace V'
-
-# See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
-alt-shift-t = 'move-node-to-workspace T --focus-follows-window'
-alt-shift-i = 'move-node-to-workspace I --focus-follows-window'
-alt-shift-w = 'move-node-to-workspace W --focus-follows-window'
-alt-shift-c = 'move-node-to-workspace C --focus-follows-window'
-alt-shift-e = 'move-node-to-workspace E --focus-follows-window'
-alt-shift-g = 'move-node-to-workspace G --focus-follows-window'
-alt-shift-m = 'move-node-to-workspace M --focus-follows-window'
-alt-shift-n = 'move-node-to-workspace N --focus-follows-window'
-alt-shift-o = 'move-node-to-workspace O --focus-follows-window'
-alt-shift-p = 'move-node-to-workspace P --focus-follows-window'
-alt-shift-s = 'move-node-to-workspace S --focus-follows-window'
-alt-shift-v = 'move-node-to-workspace V --focus-follows-window'
-alt-shift-z = 'move-node-to-workspace Z --focus-follows-window'
-
-alt-shift-f = 'fullscreen'
-
 alt-1 = 'workspace 1'
 alt-2 = 'workspace 2'
 alt-3 = 'workspace 3'
+alt-4 = 'workspace 4'
+alt-5 = 'workspace 5'
+alt-6 = 'workspace 6'
+alt-7 = 'workspace 7'
+alt-8 = 'workspace 8'
+alt-9 = 'workspace 9'
 
+alt-q = 'workspace 1'
+alt-w = 'workspace 2'
+alt-e = 'workspace 3'
+alt-r = 'workspace 4'
+alt-t = 'workspace 5'
+alt-y = 'workspace 6'
+alt-u = 'workspace 7'
+alt-i = 'workspace 8'
+alt-o = 'workspace 9'
+
+# See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
 alt-shift-1 = 'move-node-to-workspace 1 --focus-follows-window'
 alt-shift-2 = 'move-node-to-workspace 2 --focus-follows-window'
 alt-shift-3 = 'move-node-to-workspace 3 --focus-follows-window'
+alt-shift-4 = 'move-node-to-workspace 4 --focus-follows-window'
+alt-shift-5 = 'move-node-to-workspace 5 --focus-follows-window'
+alt-shift-6 = 'move-node-to-workspace 6 --focus-follows-window'
+alt-shift-7 = 'move-node-to-workspace 7 --focus-follows-window'
+alt-shift-8 = 'move-node-to-workspace 8 --focus-follows-window'
+alt-shift-9 = 'move-node-to-workspace 9 --focus-follows-window'
+
+alt-shift-q = 'move-node-to-workspace 1 --focus-follows-window'
+alt-shift-w = 'move-node-to-workspace 2 --focus-follows-window'
+alt-shift-e = 'move-node-to-workspace 3 --focus-follows-window'
+alt-shift-r = 'move-node-to-workspace 4 --focus-follows-window'
+alt-shift-t = 'move-node-to-workspace 5 --focus-follows-window'
+alt-shift-y = 'move-node-to-workspace 6 --focus-follows-window'
+alt-shift-u = 'move-node-to-workspace 7 --focus-follows-window'
+alt-shift-i = 'move-node-to-workspace 8 --focus-follows-window'
+alt-shift-o = 'move-node-to-workspace 9 --focus-follows-window'
+
+alt-shift-f = 'fullscreen'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
 alt-tab = 'workspace-back-and-forth'
@@ -174,7 +178,7 @@ alt-shift-tab = [
   'exec-and-forget sketchybar --trigger aerospace_monitor_change TARGET_MONITOR=$(aerospace list-monitors --focused --format "%{monitor-appkit-nsscreen-screens-id}") FOCUSED_WORKSPACE=$(aerospace list-workspaces --focused)',
 ]
 
-alt-shift-r = 'mode resize'
+alt-shift-s = 'mode resize'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#mode
 alt-shift-semicolon = 'mode service'
@@ -210,40 +214,31 @@ alt-shift-l = ['join-with right', 'mode main']
 
 [[on-window-detected]]
 if.app-id = "com.github.wez.wezterm"
-run = "move-node-to-workspace T"
+run = "move-node-to-workspace 1"
 [[on-window-detected]]
 if.app-id = "com.apple.Terminal"
-run = "move-node-to-workspace T"
+run = "move-node-to-workspace 1"
 [[on-window-detected]]
 if.app-id = "com.googlecode.iterm2"
-run = "move-node-to-workspace T"
+run = "move-node-to-workspace 1"
 [[on-window-detected]]
 if.app-id = "com.microsoft.VSCode"
-run = "move-node-to-workspace I"
+run = "move-node-to-workspace 1"
 [[on-window-detected]]
 if.app-id = "com.apple.Safari"
-run = "move-node-to-workspace W"
+run = "move-node-to-workspace 2"
 [[on-window-detected]]
 if.app-id = "com.google.Chrome"
-run = "move-node-to-workspace W"
+run = "move-node-to-workspace 2"
 [[on-window-detected]]
 if.app-id = "com.openai.atlas"
-run = "move-node-to-workspace W"
-[[on-window-detected]]
-if.app-id = "com.tinyspeck.slackmacgap" # Slack
-run = "move-node-to-workspace S"
-[[on-window-detected]]
-if.app-id = "com.apple.iCal"
-run = "move-node-to-workspace C"
+run = "move-node-to-workspace 2"
 [[on-window-detected]]
 if.app-id = "md.obsidian"
-run = "move-node-to-workspace O"
-[[on-window-detected]]
-if.app-id = "org.zotero.zotero"
-run = "move-node-to-workspace Z"
+run = "move-node-to-workspace 3"
 [[on-window-detected]]
 if.app-id = "notion.id"
-run = "move-node-to-workspace N"
+run = "move-node-to-workspace 3"
 [[on-window-detected]]
-if.app-id = "com.apple.mail"
-run = ["layout floating", "move-node-to-workspace M"]
+if.app-id = "com.tinyspeck.slackmacgap" # Slack
+run = "move-node-to-workspace 4"
