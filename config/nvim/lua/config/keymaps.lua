@@ -1,7 +1,7 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
-vim.keymap.set({ "n", "v", "x" }, "<leader>o", "<Cmd>source %<CR>", { desc = "Source " .. vim.fn.expand("$MYVIMRC") })
+vim.keymap.set({ "n", "v", "x" }, "<leader>so", "<Cmd>source %<CR>", { desc = "Source current file" })
 vim.keymap.set({ "n", "v", "x" }, "<leader>O", "<Cmd>restart<CR>", { desc = "Restart vim." })
 
 -- Keep these in VS Code mode too - they're useful for navigation

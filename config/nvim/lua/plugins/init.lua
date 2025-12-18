@@ -11,7 +11,8 @@ vim.pack.add({
   { src = "https://github.com/mason-org/mason-lspconfig.nvim" },
   { src = "https://github.com/nvim-mini/mini.pairs" },
   { src = "https://github.com/Saghen/blink.cmp" },
-  { src = "https://github.com/folke/sidekick.nvim" },
+  { src = "https://github.com/NickvanDyke/opencode.nvim" },
+  { src = "https://github.com/giuxtaposition/blink-cmp-copilot" },
   { src = "https://github.com/zbirenbaum/copilot.lua" },
   { src = "https://github.com/lewis6991/gitsigns.nvim" },
 })
@@ -22,6 +23,6 @@ vim.keymap.set("n", "<leader>u", "<cmd>lua vim.pack.update()<CR>", { desc = "Upd
 require("plugins.ui")
 require("plugins.editor")
 require("plugins.lsp")
+require("plugins.ai") -- Must load before autocomplete (copilot.lua before blink-cmp-copilot)
 require("plugins.autocomplete")
 require("plugins.git")
-require("plugins.ai")

@@ -1,35 +1,37 @@
--- Blink.cmp - LSP and basic completions
+-- Blink.cmp - LSP and Copilot completions
 require("blink.cmp").setup({
   sources = {
-    default = { "lsp", "path", "snippets", "buffer" },
+    default = { "lsp", "path", "snippets", "buffer", "copilot" },
+    providers = {
+      copilot = {
+        name = "copilot",
+        module = "blink-cmp-copilot",
+        score_offset = 100,
+        async = true,
+        transform_items = function(_, items)
+          local CompletionItemKind = require("blink.cmp.types").CompletionItemKind
+          local kind_idx = #CompletionItemKind + 1
+          CompletionItemKind[kind_idx] = "Copilot"
+          for _, item in ipairs(items) do
+            item.kind = kind_idx
+          end
+          return items
+        end,
+      },
+    },
   },
   fuzzy = {
     implementation = "lua",
   },
   keymap = {
-    ['<C-p>'] = { 'select_prev', 'fallback_to_mappings' },
-    ['<C-n>'] = { 'select_next', 'fallback_to_mappings' },
-    ['<C-y>'] = { 'select_and_accept', 'fallback' },
-    ['<C-e>'] = { 'cancel', 'fallback' },
+    ["<C-p>"] = { "select_prev", "fallback_to_mappings" },
+    ["<C-n>"] = { "select_next", "fallback_to_mappings" },
+    ["<C-y>"] = { "select_and_accept", "fallback" },
+    ["<C-e>"] = { "cancel", "fallback" },
     ["<Tab>"] = {
-      -- 1. jump forward in snippets if possible
       function(cmp)
         return cmp.snippet_active() and cmp.snippet_forward()
       end,
-      -- 2. accept Copilot ghost text if visible (prioritize in insert mode)
-      function(cmp)
-        local ok, s = pcall(require, "copilot.suggestion")
-        if ok and s.is_visible() then
-          s.accept()
-          return true
-        end
-      end,
-      -- 3. invoke sidekick's NES jump/apply if available
-      function(cmp)
-        local ok, sidekick = pcall(require, "sidekick")
-        return ok and sidekick.nes_jump_or_apply()
-      end,
-      -- 4. otherwise fall back to normal tab
       "fallback",
     },
   },
@@ -37,9 +39,35 @@ require("blink.cmp").setup({
     menu = {
       auto_show = true,
     },
-    -- keyword_length = 1,
+  },
+  appearance = {
+    kind_icons = {
+      Copilot = "",
+      Text = "󰉿",
+      Method = "󰊕",
+      Function = "󰊕",
+      Constructor = "󰒓",
+      Field = "󰜢",
+      Variable = "󰆦",
+      Property = "󰖷",
+      Class = "󱡠",
+      Interface = "󱡠",
+      Struct = "󱡠",
+      Module = "󰅩",
+      Unit = "󰪚",
+      Value = "󰦨",
+      Enum = "󰦨",
+      EnumMember = "󰦨",
+      Keyword = "󰻾",
+      Constant = "󰏿",
+      Snippet = "󱄽",
+      Color = "󰏘",
+      File = "󰈔",
+      Reference = "󰬲",
+      Folder = "󰉋",
+      Event = "󱐋",
+      Operator = "󰪚",
+      TypeParameter = "󰬛",
+    },
   },
 })
-
--- Make ghost text readable with your colorscheme
-vim.api.nvim_set_hl(0, "CopilotSuggestion", { fg = "#6C7086", italic = true })
