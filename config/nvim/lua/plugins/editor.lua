@@ -69,6 +69,8 @@ require("nvim-tree").setup({
   },
 })
 map("n", "<leader>e", "<cmd>NvimTreeToggle<CR>")
+vim.cmd("autocmd VimEnter * hi NvimTreeNormal guibg=NONE" )
+vim.cmd("autocmd VimEnter * hi NvimTreeNormalNC guibg=NONE" )
 
 -- Telescope
 local telescope = require("telescope")
