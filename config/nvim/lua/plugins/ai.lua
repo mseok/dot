@@ -1,67 +1,37 @@
--- Copilot setup - disable ghost text suggestion (use blink-cmp-copilot instead)
-require("copilot").setup({
-  copilot_node_command = vim.fn.exepath("node"),
-  panel = { enabled = false },
-  suggestion = { enabled = false }, -- Disabled: using blink-cmp-copilot instead
-  filetypes = {
-    ["*"] = true,
-  },
+vim.g.sidekick_nes = true
+vim.b.sidekick_nes = true
+
+-- Sidekick setup
+require("sidekick").setup({
+  nes = {
+    ---@type boolean|fun(buf:integer):boolean?
+    enabled = function(buf)
+      return vim.g.sidekick_nes ~= false and vim.b.sidekick_nes ~= false
+    end,
+  }
 })
 
--- opencode.nvim setup
-vim.o.autoread = true -- Required for buffer reload when opencode edits files
+-- Sidekick keymaps
+local cli = require("sidekick.cli")
+vim.keymap.set("n", "<leader>aa", cli.toggle, { desc = "Sidekick Toggle" })
+vim.keymap.set("n", "<leader>as", cli.select, { desc = "Sidekick Select" })
+vim.keymap.set("n", "<leader>ad", cli.close, { desc = "Sidekick Close" })
+vim.keymap.set({ "n", "x" }, "<leader>at", function()
+  cli.send({ msg = "{this}" })
+end, { desc = "Sidekick Send This" })
+vim.keymap.set("n", "<leader>af", function()
+  cli.send({ msg = "{file}" })
+end, { desc = "Sidekick Send File" })
+vim.keymap.set("x", "<leader>av", function()
+  cli.send({ msg = "{selection}" })
+end, { desc = "Sidekick Send Selection" })
+vim.keymap.set("n", "<leader>ap", cli.prompt, { desc = "Sidekick Prompt" })
+vim.keymap.set({ "n", "x", "i", "t" }, "<C-.>", cli.toggle, { desc = "Sidekick Toggle" })
 
----@type opencode.Opts
-vim.g.opencode_opts = {
-  provider = {
-    enabled = "tmux", -- Options: "terminal", "tmux", "wezterm"
-    terminal = {},
-    tmux = {},
-    wezterm = {},
-  },
-}
-
--- opencode keybindings with <leader>o prefix
-vim.keymap.set({ "n", "x" }, "<leader>oa", function()
-  require("opencode").ask("@this: ", { submit = true })
-end, { desc = "Ask opencode" })
-
-vim.keymap.set({ "n", "x" }, "<leader>os", function()
-  require("opencode").select()
-end, { desc = "Select opencode action" })
-
-vim.keymap.set({ "n", "t" }, "<leader>ot", function()
-  require("opencode").toggle()
-end, { desc = "Toggle opencode" })
-
-vim.keymap.set({ "n", "x" }, "<leader>op", function()
-  return require("opencode").operator("@this ")
-end, { expr = true, desc = "Add range to opencode" })
-
-vim.keymap.set("n", "<leader>ou", function()
-  require("opencode").command("session.half.page.up")
-end, { desc = "opencode scroll up" })
-
-vim.keymap.set("n", "<leader>od", function()
-  require("opencode").command("session.half.page.down")
-end, { desc = "opencode scroll down" })
-
-vim.keymap.set("n", "<leader>on", function()
-  require("opencode").command("session.new")
-end, { desc = "New opencode session" })
-
-vim.keymap.set("n", "<leader>oi", function()
-  require("opencode").command("session.interrupt")
-end, { desc = "Interrupt opencode" })
-
--- Provider switcher
-vim.keymap.set("n", "<leader>oP", function()
-  vim.ui.select({ "terminal", "tmux", "wezterm" }, {
-    prompt = "Select opencode provider:",
-  }, function(choice)
-    if choice then
-      vim.g.opencode_opts.provider.enabled = choice
-      vim.notify("opencode provider: " .. choice)
-    end
-  end)
-end, { desc = "Select opencode provider" })
+-- Normal mode: use <Tab> for Sidekick NES jump/apply, otherwise keep normal <Tab>
+vim.keymap.set("n", "<Tab>", function()
+  if require("sidekick").nes_jump_or_apply() then
+    return ""
+  end
+  return "<Tab>"
+end, { expr = true, desc = "Sidekick NES jump/apply (normal)" })

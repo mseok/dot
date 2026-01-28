@@ -1,24 +1,7 @@
--- Blink.cmp - LSP and Copilot completions
+-- Blink.cmp - LSP completions
 require("blink.cmp").setup({
   sources = {
-    default = { "lsp", "path", "snippets", "buffer", "copilot" },
-    providers = {
-      copilot = {
-        name = "copilot",
-        module = "blink-cmp-copilot",
-        score_offset = 100,
-        async = true,
-        transform_items = function(_, items)
-          local CompletionItemKind = require("blink.cmp.types").CompletionItemKind
-          local kind_idx = #CompletionItemKind + 1
-          CompletionItemKind[kind_idx] = "Copilot"
-          for _, item in ipairs(items) do
-            item.kind = kind_idx
-          end
-          return items
-        end,
-      },
-    },
+    default = { "lsp", "path", "snippets", "buffer" },
   },
   fuzzy = {
     implementation = "lua",
@@ -29,8 +12,14 @@ require("blink.cmp").setup({
     ["<C-y>"] = { "select_and_accept", "fallback" },
     ["<C-e>"] = { "cancel", "fallback" },
     ["<Tab>"] = {
-      function(cmp)
-        return cmp.snippet_active() and cmp.snippet_forward()
+      "snippet_forward",
+      function()
+        return require("sidekick").nes_jump_or_apply()
+      end,
+      function()
+        if vim.lsp.inline_completion then
+          return vim.lsp.inline_completion.get()
+        end
       end,
       "fallback",
     },
@@ -42,7 +31,6 @@ require("blink.cmp").setup({
   },
   appearance = {
     kind_icons = {
-      Copilot = "",
       Text = "󰉿",
       Method = "󰊕",
       Function = "󰊕",

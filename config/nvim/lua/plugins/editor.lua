@@ -38,24 +38,37 @@ require("nvim-treesitter.configs").setup({
   },
 })
 
--- Oil file manager
-require("oil").setup({
-  lsp_file_methods = {
-    enabled = true,
-    timeout_ms = 1000,
-    autosave_changes = true,
+-- nvim-tree file explorer
+require("nvim-tree").setup({
+  disable_netrw = true,
+  hijack_netrw = true,
+  view = {
+    width = 36,
+    side = "left",
   },
-  columns = {
-    "permissions",
-    "icon",
+  renderer = {
+    highlight_git = true,
+    icons = {
+      show = {
+        file = true,
+        folder = true,
+        folder_arrow = true,
+        git = true,
+      },
+    },
   },
-  float = {
-    max_width = 0.7,
-    max_height = 0.6,
-    border = "rounded",
+  filters = {
+    dotfiles = false,
+  },
+  git = {
+    enable = true,
+    ignore = false,
+  },
+  update_focused_file = {
+    enable = true,
   },
 })
-map("n", "<leader>e", "<cmd>Oil<CR>")
+map("n", "<leader>e", "<cmd>NvimTreeToggle<CR>")
 
 -- Telescope
 local telescope = require("telescope")

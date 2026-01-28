@@ -20,17 +20,32 @@ local lsp_configs = {
   ty = dofile(vim.fn.stdpath("config") .. "/lsp/ty.lua"),
 }
 
+if vim.fn.executable("copilot-language-server") == 1 then
+  lsp_configs.copilot = dofile(vim.fn.stdpath("config") .. "/lsp/copilot.lua")
+else
+  vim.notify(
+    "copilot-language-server not found; Sidekick NES disabled until installed.",
+    vim.log.levels.WARN
+  )
+end
+
 for name, config in pairs(lsp_configs) do
   vim.lsp.config(name, config)
 end
 
-vim.lsp.enable({
+local enabled_servers = {
   -- "pyright",
   "ruff",
   "lua_ls",
   "bashls",
   "ty",
-})
+}
+
+if lsp_configs.copilot then
+  table.insert(enabled_servers, "copilot")
+end
+
+vim.lsp.enable(enabled_servers)
 
 vim.api.nvim_create_autocmd('LspAttach', {
   group = vim.api.nvim_create_augroup('my.lsp', {}),
