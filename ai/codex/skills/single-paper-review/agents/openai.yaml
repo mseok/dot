@@ -1,0 +1,8 @@
+interface:
+  display_name: "Single Paper Review"
+  short_description: "Summarize one paper as a reusable note"
+  default_prompt: "Use $single-paper-review to summarize this paper into an Obsidian note with metric definitions and embedded figures/tables."
+
+policy:
+  allow_implicit_invocation: true
+

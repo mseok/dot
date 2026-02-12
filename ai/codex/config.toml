@@ -1,0 +1,64 @@
+model = "gpt-5.2"
+model_reasoning_effort = "xhigh"
+personality = "pragmatic"
+[projects."/Users/mseok/scp/FragLLM"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/FragFM2"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/FragFM2_refactor"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/Downloads/최종제출서류 copy"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/dot"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/kfold"]
+trust_level = "untrusted"
+
+[projects."/Users/mseok/temp"]
+trust_level = "untrusted"
+
+[projects."/Users/mseok/scp/THESIS"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/THESIS/thesis"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/Library/Mobile Documents/iCloud~md~obsidian/Documents/kepano-obsidian-main"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/epoch-0_step-0"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/plot"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/MoAgent"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/AgenticScientificWriting"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/scp/MoAgent/MoA_Prediction"]
+trust_level = "trusted"
+
+[projects."/Users/mseok/Desktop/work/MoAgent"]
+trust_level = "trusted"
+
+[mcp_servers.Context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp@latest"]
+
+[mcp_servers.notion]
+url = "https://mcp.notion.com/mcp"
+
+[features]
+unified_exec = true
+shell_snapshot = true
+
+[notice.model_migrations]
+"gpt-5.2" = "gpt-5.2-codex"

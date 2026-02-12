@@ -1,0 +1,4 @@
+interface:
+  display_name: "Clipboard Copy"
+  short_description: "Copy file/text to macOS clipboard quickly"
+  default_prompt: "Copy the requested file or text to the macOS clipboard and confirm what was copied."
