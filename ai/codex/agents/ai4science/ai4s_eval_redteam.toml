@@ -1,1 +1,3 @@
 model_instructions_file = "./prompts/ai4s_eval_redteam.md"
+model = "gpt-5.2"
+model_reasoning_effort = "xhigh"
