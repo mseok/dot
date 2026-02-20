@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Add & Commit"
+  short_description: "Stage changes and write concise commit summaries"
+  default_prompt: "Use $git-add-commit to stage unstaged changes and commit with a concise summary of the diff."

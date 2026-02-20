@@ -1,53 +1,6 @@
-model = "gpt-5.2"
+model = "gpt-5.3-codex"
 model_reasoning_effort = "xhigh"
 personality = "pragmatic"
-[projects."/Users/mseok/scp/FragLLM"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/FragFM2"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/FragFM2_refactor"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/Downloads/최종제출서류 copy"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/dot"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/kfold"]
-trust_level = "untrusted"
-
-[projects."/Users/mseok/temp"]
-trust_level = "untrusted"
-
-[projects."/Users/mseok/scp/THESIS"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/THESIS/thesis"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/Library/Mobile Documents/iCloud~md~obsidian/Documents/kepano-obsidian-main"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/epoch-0_step-0"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/plot"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/MoAgent"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/AgenticScientificWriting"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/scp/MoAgent/MoA_Prediction"]
-trust_level = "trusted"
-
-[projects."/Users/mseok/Desktop/work/MoAgent"]
-trust_level = "trusted"
 
 [mcp_servers.Context7]
 command = "npx"
@@ -56,9 +9,47 @@ args = ["-y", "@upstash/context7-mcp@latest"]
 [mcp_servers.notion]
 url = "https://mcp.notion.com/mcp"
 
+[mcp_servers.notebooklm]
+command = "npx"
+args = ["notebooklm-mcp@latest"]
+
+[shell_environment_policy]
+inherit = "core"
+set = { PATH = "/usr/bin:/usr/local/bin:/bin", MY_FLAG = "1" }
+ignore_default_excludes = false
+exclude = ["AWS_*", "AZURE_*", "*_KEY"]
+
 [features]
 unified_exec = true
 shell_snapshot = true
+multi_agent = true
+
+[agents.ai4s_coordinator]
+description = "Research coordinator for AI4Science foundation model cycles. Converts goals into falsifiable tickets and returns Go/No-Go/Pivot."
+config_file = "./agents/ai4science/ai4s_coordinator.toml"
+
+[agents.ai4s_data_integrity]
+description = "Owns data quality and split integrity. Blocks progress on leakage, contamination, or invalid dataset versioning."
+config_file = "./agents/ai4science/ai4s_data_integrity.toml"
+
+[agents.ai4s_model_architecture]
+description = "Owns model and layer implementation for architecture changes with ablation switches and rollback plans."
+config_file = "./agents/ai4science/ai4s_model_architecture.toml"
+
+[agents.ai4s_eval_redteam]
+description = "Owns benchmark, regression, and failure-mode analysis. Provides release verdict with guardrails."
+config_file = "./agents/ai4science/ai4s_eval_redteam.toml"
+
+[agents.ai4s_theory_objective]
+description = "Owns objective formulation, invariance/equivariance checks, and math-task alignment."
+config_file = "./agents/ai4science/ai4s_theory_objective.toml"
 
 [notice.model_migrations]
 "gpt-5.2" = "gpt-5.2-codex"
+
+[tui]
+status_line = ["model-with-reasoning", "project-root", "git-branch", "context-used"]
+animations = false
+show_tooltips = true
+notifications = true
+notification_method = "bel"

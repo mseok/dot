@@ -2,3 +2,4 @@
 .DS_Store
 CLAUDE.md
 .claude/
+__pycache__/

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Make Obsidian Base"
+  short_description: "Create category+base files in one command"
+  default_prompt: "Use $make-obsidian-base to create a new Obsidian category note and matching base file from a category name."
