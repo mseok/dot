@@ -1,0 +1,5 @@
+interface:
+  display_name: "Modular Python (Deep Learning)"
+  short_description: "Write and refactor modular, Pythonic deep learning research code"
+  default_prompt: "Help me write or refactor modular Python deep learning code (PyTorch/JAX). Follow Python philosophy (PEP 8/20), keep changes simple and surgical, define clear I/O and tensor-shape contracts, and provide HPC-friendly run instructions without claiming to have executed anything."
+

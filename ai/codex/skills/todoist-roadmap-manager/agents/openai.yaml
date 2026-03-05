@@ -1,0 +1,4 @@
+interface:
+  display_name: "Todoist Roadmap Manager"
+  short_description: "Sync Todoist roadmaps with idempotent task control"
+  default_prompt: "Use $todoist-roadmap-manager to organize roadmap milestones into projects, labels, and safely recover tasks completed by mistake."

@@ -37,6 +37,8 @@ Produce a single-paper note that is:
 5. Add a "Metrics (math + meaning)" section (mandatory)
    For every metric used in Methods/Results:
    - Provide a mathematical definition in LaTeX (use `$$ ... $$`).
+   - When using LaTeX, just use single `\`, instead of double `\\`.
+   - When writing text, if you want to write `<` or `>`, prepend `\` before the characters. (i.e., `\<BOS\>`)
    - Specify how the paper computes it (averaging, thresholds, matching rules, postprocessing).
    - Interpret what it means:
      - What higher/lower implies about behavior
