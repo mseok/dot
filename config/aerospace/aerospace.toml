@@ -48,7 +48,10 @@ key-mapping.preset = 'qwerty'
 # Drop it from your config, if you don't like this behavior
 # See https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
-on-focus-changed = 'move-mouse window-lazy-center'
+on-focus-changed = [
+  'move-mouse window-lazy-center',
+  'exec-and-forget ~/.config/aerospace/input-source-on-focus.sh',
+]
 
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
 # Possible values:
@@ -75,7 +78,7 @@ outer.left =       8
 outer.bottom =     8
 outer.right =      8
 outer.top = [
-  { monitor."Built-in" = 4 },
+  { monitor."Built-in" = 6 },
   { monitor."LG HDR 5K" = 48 },
   { monitor."LG UltraFine" = 48 },
   32,
@@ -247,5 +250,8 @@ run = "move-node-to-workspace 3"
 if.app-id = "notion.id"
 run = "move-node-to-workspace 3"
 [[on-window-detected]]
-if.app-id = "com.tinyspeck.slackmacgap" # Slack
+if.app-id = "com.tinyspeck.slackmacgap"
 run = "move-node-to-workspace 4"
+[[on-window-detected]]
+if.app-id = "com.spotify.client"
+run = "move-node-to-workspace 7"
