@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ -n "${CODEX_BUN_BIN:-}" ]]; then
+  BUN_BIN="${CODEX_BUN_BIN}"
+elif command -v bun >/dev/null 2>&1; then
+  BUN_BIN="$(command -v bun)"
+elif [[ -x "${HOME}/.bun/bin/bun" ]]; then
+  BUN_BIN="${HOME}/.bun/bin/bun"
+else
+  echo "bun not found" >&2
+  exit 1
+fi
+
+API_KEY_FILE="${HOME}/.codex/obsidian-api-key"
+if [[ -z "${OBSIDIAN_API_KEY:-}" && -f "$API_KEY_FILE" ]]; then
+  OBSIDIAN_API_KEY="$(<"$API_KEY_FILE")"
+fi
+
+if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
+  echo "OBSIDIAN_API_KEY is not set and ${API_KEY_FILE} is missing." >&2
+  exit 1
+fi
+
+export OBSIDIAN_API_KEY
+export OBSIDIAN_PROTOCOL="${OBSIDIAN_PROTOCOL:-http}"
+export OBSIDIAN_HOST="${OBSIDIAN_HOST:-127.0.0.1}"
+export OBSIDIAN_PORT="${OBSIDIAN_PORT:-27123}"
+
+repo_candidates=(
+  "${CODEX_OBSIDIAN_MCP_REPO:-}"
+  "${HOME}/.codex/vendor/mcp-obsidian"
+  "${HOME}/kfold-sampler-optimize/.codex-mcp/obsidian"
+)
+
+for repo in "${repo_candidates[@]}"; do
+  [[ -n "$repo" ]] || continue
+  if [[ -f "$repo/src/index.ts" ]]; then
+    exec "$BUN_BIN" "$repo/src/index.ts"
+  fi
+done
+
+echo "mcp-obsidian repo not found." >&2
+echo "Clone https://github.com/mseok/mcp-obsidian to ${HOME}/.codex/vendor/mcp-obsidian or set CODEX_OBSIDIAN_MCP_REPO." >&2
+exit 1
