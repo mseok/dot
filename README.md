@@ -45,7 +45,7 @@ This repository provides a comprehensive development environment setup including
 - **Editor**: Neovim with native vim.pack plugin management, LSP, and AI completions
 - **Window Management** (macOS): Aerospace + SketchyBar + SKHD + Borders
 - **Development Tools**: Git, fzf, ripgrep, fd, Yazi file manager
-- **AI Tools**: GitHub Copilot, Aider, Claude CLI
+- **AI Tools**: GitHub Copilot
 - **Optional AI Integrations**: launchd-managed ChatGPT <-> Obsidian MCP bridge on macOS
 
 All configurations follow the XDG Base Directory specification (`~/.config/`).
@@ -116,17 +116,9 @@ brew services start skhd
 | **Node.js** | `brew install node` | [nodejs.org](https://nodejs.org/) |
 | **Python** | `brew install python@3.11` | [python.org](https://www.python.org/) |
 
-#### Optional AI Tools
+#### Optional Integration Tools
 
 ```bash
-# Aider (AI pair programming)
-pip install aider-chat
-# or use pipx for isolated install
-pipx install aider-chat
-
-# Claude CLI
-npm install -g @anthropic-ai/claude-code
-
 # GitHub Copilot (requires subscription)
 # Installed automatically via Neovim plugin
 
@@ -520,11 +512,8 @@ dot/
 │   ├── yazi/           # Yazi file manager (XDG)
 │   ├── aerospace/      # Aerospace WM (macOS)
 │   ├── sketchybar/     # SketchyBar (macOS)
-│   ├── aider/          # Aider AI tool
-│   ├── claude/         # Claude CLI
 │   └── vscode/         # VS Code settings
 └── bin/                # Utility scripts
-    ├── aider.sh                 # Launch Aider with Claude
     ├── install_chatgpt_obsidian_mcp.sh # Install launchd-managed Obsidian MCP stack
     ├── initialize_ubuntu.sh     # Ubuntu bootstrap
     ├── tmux-*.sh               # Tmux utilities

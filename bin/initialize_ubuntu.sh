@@ -188,25 +188,6 @@ link_dot_configs() {
   fi
 }
 
-copy_dot_configs() {
-    # Copy (not link) dot configs if they don't exist
-    local src_dir="$HOME/dot/config"
-    local dest_dir="$HOME/.config"
-    mkdir -p "$dest_dir"
-
-    # Copy git config
-    if [[ ! -d "$HOME/.config/git" ]]; then
-      cp -r "$src_dir/git" "$HOME/.config/git"
-      log "Copied $src_dir/git to $HOME/.config/git"
-    fi
-
-    # Copy claude code
-    if [[ ! -d "$HOME/.claude" ]]; then
-      cp -r "$src_dir/claude" "$HOME/.claude"
-      log "Copied $src_dir/claude to $HOME/.claude"
-    fi
-}
-
 install_neovim_appimage() {
   # Install latest Neovim AppImage to $HOME/appl/bin/nvim (FUSE-safe)
   set -euo pipefail
@@ -243,7 +224,7 @@ install_global_npm_clis() {
   log "Installing global npm CLIs..."
   export NVM_DIR="$HOME/.nvm"
   [[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
-  npm install -g @anthropic-ai/claude-code @google/gemini-cli @openai/codex task-master-ai
+  npm install -g @google/gemini-cli @openai/codex task-master-ai
 }
 
 post_instructions() {
@@ -260,7 +241,7 @@ What changed:
     ~/.config/starship.toml -> $HOME/dot/config/starship.toml
     ~/.tmux.conf       	    -> $HOME/dot/config/tmux/.tmux.conf   
 • Neovim installed to: $HOME/appl/bin/nvim
-• npm global CLIs: claude-code, gemini-cli, codex-cli, task-master-ai
+• npm global CLIs: gemini-cli, codex-cli, task-master-ai
 • Appended to ~/.bashrc (idempotent):
     export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"

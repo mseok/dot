@@ -1,3 +1,22 @@
+PATH="${PATH//\$HOME\/.codex\/bin/}"
+PATH="${PATH//::/:}"
+PATH="${PATH#:}"
+PATH="${PATH%:}"
+
+if [[ -d "$HOME/.bun/bin" ]]; then
+    case ":$PATH:" in
+        *":$HOME/.bun/bin:"*) ;;
+        *) export PATH="$HOME/.bun/bin:$PATH" ;;
+    esac
+fi
+
+if [[ -d "$HOME/.codex/bin" ]]; then
+    case ":$PATH:" in
+        *":$HOME/.codex/bin:"*) ;;
+        *) export PATH="$HOME/.codex/bin:$PATH" ;;
+    esac
+fi
+
 export PATH="/usr/local/sbin:$PATH"
 export TERM="xterm-256color"
 export HISFILE=~/.config/zsh/.zsh_hitstory
@@ -52,6 +71,10 @@ source $HOME/dot/bin/slurm-commands.sh
 source $HOME/dot/bin/utilities.sh
 
 export PATH=$HOME/dot/bin:$PATH
+
+if [[ -o interactive ]] && [[ -t 0 ]] && command -v codex >/dev/null 2>&1; then
+    eval "$(codex completion zsh)"
+fi
 
 set -o vi
 

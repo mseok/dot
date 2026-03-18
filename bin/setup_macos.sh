@@ -170,21 +170,6 @@ setup_macos_window_management() {
   log "Window management services started"
 }
 
-setup_ai_tools() {
-  log "Setting up AI tools (optional)..."
-
-  # Aider configuration
-  link_config "$HOME/dot/config/aider/.aider.conf.yml" "$HOME/.aider.conf.yml"
-  link_config "$HOME/dot/config/aider/.aider.model.settings.yml" "$HOME/.aider.model.settings.yml"
-
-  # Claude CLI configuration
-  if [[ -d "$HOME/dot/config/claude" ]]; then
-    link_config "$HOME/dot/config/claude" "$HOME/.claude"
-  fi
-
-  log "AI tools configured"
-}
-
 setup_vscode() {
   log "Setting up VS Code configuration (optional)..."
   local vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
@@ -207,7 +192,6 @@ What was installed:
 • Terminal: WezTerm
 • Window Management: Aerospace, SketchyBar, Borders
 • Languages: Node.js, Python 3.11
-• AI Tools: Aider, Claude CLI configurations
 
 What was configured:
 • Shell integration (zsh/bash)
@@ -238,10 +222,6 @@ Next steps:
    nvim
    :Copilot setup
 
-5. (Optional) Install AI tools:
-   pip3 install aider-chat
-   npm install -g @anthropic-ai/claude-code
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 EOS
 }
@@ -261,7 +241,6 @@ main() {
   setup_wezterm
   setup_yazi
   setup_macos_window_management
-  setup_ai_tools
   setup_vscode
 
   print_post_install
