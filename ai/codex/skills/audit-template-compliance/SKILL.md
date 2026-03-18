@@ -1,8 +1,18 @@
 ---
 name: audit-template-compliance
 description: "Compare a project's LaTeX preamble against the working paper template. Reports missing features, conflicts, and redundancies. Optional --apply mode syncs changes interactively."
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(ls*), Bash(latexmk*), Bash(lualatex*), Bash(biber*), Skill
-argument-hint: [project-path] [--apply]
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - Edit
+  - Write
+  - Bash(ls*)
+  - Bash(latexmk*)
+  - Bash(lualatex*)
+  - Bash(biber*)
+  - Skill
+argument-hint: "[project-path] [--apply]"
 ---
 
 # Template Compliance

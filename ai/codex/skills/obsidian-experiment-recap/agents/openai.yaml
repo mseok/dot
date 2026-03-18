@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Authoring"
+  short_description: "Create and update Obsidian notes via MCP"
+  default_prompt: "Use $obsidian-authoring to create or update an Obsidian note via MCP, including frontmatter, attachments, and provenance handling."
