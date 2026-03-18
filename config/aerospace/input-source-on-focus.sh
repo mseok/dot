@@ -27,7 +27,7 @@ case "$frontmost_app_id" in
   com.apple.Terminal|com.googlecode.iterm2|com.github.wez.wezterm|com.mitchellh.ghostty)
     "$macism_bin" com.apple.keylayout.ABC >/dev/null 2>&1
     ;;
-  com.openai.codex|com.openai.atlas)
+  com.openai.codex)
     "$macism_bin" com.apple.inputmethod.Korean.2SetKorean >/dev/null 2>&1 || \
       "$macism_bin" com.apple.keylayout.2SetHangul >/dev/null 2>&1
     ;;

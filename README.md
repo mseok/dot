@@ -30,6 +30,7 @@ For Ubuntu, see [Ubuntu Installation](#ubuntu-installation) below.
   - [macOS Installation](#macos-installation)
   - [Ubuntu Installation](#ubuntu-installation)
 - [Repository Setup](#repository-setup)
+- [ChatGPT + Obsidian MCP Stack](#chatgpt--obsidian-mcp-stack-macos-optional)
 - [Configuration Details](#configuration-details)
 - [Troubleshooting](#troubleshooting)
 
@@ -45,6 +46,7 @@ This repository provides a comprehensive development environment setup including
 - **Window Management** (macOS): Aerospace + SketchyBar + SKHD + Borders
 - **Development Tools**: Git, fzf, ripgrep, fd, Yazi file manager
 - **AI Tools**: GitHub Copilot, Aider, Claude CLI
+- **Optional AI Integrations**: launchd-managed ChatGPT <-> Obsidian MCP bridge on macOS
 
 All configurations follow the XDG Base Directory specification (`~/.config/`).
 
@@ -127,6 +129,9 @@ npm install -g @anthropic-ai/claude-code
 
 # GitHub Copilot (requires subscription)
 # Installed automatically via Neovim plugin
+
+# Optional: public HTTPS tunnel for the ChatGPT <-> Obsidian MCP bridge
+brew install ngrok
 ```
 
 ### Ubuntu Installation
@@ -258,6 +263,232 @@ brew services start sketchybar
 
 ---
 
+## ChatGPT + Obsidian MCP Stack (macOS, optional)
+
+This repository includes templates and an installer for a launchd-managed stack that keeps the following chain alive on macOS:
+
+1. `Obsidian.app`
+2. The `obsidian-local-rest-api` community plugin
+3. `obsidian-mcp-server@2.0.7`
+4. An `ngrok` HTTPS tunnel
+5. A stable public MCP URL you can register in ChatGPT Developer mode
+
+The generic `bin/setup_macos.sh` bootstrap does **not** enable this automatically because it depends on:
+
+- a real Obsidian vault path
+- a local Obsidian plugin API key
+- an `ngrok` account and authtoken
+- a user decision about which public MCP URL should be exposed
+
+### Files in this Repository
+
+The reusable source of truth lives in:
+
+- `bin/install_chatgpt_obsidian_mcp.sh`
+- `config/chatgpt-obsidian-mcp/settings.env.example`
+- `config/chatgpt-obsidian-mcp/supervisor.zsh`
+- `config/chatgpt-obsidian-mcp/status.zsh`
+- `config/chatgpt-obsidian-mcp/sync-local-rest-config.zsh`
+- `config/chatgpt-obsidian-mcp/chatgpt-obsidian-mcp.plist.template`
+
+After installation, the live files are placed under:
+
+- `~/Library/Application Support/chatgpt-obsidian-mcp/`
+- `~/Library/LaunchAgents/local.chatgpt-obsidian-mcp.plist`
+
+### New Machine Setup
+
+If you want a new macOS machine to reproduce the same setup, use this order exactly.
+
+#### 1. Run the normal macOS bootstrap first
+
+```bash
+git clone https://github.com/mseok/dot.git $HOME/dot
+bash $HOME/dot/bin/setup_macos.sh
+exec $SHELL -l
+```
+
+That gives you the base shell, Node.js, Homebrew, and the rest of the dotfiles environment.
+
+#### 2. Install and open Obsidian
+
+Install Obsidian in `/Applications/Obsidian.app`, then open the vault you want ChatGPT to access.
+
+If you are using iCloud-synced vaults, make sure the vault is fully available on disk before continuing.
+
+#### 3. Enable the Local REST API plugin inside the target vault
+
+Inside Obsidian:
+
+1. Install the community plugin `obsidian-local-rest-api`
+2. Enable the plugin
+3. Turn on the insecure HTTP server for simplicity
+4. Note the vault path you want this machine to expose
+
+The expected default local endpoint is:
+
+```text
+http://127.0.0.1:27123
+```
+
+#### 4. Install and authenticate ngrok
+
+```bash
+brew install ngrok
+ngrok config add-authtoken <YOUR_NGROK_AUTHTOKEN>
+```
+
+Use the same `ngrok` account if you want the same dev domain behavior across machines.
+
+#### 5. Install the dot-managed MCP stack
+
+```bash
+bash $HOME/dot/bin/install_chatgpt_obsidian_mcp.sh
+```
+
+This script does the following:
+
+- creates `~/Library/Application Support/chatgpt-obsidian-mcp/`
+- copies the supervisor/status/sync scripts into that directory
+- installs `obsidian-mcp-server@2.0.7` into the same directory
+- renders the LaunchAgent plist into `~/Library/LaunchAgents/`
+- creates `settings.env` from the committed example if it does not already exist
+
+#### 6. Edit the installed settings file
+
+Edit:
+
+```bash
+$EDITOR "$HOME/Library/Application Support/chatgpt-obsidian-mcp/settings.env"
+```
+
+At minimum, set:
+
+- `VAULT_PATH`
+- `OBSIDIAN_APP`
+- `NGROK_URL`
+
+Example:
+
+```bash
+VAULT_PATH="$HOME/path/to/your/obsidian-vault"
+OBSIDIAN_APP="/Applications/Obsidian.app"
+REST_HOST="127.0.0.1"
+MCP_HTTP_HOST="127.0.0.1"
+MCP_HTTP_PORT="3010"
+NGROK_URL="https://your-ngrok-domain.ngrok-free.dev"
+```
+
+`NGROK_URL` should be the public HTTPS endpoint you want ChatGPT to keep using. The MCP URL registered in ChatGPT will be:
+
+```text
+${NGROK_URL}/mcp
+```
+
+#### 7. Sync the Obsidian Local REST API key into the launchd-readable state file
+
+The Local REST API plugin stores its own key inside the vault. The launchd process should not read the iCloud vault directly on every restart, so this setup copies the current plugin key/port into a separate local file.
+
+Run:
+
+```bash
+$HOME/Library/Application Support/chatgpt-obsidian-mcp/bin/sync-local-rest-config.zsh
+```
+
+This generates:
+
+```text
+~/Library/Application Support/chatgpt-obsidian-mcp/local-rest.env
+```
+
+That file contains the Obsidian plugin API key and should stay local to the machine.
+
+#### 8. Load the LaunchAgent
+
+```bash
+launchctl unload "$HOME/Library/LaunchAgents/local.chatgpt-obsidian-mcp.plist" >/dev/null 2>&1 || true
+launchctl load -w "$HOME/Library/LaunchAgents/local.chatgpt-obsidian-mcp.plist"
+```
+
+This enables automatic startup on login.
+
+#### 9. Verify the stack
+
+```bash
+$HOME/Library/Application Support/chatgpt-obsidian-mcp/bin/status.zsh
+```
+
+Healthy output should show:
+
+- Obsidian running
+- REST API listening on `127.0.0.1:27123` (or your configured port)
+- MCP HTTP listening on `127.0.0.1:3010`
+- a loaded LaunchAgent entry
+
+#### 10. Register the MCP URL in ChatGPT
+
+In ChatGPT Developer mode, register:
+
+```text
+https://your-ngrok-domain.ngrok-free.dev/mcp
+```
+
+The server itself is local, but ChatGPT requires an HTTPS MCP endpoint, so the `ngrok` tunnel is the external entrypoint.
+
+### Operational Notes
+
+#### What auto-recovers after login
+
+The supervisor process waits for dependencies in the correct order:
+
+1. Obsidian is opened if it is not already running
+2. The Local REST API port is polled until available
+3. `obsidian-mcp-server` is started
+4. `ngrok` is started with the configured public URL
+
+If one of those processes dies later, the supervisor restarts the stack.
+
+#### What you must rerun manually
+
+If any of the following change, rerun the sync script:
+
+- the Obsidian Local REST API plugin API key
+- the plugin port
+- whether the plugin uses HTTP or HTTPS
+
+Command:
+
+```bash
+$HOME/Library/Application Support/chatgpt-obsidian-mcp/bin/sync-local-rest-config.zsh
+```
+
+If `settings.env` changes, reload the LaunchAgent:
+
+```bash
+launchctl unload "$HOME/Library/LaunchAgents/local.chatgpt-obsidian-mcp.plist" >/dev/null 2>&1 || true
+launchctl load -w "$HOME/Library/LaunchAgents/local.chatgpt-obsidian-mcp.plist"
+```
+
+#### Secret handling
+
+Do **not** commit these machine-local files:
+
+- `~/Library/Application Support/chatgpt-obsidian-mcp/local-rest.env`
+- `~/Library/Application Support/ngrok/ngrok.yml`
+
+They contain the Obsidian API key and the ngrok authtoken.
+
+#### Debugging
+
+Check:
+
+- `~/Library/Application Support/chatgpt-obsidian-mcp/logs/launchd.out.log`
+- `~/Library/Application Support/chatgpt-obsidian-mcp/logs/launchd.err.log`
+- `~/Library/Application Support/chatgpt-obsidian-mcp/logs/mcp-server.log`
+- `~/Library/Application Support/chatgpt-obsidian-mcp/logs/ngrok.log`
+
+---
+
 ## Configuration Details
 
 ### XDG Base Directory Specification
@@ -283,6 +514,7 @@ dot/
 │   ├── zsh/            # Zsh shell
 │   ├── bash/           # Bash shell
 │   ├── git/            # Git config
+│   ├── chatgpt-obsidian-mcp/ # Templates for the launchd-managed MCP bridge
 │   ├── starship/       # Starship prompt (XDG)
 │   ├── wezterm/        # WezTerm terminal (XDG)
 │   ├── yazi/           # Yazi file manager (XDG)
@@ -293,6 +525,7 @@ dot/
 │   └── vscode/         # VS Code settings
 └── bin/                # Utility scripts
     ├── aider.sh                 # Launch Aider with Claude
+    ├── install_chatgpt_obsidian_mcp.sh # Install launchd-managed Obsidian MCP stack
     ├── initialize_ubuntu.sh     # Ubuntu bootstrap
     ├── tmux-*.sh               # Tmux utilities
     └── utilities.sh            # Cross-platform helpers
@@ -407,4 +640,3 @@ tail startup.log
 - **Aerospace Guide**: https://nikitabobko.github.io/AeroSpace/guide
 - **SketchyBar Config**: https://felixkratz.github.io/SketchyBar/config/
 - **Starship Config**: https://starship.rs/config/
-
