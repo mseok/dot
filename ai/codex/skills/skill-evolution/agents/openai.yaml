@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Evolution"
+  short_description: "Continuously upgrade existing Codex skills"
+  default_prompt: "Use $skill-evolution to inspect a Codex skill, apply the highest-leverage upgrade, and validate the revision."
