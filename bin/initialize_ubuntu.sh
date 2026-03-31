@@ -468,6 +468,11 @@ install_optional_tmux_plugins() {
   git clone --depth 1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
 }
 
+install_color_profile() {
+  tic -x -o $HOME/.terminfo "$REPO_ROOT/config/terminal/wezterm.src"
+  tic -x -o $HOME/.terminfo "$REPO_ROOT/config/terminal/tmux-256color.src"
+}
+
 link_dot_configs() {
   ensure_link "$REPO_ROOT/config/nvim" "$HOME/.config/nvim"
   ensure_link "$REPO_ROOT/config/tmux/.tmux.conf" "$HOME/.tmux.conf"

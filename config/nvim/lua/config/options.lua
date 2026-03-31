@@ -36,9 +36,11 @@ else
     name = "OSC 52",
     copy = {
       ["+"] = osc.copy("+"),
+      ["*"] = osc.copy("*"),
     },
     paste = {
       ["+"] = osc.paste("+"),
+      ["*"] = osc.paste("*"),
     },
   }
 end

@@ -1,42 +1,52 @@
 local map = vim.keymap.set
 
--- Treesitter configuration (using new API for nvim-treesitter main branch)
--- Install parsers asynchronously (will be no-op if already installed)
-require("nvim-treesitter.configs").setup({
-  ensure_installed = { "python", "bash", "lua", "vim", "vimdoc", "query" },
-  highlight = { enable = true },
+if vim.fn.has("nvim-0.11") == 1 then
+  local ok, configs = pcall(require, "nvim-treesitter.configs")
+  if ok then
+    configs.setup({
+      ensure_installed = { "python", "bash", "lua", "vim", "vimdoc", "query" },
+      highlight = { enable = true },
 
-  textobjects = {
-    select = {
-      enable = true,
+      textobjects = {
+        select = {
+          enable = true,
 
-      -- Automatically jump forward to textobj if cursor is before it
-      lookahead = true,
+          -- Automatically jump forward to textobj if cursor is before it
+          lookahead = true,
 
-      keymaps = {
-        ["af"] = "@function.outer",
-        ["if"] = "@function.inner",
+          keymaps = {
+            ["af"] = "@function.outer",
+            ["if"] = "@function.inner",
 
-        ["ac"] = "@class.outer",
-        ["ic"] = "@class.inner",
+            ["ac"] = "@class.outer",
+            ["ic"] = "@class.inner",
 
-        ["al"] = "@loop.outer",
-        ["il"] = "@loop.inner",
+            ["al"] = "@loop.outer",
+            ["il"] = "@loop.inner",
 
-        ["aa"] = "@parameter.outer",
-        ["ia"] = "@parameter.inner",
+            ["aa"] = "@parameter.outer",
+            ["ia"] = "@parameter.inner",
 
-        ["ai"] = "@conditional.outer",
-        ["ii"] = "@conditional.inner",
+            ["ai"] = "@conditional.outer",
+            ["ii"] = "@conditional.inner",
 
-        ["ab"] = "@block.outer",
-        ["ib"] = "@block.inner",
+            ["ab"] = "@block.outer",
+            ["ib"] = "@block.inner",
 
-        ["acm"] = "@comment.outer",
+            ["acm"] = "@comment.outer",
+          },
+        },
       },
-    },
-  },
-})
+    })
+  end
+else
+  vim.schedule(function()
+    vim.notify(
+      "Tree-sitter disabled: this config expects Neovim 0.11+ for the current nvim-treesitter setup.",
+      vim.log.levels.WARN
+    )
+  end)
+end
 
 -- nvim-tree file explorer
 require("nvim-tree").setup({
