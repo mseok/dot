@@ -1,6 +1,7 @@
 # Failure Taxonomy
 
-Use this taxonomy to convert vague "the skill feels weak" feedback into a concrete patch target.
+Use this taxonomy to convert vague "the skill feels weak" feedback into a
+concrete patch target.
 
 ## 1. Trigger failure
 
@@ -17,7 +18,8 @@ Patch target:
 
 Typical fix:
 
-- Add specific request phrasings, file types, task names, and exclusions to the description.
+- Add specific request phrasings, file types, task names, and exclusions to the
+  description.
 
 ## 2. Intake failure
 
@@ -26,49 +28,58 @@ Symptoms:
 - The skill asks for too much information up front.
 - The skill misses one blocking field and proceeds with weak assumptions.
 - The same clarification is asked across multiple sessions.
+- Evidence-light requests stall instead of using a default audit path.
 
 Patch target:
 
 - `SKILL.md` intake contract
-- Supporting reference with defaults
+- A reference file with defaults when needed
 
 Typical fix:
 
-- Define a minimal contract, defaults, and the exact missing fields that justify a question.
+- Define the minimum evidence needed to choose a mode or patch depth.
+- State the exact missing artifact that justifies asking a question.
 
 ## 3. Workflow failure
 
 Symptoms:
 
 - The skill knows the task but chooses the wrong order.
-- It mixes setup, execution, and reporting in a confusing way.
-- Good steps exist, but they are hard to discover from the quick start.
+- Setup, execution, and reporting are mixed together.
+- Good steps exist but the preferred path is hard to discover.
 
 Patch target:
 
 - `SKILL.md`
-- Possibly a workflow reference
+- Possibly one workflow reference
 
 Typical fix:
 
-- Reorder the steps, collapse branches, and make the preferred path explicit.
+- Reorder the steps, collapse ambiguous branches, and make the preferred path
+  explicit.
 
 ## 4. Scope failure
 
 Symptoms:
 
-- The skill claims to handle tasks it should redirect.
-- It tries to combine prediction, benchmarking, training, and ops in one path.
-- It makes promises that depend on unavailable tools or environments.
+- The skill promises tasks it should redirect away from.
+- It depends on tools or environments that are not available.
+- The default tool, editor, or medium no longer matches the real job.
+- Old branches or references for abandoned use cases still remain and confuse
+  the main workflow.
 
 Patch target:
 
 - Frontmatter `description`
-- `SKILL.md` scope or caveats
+- `SKILL.md` scope and caveats
+- Obsolete references or helper guides
 
 Typical fix:
 
-- Narrow the promises and add clear redirect rules for out-of-scope requests.
+- Narrow the promise, add redirect rules, and prune dead branches or stale
+  references.
+- If the job stays the same but the medium changes, retarget the skill and
+  demote the old medium to fallback interoperability only.
 
 ## 5. Reference failure
 
@@ -84,7 +95,9 @@ Patch target:
 
 Typical fix:
 
-- Move detailed material into a reference file and link it from the relevant step.
+- Move detailed material into a reference file and link it from the relevant
+  step.
+- Delete references that only served abandoned branches.
 
 ## 6. Determinism failure
 
@@ -92,7 +105,7 @@ Symptoms:
 
 - The same helper code gets rewritten every time.
 - Repeated manual steps are error-prone.
-- Minor format checks or audits take too long to do by hand.
+- Minor audits or format checks take too long by hand.
 
 Patch target:
 
@@ -108,16 +121,17 @@ Symptoms:
 
 - The final answer shape varies too much.
 - The skill omits critical assumptions or follow-up checks.
-- The user receives commands but not the expected artifacts or memo shape.
+- The user receives commands but not the expected deliverable shape.
 
 Patch target:
 
 - `SKILL.md` output contract
-- Output template reference
+- Output template reference when needed
 
 Typical fix:
 
-- State the required sections, assumptions, deliverables, and verification checklist.
+- State the required sections, assumptions, deliverables, and verification
+  checklist.
 
 ## 8. Validation failure
 
@@ -125,16 +139,18 @@ Symptoms:
 
 - Stale placeholders or broken links survive multiple revisions.
 - UI metadata drifts from the skill body.
-- The skill looks fine on inspection but fails basic hygiene checks.
+- The audit path creates false confidence because it checks only structure.
 
 Patch target:
 
 - `scripts/`
 - Release checklist
+- Mode test prompts
 
 Typical fix:
 
-- Add a fast audit script and run it together with `quick_validate.py`.
+- Keep structural validation fast, but pair it with one realistic behavioral
+  prompt.
 
 ## 9. Environment boundary failure
 
@@ -151,4 +167,5 @@ Patch target:
 
 Typical fix:
 
-- Make the boundary explicit and add a remote-only verification checklist where needed.
+- Make the boundary explicit and add a remote-only verification checklist where
+  needed.

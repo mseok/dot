@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gov R&D Report"
+  short_description: "Draft official Korean government project result reports"
+  default_prompt: "Use $gov-rnd-report-writer to draft or revise a Korean government R&D result report section from the provided writing guide, evaluation criteria, and evidence."

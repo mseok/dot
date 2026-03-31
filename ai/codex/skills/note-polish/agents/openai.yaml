@@ -1,0 +1,4 @@
+interface:
+  display_name: "Note Polish"
+  short_description: "Polish note structure and tone"
+  default_prompt: "Use $note-polish to revise this note while preserving its intent, note type, and tone."

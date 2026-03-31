@@ -1,0 +1,4 @@
+interface:
+  display_name: "Recent Notes Research Questions"
+  short_description: "Turn recent notes into research questions"
+  default_prompt: "Use $recent-notes-research-questions to mine my latest Obsidian notes for creative, testable research questions."

@@ -1,6 +1,12 @@
 ---
 name: modular-python-deep-learning
-description: Write and refactor modular, readable Python code for deep learning research (PyTorch/JAX), following Python philosophy (PEP 8/20) and Karpathy-style coding guidelines (think before coding, simplicity first, surgical changes, goal-driven execution). Use for structuring training/eval code, splitting monolithic scripts into modules, designing clean APIs/configs, improving maintainability, and making experiments reproducible and HPC-friendly.
+description: >
+  Use when the user wants to write, refactor, or modularize deep learning
+  research code in Python (PyTorch/JAX): split monolithic train/eval scripts
+  into importable modules, define explicit tensor-shape and I/O contracts, clean
+  up configs and public APIs, separate pure compute from side effects, add
+  smoke-test hooks, and prepare HPC-friendly handoffs without implying local
+  training or inference.
 ---
 
 # Modular Python for Deep Learning
@@ -60,4 +66,3 @@ If the user mentions remote HPC/Slurm:
 - Summarize module responsibilities and public entrypoints.
 - Document any new CLI flags/config fields and defaults.
 - Call out any intentional behavior changes and migration notes (checkpoint compatibility, metric name changes).
-

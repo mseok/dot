@@ -1,0 +1,73 @@
+{
+  "name": "skill-evolution-score-gate",
+  "scale_max": 10.0,
+  "threshold_default": 9.0,
+  "rubric": [
+    {
+      "id": "trigger_scope",
+      "label": "Trigger / scope clarity",
+      "weight": 1.0
+    },
+    {
+      "id": "mode_selection",
+      "label": "Mode selection",
+      "weight": 1.0
+    },
+    {
+      "id": "patch_depth",
+      "label": "Patch depth selection",
+      "weight": 1.0
+    },
+    {
+      "id": "intake_minimality",
+      "label": "Intake minimality",
+      "weight": 1.0
+    },
+    {
+      "id": "taxonomy_mapping",
+      "label": "Taxonomy-to-action mapping",
+      "weight": 1.0
+    },
+    {
+      "id": "workflow_coherence",
+      "label": "Workflow coherence",
+      "weight": 1.0
+    },
+    {
+      "id": "role_separation",
+      "label": "Implementation / Evaluation role separation",
+      "weight": 2.0
+    },
+    {
+      "id": "validation_integrity",
+      "label": "Validation integrity",
+      "weight": 2.0
+    }
+  ],
+  "required_cases": [
+    {
+      "id": "implementer-rubric",
+      "role": "implementation",
+      "prompt_id": "implementer-rubric"
+    },
+    {
+      "id": "evaluator-score",
+      "role": "evaluation",
+      "prompt_id": "evaluator-score"
+    },
+    {
+      "id": "loop-until-threshold",
+      "role": "loop",
+      "prompt_id": "loop-until-threshold"
+    }
+  ],
+  "required_report_flags": {
+    "independent_evaluation": true
+  },
+  "required_closeout_fields": [
+    "rubric",
+    "implementation_score",
+    "independent_evaluation_score",
+    "threshold_met"
+  ]
+}

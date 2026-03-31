@@ -2,13 +2,17 @@
 """
 Fast structural audit for Codex skills.
 
-This script complements quick_validate.py by checking for:
+This script complements quick_validate.py by checking structural hygiene only.
+It does not claim behavioral correctness or purpose fit.
+
+Checks include:
 - TODO placeholders
 - missing or weak "when to use" wording
 - dangling local markdown links in SKILL.md
 - missing agents/openai.yaml metadata
 - missing $skill-name mention in default_prompt
 - oversized SKILL.md files that should likely be split
+- optional skill-specific invariants for known local skills
 """
 
 import argparse
@@ -16,8 +20,46 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
+
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 TODO_RE = re.compile(r"\[TODO:|TODO\b", re.IGNORECASE)
+FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n?", re.DOTALL)
+
+SKILL_SPECIFIC_EXPECTATIONS = {
+    "skill-evolution": {
+        "required_markdown_terms": (
+            "diagnose-only",
+            "patch",
+            "retarget",
+            "narrow patch",
+            "deep patch",
+            "`Diagnosis`",
+            "`Mode`",
+            "`Patch depth`",
+            "`Rubric`",
+            "`Revision plan`",
+            "`Changes`",
+            "`Validation`",
+            "`Scores`",
+            "`Next prompt`",
+            "references/deep-patch-playbook.md",
+            "references/evaluation-loop.md",
+            "references/score-gate-case-pack.json",
+            "references/specialized-upgrade-cases.md",
+            "references/mode-test-prompts.md",
+            "implementation agent",
+            "evaluation agent",
+            "independent",
+            "score_gate.py",
+            "machine-readable",
+        ),
+        "required_prompt_terms": ("diagnose", "score", "patch", "retarget", "evaluation"),
+    }
+}
 
 
 def load_text(path: Path) -> str:
@@ -32,18 +74,75 @@ def strip_quotes(value: str) -> str:
 
 
 def extract_frontmatter(markdown: str) -> dict:
-    match = re.match(r"^---\n(.*?)\n---\n?", markdown, re.DOTALL)
+    match = FRONTMATTER_RE.match(markdown)
     if not match:
         raise ValueError("No valid YAML frontmatter found in SKILL.md")
-    frontmatter = {}
+    frontmatter_text = match.group(1)
+    if yaml is not None:
+        frontmatter = yaml.safe_load(frontmatter_text)
+        if not isinstance(frontmatter, dict):
+            raise ValueError("Frontmatter must parse to a YAML mapping")
+        return frontmatter
+    return fallback_frontmatter(frontmatter_text)
+
+
+def fallback_frontmatter(frontmatter_text: str) -> dict:
+    data = {}
+    lines = frontmatter_text.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            i += 1
+            continue
+        if line.startswith((" ", "\t")):
+            i += 1
+            continue
+        if ":" not in line:
+            raise ValueError(f"Unsupported frontmatter line without key separator: {line}")
+        key, raw_value = line.split(":", 1)
+        key = key.strip()
+        value = raw_value.lstrip()
+        if value in {">", "|"}:
+            i += 1
+            block = []
+            while i < len(lines):
+                block_line = lines[i]
+                if block_line.startswith("  "):
+                    block.append(block_line[2:])
+                    i += 1
+                    continue
+                if block_line.startswith("\t"):
+                    block.append(block_line.lstrip("\t"))
+                    i += 1
+                    continue
+                if not block_line.strip():
+                    block.append("")
+                    i += 1
+                    continue
+                break
+            data[key] = "\n".join(block).strip()
+            continue
+        data[key] = strip_quotes(value.strip())
+        i += 1
+    if not isinstance(data, dict):
+        raise ValueError("Frontmatter must parse to a YAML-like mapping")
+    return data
+
+
+def has_risky_plain_description(markdown: str) -> bool:
+    match = FRONTMATTER_RE.match(markdown)
+    if not match:
+        return False
     for raw_line in match.group(1).splitlines():
-        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+        if not raw_line.lstrip().startswith("description:"):
             continue
-        if ":" not in raw_line:
-            continue
-        key, value = raw_line.split(":", 1)
-        frontmatter[key.strip()] = strip_quotes(value)
-    return frontmatter
+        if re.match(r'^\s*description:\s*([\'"].*|[>|].*)$', raw_line):
+            return False
+        value = raw_line.split(":", 1)[1]
+        return ": " in value
+    return False
 
 
 def extract_interface_fields(yaml_text: str) -> dict:
@@ -96,6 +195,12 @@ def audit_skill(skill_dir: Path) -> tuple[int, int, int, list[str]]:
     skill_name = str(frontmatter.get("name", "")).strip()
     description = str(frontmatter.get("description", "")).strip()
 
+    if yaml is None:
+        warnings += 1
+        lines.append(
+            "WARN PyYAML unavailable; YAML syntax validation skipped, using degraded frontmatter parsing"
+        )
+
     if TODO_RE.search(markdown):
         failures += 1
         lines.append("FAIL TODO placeholder(s) remain in SKILL.md")
@@ -103,12 +208,22 @@ def audit_skill(skill_dir: Path) -> tuple[int, int, int, list[str]]:
         passes += 1
         lines.append("PASS no TODO placeholders found")
 
-    if "use when" not in description.lower():
+    normalized_description = " ".join(description.lower().split())
+    if "use when" not in normalized_description:
         warnings += 1
         lines.append("WARN description does not include explicit 'Use when' wording")
     else:
         passes += 1
         lines.append("PASS description includes explicit trigger wording")
+
+    if has_risky_plain_description(markdown):
+        warnings += 1
+        lines.append(
+            "WARN description is an unquoted plain scalar containing ': '; quote it or use '>'"
+        )
+    else:
+        passes += 1
+        lines.append("PASS description avoids risky plain-scalar YAML style")
 
     skill_lines = markdown.count("\n") + 1
     if skill_lines > 500:
@@ -164,12 +279,45 @@ def audit_skill(skill_dir: Path) -> tuple[int, int, int, list[str]]:
                 expected_skill_ref = f"${skill_name}" if skill_name else "$skill-name"
                 if expected_skill_ref not in default_prompt:
                     warnings += 1
-                    lines.append(
-                        f"WARN default_prompt does not mention {expected_skill_ref}"
-                    )
+                    lines.append(f"WARN default_prompt does not mention {expected_skill_ref}")
                 else:
                     passes += 1
                     lines.append("PASS default_prompt mentions the skill explicitly")
+
+                expectations = SKILL_SPECIFIC_EXPECTATIONS.get(skill_name)
+                if expectations:
+                    missing_terms = [
+                        term
+                        for term in expectations["required_markdown_terms"]
+                        if term not in markdown
+                    ]
+                    if missing_terms:
+                        failures += 1
+                        lines.append(
+                            "FAIL SKILL.md missing expected structural term(s): "
+                            + ", ".join(missing_terms)
+                        )
+                    else:
+                        passes += 1
+                        lines.append(
+                            "PASS SKILL.md includes expected mode, patch-depth, output, and reference terms"
+                        )
+
+                    default_prompt_lower = default_prompt.lower()
+                    missing_prompt_terms = [
+                        term
+                        for term in expectations["required_prompt_terms"]
+                        if term not in default_prompt_lower
+                    ]
+                    if missing_prompt_terms:
+                        failures += 1
+                        lines.append(
+                            "FAIL default_prompt missing expected mode term(s): "
+                            + ", ".join(missing_prompt_terms)
+                        )
+                    else:
+                        passes += 1
+                        lines.append("PASS default_prompt includes expected mode terms")
 
     return failures, warnings, passes, lines
 
@@ -186,6 +334,7 @@ def main() -> int:
     for line in lines:
         print(line)
     print(f"Summary: {failures} FAIL, {warnings} WARN, {passes} PASS")
+    print("Note: PASS means structural hygiene only, not behavioral correctness.")
 
     return 1 if failures else 0
 

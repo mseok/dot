@@ -1,24 +1,30 @@
 # Upgrade Loop
 
-Use this loop when iterating on an existing skill.
+Use this sequence when iterating on an existing skill.
 
-## Step 1. Start from a concrete artifact
+## 1. Start from the strongest evidence available
 
-Good artifacts:
+Prefer this order:
 
-- a user complaint
-- a transcript where the skill underperformed
-- a diff showing repeated manual edits
-- a missing deliverable or broken output shape
+1. an explicit failed artifact, transcript, or user complaint
+2. the current request plus the first audit finding
+3. the most recent real failure you can point to
 
-Bad artifacts:
+If one missing artifact would materially change the chosen mode or patch depth,
+ask for that single item. Otherwise proceed.
 
-- "make it better"
-- generic brainstorming without a failure mode
+## 2. Choose mode and patch depth
 
-If there is no concrete artifact, ask for one example prompt or choose the most recent real failure.
+- `diagnose-only`: analyze and propose changes without editing
+- `patch`: fix the existing skill
+- `retarget`: change the default tool, editor, or medium while keeping the same
+  job
 
-## Step 2. Audit before patching
+If the mode is `patch`, read
+[`deep-patch-playbook.md`](deep-patch-playbook.md) to decide whether the work
+stays `narrow patch` or escalates to `deep patch`.
+
+## 3. Audit before editing
 
 Run:
 
@@ -29,47 +35,37 @@ python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_val
 
 Use the audit output to separate structural issues from behavioral ones.
 
-If `quick_validate.py` fails with `ModuleNotFoundError: yaml`, note that the system validator depends on `PyYAML`. Do not hide the failure. Either fix the Python environment or continue with `skill_audit.py` as the local minimum gate and mention the missing dependency in the closeout.
+If `quick_validate.py` fails with `ModuleNotFoundError: yaml`, call that out
+explicitly. Do not pretend the validator passed.
 
-## Step 3. Match the fix to the failure
+## 4. Match the fix to the failure
 
-- Trigger problem: patch frontmatter.
-- Missing decision point: patch `SKILL.md`.
-- Long, branch-specific detail: add a reference.
-- Repeated helper logic: add a script.
-- Stale UI affordance: patch `agents/openai.yaml`.
+- Trigger or scope problem: patch frontmatter first
+- Intake, workflow, or output problem: patch `SKILL.md`
+- Branch-specific detail: add or prune a reference
+- Repeated deterministic logic: add or repair a script
+- Stale UI affordance: patch `agents/openai.yaml`
 
-Resist broad rewrites unless the existing skill structure is actively blocking progress.
+Escalate to `deep patch` only when repeated failures or multi-layer drift
+justify coordinated changes across several of those surfaces.
 
-## Step 4. Keep the patch narrow
+## 5. Re-validate
 
-For one iteration, prefer one of these scopes:
-
-- one new workflow branch
-- one rewritten quick-start section
-- one new reference file
-- one new helper script
-- one output-contract improvement
-
-Large rewrites should be justified by repeated failures across multiple prompts.
-
-## Step 5. Re-validate
-
-Run the same validators after patching. Do not stop at visual inspection.
+Run the same structural validators after editing, then exercise one realistic
+mode-specific prompt from [`mode-test-prompts.md`](mode-test-prompts.md).
 
 Interpretation:
 
-- `FAIL`: structural issue or broken path; fix before shipping
-- `WARN`: acceptable if intentional, but mention it in the closeout
-- `PASS`: no structural issues detected by the local audit
+- `FAIL`: broken path or structural issue; fix before shipping
+- `WARN`: acceptable only if explicitly called out in the closeout
+- `PASS`: no structural issue detected by the local audit
 
-## Step 6. Pick the next real test prompt
+## 6. Close out clearly
 
-End every revision with one prompt that should exercise the new behavior.
+State:
 
-Examples:
-
-- "Use `$skill-name` to verify this HPC preflight spec before I submit the Slurm job."
-- "Use `$skill-name` to turn PDB ID plus SMILES into a docking handoff and scoring memo."
-
-The test prompt should be narrow enough that success or failure is obvious.
+- the failure-taxonomy class
+- the chosen mode
+- the chosen patch depth
+- why the work did or did not escalate to `deep patch`
+- one next prompt that should exercise the revised path

@@ -1,81 +1,178 @@
 ---
 name: skill-evolution
-description: Continuously improve existing Codex skills through failure-driven iteration. Use when the user wants to upgrade, harden, version up, or refactor a skill after real usage; tighten trigger descriptions, restructure SKILL.md, add references/scripts/assets, or add validation so the next invocation performs better.
+description: >
+  Audit, score, patch, or retarget an existing Codex skill after real friction.
+  Use when the user wants to review a skill without editing it, repair weak
+  triggering or workflow drift, harden validation, run an implementation-agent
+  and evaluation-agent loop with a rubric and independent scoring, prune
+  obsolete branches, or switch the skill's default tool, editor, or output
+  medium without creating a new skill. Escalate patch work from narrow to deep
+  only when repeated failures or multi-layer drift justify a wider rewrite.
 ---
 
 # Skill Evolution
 
-Use this skill to revise an existing skill after observing actual friction. Prefer the smallest high-leverage change that makes future invocations trigger earlier, ask fewer unnecessary questions, and produce more reliable outputs.
+Use this skill to improve an existing skill after observing real friction.
+Default to the smallest change that removes the failure mode, but treat deep
+patching as a first-class path when the skill has drifted across multiple
+layers.
+
+## Mode selection
+
+Choose one mode before editing:
+
+- `diagnose-only`: audit the target skill, classify the failure mode, and
+  propose changes without editing anything
+- `patch`: update the existing skill while preserving the same job; default to
+  `narrow patch`, then escalate to `deep patch` only when the evidence justifies
+  it
+- `retarget`: keep the same job but change the skill's default tool, editor, or
+  output medium; old behavior becomes fallback interoperability only
+
+If the real request is "create a new skill from scratch," switch to
+`$skill-creator`.
+
+## Patch depth selection
+
+Only choose a patch depth when the mode is `patch`.
+
+- `narrow patch`: one frontmatter fix, one workflow rewrite, one reference
+  update, one script change, or one output-contract repair
+- `deep patch`: multiple layers drifted at once, such as `SKILL.md`,
+  `references/`, `scripts/`, `agents/openai.yaml`, and the output contract no
+  longer matching each other
+
+Read [`references/deep-patch-playbook.md`](references/deep-patch-playbook.md)
+when deciding whether to escalate.
 
 ## Quick start
 
-- Read the target skill's `SKILL.md`, `agents/openai.yaml`, and only the directly relevant resources.
-- Run `python3 scripts/skill_audit.py <skill-dir>` for a fast structural audit.
-- Load `references/failure-taxonomy.md` to classify the observed problem.
-- Load `references/upgrade-loop.md` to choose the change type and implementation order.
-- Load `references/release-checklist.md` before finalizing the revision.
+- Decide the mode: `diagnose-only`, `patch`, or `retarget`.
+- If the user wants a score, a threshold such as `>=9`, or separate
+  implementation and evaluation roles, read
+  [`references/evaluation-loop.md`](references/evaluation-loop.md) before
+  patching.
+- If the scored path uses the default harness, load
+  [`references/score-gate-case-pack.json`](references/score-gate-case-pack.json)
+  and validate the evaluator report with
+  `python3 scripts/score_gate.py references/score-gate-case-pack.json <evaluator-report.json>`.
+- If the mode is `patch`, decide between `narrow patch` and `deep patch`.
+- Read the target skill's `SKILL.md`, `agents/openai.yaml`, and only the
+  directly relevant references or scripts.
+- Run `python3 scripts/skill_audit.py <skill-dir>` for a structural audit.
+- Run
+  `python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
+  when a real YAML parse check is available.
+- Classify the problem with
+  [`references/failure-taxonomy.md`](references/failure-taxonomy.md).
+- Use [`references/upgrade-loop.md`](references/upgrade-loop.md) for sequencing.
+- Load [`references/specialized-upgrade-cases.md`](references/specialized-upgrade-cases.md)
+  only when the failure is about visual excess, broken rendered artifacts,
+  external style transfer, or medium retargeting.
+- Before closing, read
+  [`references/release-checklist.md`](references/release-checklist.md) and pick
+  one prompt from
+  [`references/mode-test-prompts.md`](references/mode-test-prompts.md).
 
-## Operating rules
+## Intake contract
 
-- Upgrade from concrete evidence: user feedback, failed outputs, repeated clarifications, missing resources, or stale guidance.
-- Fix trigger quality first. If the skill does not activate for the right requests, improve the frontmatter description before expanding the body.
-- Keep `SKILL.md` lean. Move detailed patterns into `references/`, deterministic logic into `scripts/`, and reusable deliverables into `assets/`.
-- Do not add generic prose "just in case." Every added line should remove a known failure mode or reduce future ambiguity.
-- Preserve environment boundaries. If the target skill concerns HPC-only work, do not imply that training, inference, or experiments were executed locally.
-- When adding scripts, keep them local-utility focused and testable without remote infrastructure.
-- If the request is really "create a new skill from scratch," switch to `$skill-creator` or apply the same initialization workflow first.
+- Ask only for the single missing artifact that would materially change the
+  chosen mode or patch depth.
+- If the user asks for scored improvement and no rubric is provided, the
+  implementation agent defines the rubric before patching.
+- If the user asks for separate implementation and evaluation agents, the
+  implementation agent owns the rubric and patch plan, while the evaluation
+  agent scores independently from that rubric alone.
+- In the default score-gated path, keep the evaluator report machine-readable
+  so it can be checked with `scripts/score_gate.py`.
+- If the request is "evaluate" or "improve this skill" without a failing
+  example, use the current request plus the first audit finding as enough
+  evidence to proceed.
+- Use `narrow patch` by default.
+- Escalate to `deep patch` only when at least one of these is true:
+  - the current request plus the first audit finding already shows drift across
+    two or more layers
+  - the same failure pattern appears in two or more prompts, sessions, or
+    revisions
+  - stale branches, obsolete references, or wrong-default-medium leakage are
+    materially confusing the skill
+- Preserve environment boundaries. If the target skill concerns HPC-only work,
+  do not imply local execution happened.
 
-## Upgrade workflow
+## Workflow
 
 1. Pin down the upgrade driver:
-   - one wrong answer pattern
-   - one missing workflow
-   - one repeated clarification
-   - one validation gap
-2. Run `scripts/skill_audit.py` on the target skill and collect the warnings.
-3. Classify the problem with `references/failure-taxonomy.md`.
-4. Choose the smallest effective fix:
-   - frontmatter description
-   - `SKILL.md` workflow
-   - `references/`
-   - `scripts/`
-   - `agents/openai.yaml`
-5. Patch the skill.
-6. Validate the revision:
-   - run `python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
-   - rerun `python3 scripts/skill_audit.py <skill-dir>`
-   - if `quick_validate.py` fails because `PyYAML` is unavailable in the local Python, report that explicitly and treat `skill_audit.py` as the minimum local gate until the environment is fixed
-7. Close with:
-   - what failure mode was removed
-   - what remains unresolved
-   - what real prompt should exercise the revised path next
+   - explicit failed artifact or transcript
+   - current request plus the first audit finding
+   - most recent real failure you can point to
+2. Choose the mode.
+3. If the request is score-gated or requires separate roles, define or confirm
+   the rubric and threshold, then read
+   [`references/evaluation-loop.md`](references/evaluation-loop.md).
+4. If the mode is `patch`, choose `narrow patch` or `deep patch`.
+5. Read the target skill's core files and only the relevant helpers.
+6. Run structural validation before editing:
+   - `python3 scripts/skill_audit.py <skill-dir>`
+   - `python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
+7. Classify the failure using
+   [`references/failure-taxonomy.md`](references/failure-taxonomy.md).
+8. Choose the smallest effective change:
+   - frontmatter description for trigger or scope failures
+   - `SKILL.md` for workflow, intake, or output-contract failures
+   - `references/` for branch-specific detail or specialized cases
+   - `scripts/` for deterministic repeated logic
+   - `agents/openai.yaml` for stale UI metadata
+9. If the work is `deep patch`, also:
+   - prune obsolete branches, dead references, or stale helper logic
+   - deduplicate repeated guidance between `SKILL.md` and `references/`
+   - realign `SKILL.md`, `references/`, `scripts/`, and `agents/openai.yaml`
+   - redesign the validation path when the current one creates false confidence
+10. Validate the revision:
+   - rerun `quick_validate.py`
+   - rerun `skill_audit.py`
+   - if the driver was a concrete failed artifact, rerun that artifact path once
+     under the revised rules
+   - if the default score-gated harness is active, run
+     `python3 scripts/score_gate.py references/score-gate-case-pack.json <evaluator-report.json>`
+   - if the request is score-gated, rerun the independent evaluation loop until
+     the evaluator reaches the requested threshold or states a blocker
+11. Close with the required output contract and one realistic next prompt.
 
 ## Change selection rules
 
-- Edit the frontmatter description when trigger coverage is the problem.
-- Edit `SKILL.md` when the workflow order, scope boundaries, or output contract are unclear.
-- Add `references/` when the skill needs detailed domain guidance that should load only on demand.
-- Add `scripts/` when the same deterministic logic would otherwise be rewritten every time.
-- Edit `agents/openai.yaml` when the UI metadata or default prompt is stale.
-
-## High-value targets
-
-- Trigger misses: description is too narrow, too vague, or missing concrete use cases.
-- Context bloat: `SKILL.md` is long because specialized details were not moved into references.
-- Procedure drift: quick-start steps no longer match the best workflow.
-- Capability drift: the skill promises tasks it should redirect away from.
-- Validation gaps: broken links, stale placeholders, or missing UI metadata are not caught quickly.
-- Environment mismatch: instructions imply local execution for HPC-only steps.
-- Weak handoff: the skill lacks a clear output contract or final deliverable.
+- Fix frontmatter first only when the failure class is `trigger` or `scope`.
+- Keep `SKILL.md` lean. Move branch-specific detail into `references/` and
+  repeated deterministic logic into `scripts/`.
+- Do not add generic prose or optionality "just in case."
+- When the user asks for a score or separate roles, prefer a rubric-based
+  implementation and evaluation loop over self-scoring.
+- When the user asks for 10/10 or a deterministic harness, prefer the default
+  case-pack-based score gate over a prose-only loop.
+- Retargeting is an upgrade, not a net-new skill, unless both old and new
+  mediums must remain first-class.
+- Self-application is allowed. When upgrading `skill-evolution` itself, prefer
+  patches that reduce unnecessary clarification, make patch-depth escalation
+  explicit, tighten the validation loop, and keep evaluator scoring
+  independent.
 
 ## Output contract
 
-When upgrading a skill, present the result in this order:
+Return results in this order:
 
-1. `Diagnosis`: the concrete failure mode or upgrade driver.
-2. `Revision plan`: the smallest set of changes that should fix it.
-3. `Applied changes`: what was modified in the skill.
-4. `Validation`: validator output and any remaining warnings.
-5. `Next prompt`: one realistic user request that should test the new path.
+1. `Diagnosis`: the concrete failure mode or upgrade driver, including the
+   failure-taxonomy class
+2. `Mode`: `diagnose-only`, `patch`, or `retarget`
+3. `Patch depth`: `none` for `diagnose-only`, otherwise `narrow patch` or
+   `deep patch`
+4. `Rubric`: the scoring rubric and threshold, or `not requested`
+5. `Revision plan`: the smallest set of changes that should fix the problem
+6. `Changes`: proposed changes for `diagnose-only`; applied changes for `patch`
+   or `retarget`
+7. `Validation`: validator output, structural warnings, `score_gate.py` output
+   when used, and why the work did or did not escalate to `deep patch`
+8. `Scores`: implementation score, independent evaluation score, and loop
+   status, or `not requested`
+9. `Next prompt`: one realistic request that should exercise the revised path
 
-If the upgrade is blocked by missing artifacts, ask for the single missing input that would change the patch.
+If the revision changes the skill's default tool or medium, also state what
+remains as fallback interoperability only.

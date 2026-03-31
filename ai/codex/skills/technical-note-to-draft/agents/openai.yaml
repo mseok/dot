@@ -1,0 +1,4 @@
+interface:
+  display_name: "Technical Note Draft"
+  short_description: "Turn Obsidian notes into a draft"
+  default_prompt: "Use $technical-note-to-draft to turn my Obsidian notes into an internal long-form technical draft."

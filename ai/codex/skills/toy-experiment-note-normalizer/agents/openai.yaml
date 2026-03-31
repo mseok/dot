@@ -1,0 +1,4 @@
+interface:
+  display_name: "Toy Experiment Note Normalizer"
+  short_description: "Normalize rough experiment notes into a fixed Obsidian note"
+  default_prompt: "Use $toy-experiment-note-normalizer to turn rough experiment bullets into a decision-complete Obsidian experiment note with fixed frontmatter and sections, while preserving uncertainty and not inventing results."

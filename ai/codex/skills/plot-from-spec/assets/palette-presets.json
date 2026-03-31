@@ -1,0 +1,7 @@
+{
+  "okabe-ito": ["#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"],
+  "deep-muted": ["#24435B", "#4D7EA8", "#6FA3EF", "#7D8F69", "#C7B65D", "#C9725B", "#B14D57", "#7E5A9B"],
+  "warm-neutral": ["#2C2C2C", "#8C6D46", "#C37D3D", "#D9B36C", "#7F9E89", "#4E7A73", "#7E8AA2", "#B55D4C"],
+  "diverging-blue-red": ["#2166AC", "#67A9CF", "#D1E5F0", "#F7F7F7", "#FDDBC7", "#EF8A62", "#B2182B"],
+  "sequential-teal": ["#F1FAF8", "#D9F0EE", "#A6DCD7", "#5FBEB5", "#2E8F8A", "#165F61"]
+}

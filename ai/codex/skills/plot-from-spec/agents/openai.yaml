@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plot From Spec"
+  short_description: "Generate paper-ready Python plots from structured specs"
+  default_prompt: "Use $plot-from-spec to normalize a plotting request into a validated spec and generate publication-ready Python plotting code for one supported plot family."

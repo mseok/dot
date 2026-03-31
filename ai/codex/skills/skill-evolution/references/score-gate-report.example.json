@@ -1,0 +1,22 @@
+{
+  "skill": "skill-evolution",
+  "threshold": 10.0,
+  "categories": {
+    "trigger_scope": 1.0,
+    "mode_selection": 1.0,
+    "patch_depth": 1.0,
+    "intake_minimality": 1.0,
+    "taxonomy_mapping": 1.0,
+    "workflow_coherence": 1.0,
+    "role_separation": 2.0,
+    "validation_integrity": 2.0
+  },
+  "cases": {
+    "implementer-rubric": "pass",
+    "evaluator-score": "pass",
+    "loop-until-threshold": "pass"
+  },
+  "independent_evaluation": true,
+  "threshold_met": true,
+  "blocker": ""
+}

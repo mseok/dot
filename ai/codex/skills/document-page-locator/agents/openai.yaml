@@ -1,0 +1,4 @@
+interface:
+  display_name: "Document Page Locator"
+  short_description: "Find relevant pages for a keyword or question in a PDF."
+  default_prompt: "Find the pages in the provided document that are relevant to the user's keyword or question, and explain why each page matters."

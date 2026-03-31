@@ -1,0 +1,29 @@
+figure.dpi: 120
+savefig.dpi: 300
+savefig.bbox: tight
+savefig.pad_inches: 0.02
+savefig.transparent: False
+
+font.family: DejaVu Sans
+font.size: 8
+axes.titlesize: 8
+axes.labelsize: 8
+xtick.labelsize: 7
+ytick.labelsize: 7
+legend.fontsize: 7
+legend.title_fontsize: 7
+
+axes.linewidth: 0.8
+xtick.major.width: 0.8
+ytick.major.width: 0.8
+xtick.major.size: 3
+ytick.major.size: 3
+
+lines.linewidth: 1.6
+lines.markersize: 4
+patch.linewidth: 0.8
+
+axes.grid: False
+axes.spines.top: False
+axes.spines.right: False
+legend.frameon: False

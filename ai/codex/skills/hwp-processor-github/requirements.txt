@@ -1,0 +1,7 @@
+# HWP Processor Dependencies
+
+# OLE2 파일 파싱 (필수)
+olefile>=0.46
+
+# 선택적: pyhwp 사용 시
+# pyhwp>=0.1b15

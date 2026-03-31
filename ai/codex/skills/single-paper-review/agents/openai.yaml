@@ -1,8 +1,7 @@
 interface:
   display_name: "Single Paper Review"
-  short_description: "Summarize one paper as a reusable note"
-  default_prompt: "Use $single-paper-review to summarize this paper into an Obsidian note with metric definitions and embedded figures/tables."
+  short_description: "Summarize one paper as a reusable note with a figure atlas"
+  default_prompt: "Use $single-paper-review to summarize this paper into an Obsidian note with metric definitions, main-paper figure captures saved under Attachments/, and one section that embeds every body figure in order."
 
 policy:
   allow_implicit_invocation: true
-

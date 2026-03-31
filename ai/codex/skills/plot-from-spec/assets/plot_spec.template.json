@@ -1,0 +1,52 @@
+{
+  "plot_family": "line",
+  "data_source": {
+    "dataframe_name": "df"
+  },
+  "data_schema": {
+    "epoch": "int",
+    "method": "category",
+    "auroc": "float",
+    "seed": "int"
+  },
+  "mapping": {
+    "x": "epoch",
+    "y": "auroc",
+    "color": "method",
+    "group": "seed"
+  },
+  "aggregation": {
+    "mode": "group_summary",
+    "groupby": ["epoch", "method"],
+    "summary": "mean",
+    "uncertainty": "std"
+  },
+  "constraints": {
+    "medium": "paper",
+    "width": "single-column",
+    "colorblind_safe": true,
+    "grayscale_safe": true,
+    "palette": "okabe-ito"
+  },
+  "figure": {
+    "title": "",
+    "xlabel": "Epoch",
+    "ylabel": "AUROC",
+    "legend_title": "Method",
+    "x_order": [],
+    "hue_order": [],
+    "facet_order": [],
+    "trend": "none",
+    "sharey": true,
+    "annot": false,
+    "fmt": ".2f",
+    "center": null
+  },
+  "export": {
+    "basename": "training_auroc",
+    "formats": ["pdf", "png"],
+    "dpi": 300,
+    "outdir": ".",
+    "transparent": false
+  }
+}

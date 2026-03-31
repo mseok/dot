@@ -1,4 +1,4 @@
 interface:
   display_name: "Skill Evolution"
-  short_description: "Continuously upgrade existing Codex skills"
-  default_prompt: "Use $skill-evolution to inspect a Codex skill, apply the highest-leverage upgrade, and validate the revision."
+  short_description: "Audit, patch, or retarget an existing Codex skill"
+  default_prompt: "Use $skill-evolution to diagnose, score, patch, or retarget an existing skill. When the user asks for a score or separate roles, the implementation agent defines the rubric and patch plan, the evaluation agent scores independently, and the loop continues until the evaluator clears the requested threshold or a machine-readable evaluator report passes the default score gate."
