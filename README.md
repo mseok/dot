@@ -143,6 +143,8 @@ This script installs:
 - nvm + Node.js LTS
 - fzf (with shell integration)
 - Starship prompt
+- tmux
+- GitHub CLI (`gh`)
 - Neovim (latest AppImage)
 - UV (universal version manager)
 - ripgrep + fd

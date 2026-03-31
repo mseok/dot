@@ -18,10 +18,14 @@ LOCAL_SHARE="${LOCAL_SHARE:-$HOME/.local/share}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dot-bootstrap"
 NVM_DIR="${NVM_DIR:-$LOCAL_SHARE/nvm}"
 
+mkdir -p $LOCAL_BIN $LOCAL_OPT $LOCAL_SHARE $CACHE_DIR $NVM_DIR
+
 NVM_VERSION="${NVM_VERSION:-v0.40.1}"
 RIPGREP_VERSION="${RIPGREP_VERSION:-14.1.1}"
 FD_VERSION="${FD_VERSION:-10.2.0}"
 NEOVIM_CHANNEL="${NEOVIM_CHANNEL:-stable}"
+TMUX_VERSION="${TMUX_VERSION:-3.6a}"
+GH_VERSION="${GH_VERSION:-2.89.0}"
 
 export PATH="$LOCAL_BIN:$PATH"
 
@@ -191,18 +195,30 @@ install_uv() {
 }
 
 install_nvm_and_node() {
+  local has_nvm=0
+  local has_node=0
+
+  [[ -s "$NVM_DIR/nvm.sh" ]] && has_nvm=1
+  exists node && has_node=1
+
   if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
     local installer="$CACHE_DIR/nvm-install.sh"
     log "Installing nvm ${NVM_VERSION}..."
     download_to "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" "$installer"
     PROFILE=/dev/null NVM_DIR="$NVM_DIR" bash "$installer"
+    has_nvm=1
   else
     log "nvm already installed."
   fi
 
+  if [[ $has_node -eq 1 ]]; then
+    log "Node.js already available: $(node -v)"
+    return 0
+  fi
+
   load_nvm
-  if ! type nvm >/dev/null 2>&1; then
-    error "nvm installation finished, but nvm could not be loaded."
+  if [[ $has_nvm -eq 0 ]] || ! type nvm >/dev/null 2>&1; then
+    error "nvm is unavailable, so Node.js LTS cannot be installed automatically."
     exit 1
   fi
 
@@ -214,26 +230,27 @@ install_nvm_and_node() {
 install_fzf() {
   local dest="$LOCAL_OPT/fzf"
 
-  if [[ -x "$dest/bin/fzf" ]]; then
-    log "fzf already installed under $dest"
+  if exists fzf; then
+    log "fzf already available: $(fzf --version | head -n1)"
+    return 0
+  fi
+
+  log "Installing fzf into $dest..."
+
+  if [[ -e "$dest" ]]; then
+    backup_path "$dest"
+  fi
+
+  if exists git; then
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$dest"
   else
-    log "Installing fzf into $dest..."
-
-    if [[ -e "$dest" ]]; then
-      backup_path "$dest"
-    fi
-
-    if exists git; then
-      git clone --depth 1 https://github.com/junegunn/fzf.git "$dest"
-    else
-      local archive="$CACHE_DIR/fzf.tar.gz"
-      local tmpdir
-      tmpdir="$(mktemp -d)"
-      download_to "https://github.com/junegunn/fzf/archive/refs/heads/master.tar.gz" "$archive"
-      tar -xzf "$archive" -C "$tmpdir"
-      mv "$(find "$tmpdir" -mindepth 1 -maxdepth 1 -type d | head -n1)" "$dest"
-      rm -rf "$tmpdir"
-    fi
+    local archive="$CACHE_DIR/fzf.tar.gz"
+    local tmpdir
+    tmpdir="$(mktemp -d)"
+    download_to "https://github.com/junegunn/fzf/archive/refs/heads/master.tar.gz" "$archive"
+    tar -xzf "$archive" -C "$tmpdir"
+    mv "$(find "$tmpdir" -mindepth 1 -maxdepth 1 -type d | head -n1)" "$dest"
+    rm -rf "$tmpdir"
   fi
 
   ln -sfn "$dest/bin/fzf" "$LOCAL_BIN/fzf"
@@ -325,6 +342,56 @@ install_starship() {
   sh "$installer" -y -b "$LOCAL_BIN"
 }
 
+install_tmux() {
+  if exists tmux; then
+    log "tmux already available: $(tmux -V)"
+    return 0
+  fi
+
+  local asset url
+  case "$(uname -m)" in
+    x86_64|amd64)
+      asset="tmux-${TMUX_VERSION}-linux-x86_64.tar.gz"
+      ;;
+    aarch64|arm64)
+      asset="tmux-${TMUX_VERSION}-linux-arm64.tar.gz"
+      ;;
+    *)
+      warn "Unsupported architecture for bundled tmux: $(uname -m)"
+      return 0
+      ;;
+  esac
+
+  url="https://github.com/tmux/tmux-builds/releases/download/v${TMUX_VERSION}/${asset}"
+  log "Installing tmux ${TMUX_VERSION} from tmux-builds..."
+  install_binary_from_tarball "tmux-${TMUX_VERSION}" "$url" "tmux"
+}
+
+install_gh() {
+  if exists gh; then
+    log "gh already available: $(gh --version | head -n1)"
+    return 0
+  fi
+
+  local asset url
+  case "$(uname -m)" in
+    x86_64|amd64)
+      asset="gh_${GH_VERSION}_linux_amd64.tar.gz"
+      ;;
+    aarch64|arm64)
+      asset="gh_${GH_VERSION}_linux_arm64.tar.gz"
+      ;;
+    *)
+      warn "Unsupported architecture for bundled gh: $(uname -m)"
+      return 0
+      ;;
+  esac
+
+  url="https://github.com/cli/cli/releases/download/v${GH_VERSION}/${asset}"
+  log "Installing GitHub CLI ${GH_VERSION}..."
+  install_binary_from_tarball "gh-${GH_VERSION}" "$url" "gh"
+}
+
 install_neovim() {
   if exists nvim; then
     log "Neovim already available: $(nvim --version | head -n1)"
@@ -386,6 +453,11 @@ install_optional_tmux_plugins() {
     return 0
   fi
 
+  if ! exists tmux; then
+    warn "tmux is unavailable, skipping TPM install."
+    return 0
+  fi
+
   if ! exists git; then
     warn "git is unavailable, skipping TPM install."
     return 0
@@ -405,12 +477,10 @@ link_dot_configs() {
 }
 
 install_global_npm_clis() {
-  local packages=(
-    "@google/gemini-cli"
-    "@openai/codex"
-    "task-master-ai"
+  local package_specs=(
+    "@openai/codex:codex"
   )
-  local pkg
+  local spec pkg bin_name
 
   load_nvm
   if ! exists npm; then
@@ -418,7 +488,15 @@ install_global_npm_clis() {
     return 0
   fi
 
-  for pkg in "${packages[@]}"; do
+  for spec in "${package_specs[@]}"; do
+    pkg="${spec%%:*}"
+    bin_name="${spec##*:}"
+
+    if exists "$bin_name"; then
+      log "npm CLI already available: $bin_name"
+      continue
+    fi
+
     log "Installing npm CLI: $pkg"
     npm install -g "$pkg" >/dev/null 2>&1 || warn "Failed to install $pkg"
   done
@@ -432,7 +510,7 @@ post_instructions() {
 
 Installed or configured:
 • Node.js LTS via nvm
-• uv, fzf, starship, ripgrep, fd, Neovim
+• uv, fzf, starship, ripgrep, fd, tmux, gh, Neovim
 • tmux plugin manager (TPM), if git was available
 • Symlinks:
     ~/.config/nvim          -> <repo>/config/nvim
@@ -453,6 +531,8 @@ Next steps:
     node -v
     npm -v
     uv --version
+    gh --version | head -n 1
+    tmux -V
     nvim --version | head -n 1
     rg --version | head -n 1
     fd --version | head -n 1
@@ -476,6 +556,8 @@ main() {
   install_ripgrep
   install_fd
   install_starship
+  install_tmux
+  install_gh
   install_neovim
   install_optional_tmux_plugins
   link_dot_configs
