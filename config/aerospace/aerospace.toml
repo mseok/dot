@@ -78,10 +78,8 @@ outer.left =       8
 outer.bottom =     8
 outer.right =      8
 outer.top = [
-  { monitor."Built-in" = 6 },
-  { monitor."LG HDR 5K" = 48 },
-  { monitor."LG UltraFine" = 48 },
-  32,
+  { monitor."Built-in" = 16 },
+  48,
 ]
 
 # 'main' binding mode declaration

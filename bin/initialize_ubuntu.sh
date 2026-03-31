@@ -1,276 +1,485 @@
 #!/usr/bin/env bash
-# Purpose: One-shot bootstrap for Ubuntu dev environment (nvm, Node LTS, fzf, etc.)
-# Safety: Idempotent, non-interactive, with clear logging.
-# Comments: All comments are in English as requested.
+# Purpose: Bootstrap an Ubuntu user environment without sudo.
+# Safety: Idempotent, non-interactive, and installs only into user-owned paths.
 
 set -euo pipefail
 
-# --------------- helpers ---------------
 log()   { printf "\033[1;32m[INFO]\033[0m %s\n" "$*"; }
 warn()  { printf "\033[1;33m[WARN]\033[0m %s\n" "$*"; }
 error() { printf "\033[1;31m[ERR ]\033[0m %s\n" "$*" >&2; }
 exists(){ command -v "$1" >/dev/null 2>&1; }
 
-# Determine the primary shell rc file to modify (bash or zsh)
-detect_shell_rc() {
-  # If running inside zsh, prefer .zshrc; else .bashrc
-  if [[ -n "${ZSH_VERSION:-}" ]]; then
-    echo "$HOME/.zshrc"
-  elif [[ -n "${BASH_VERSION:-}" ]]; then
-    echo "$HOME/.bashrc"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
+LOCAL_OPT="${LOCAL_OPT:-$HOME/.local/opt}"
+LOCAL_SHARE="${LOCAL_SHARE:-$HOME/.local/share}"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dot-bootstrap"
+NVM_DIR="${NVM_DIR:-$LOCAL_SHARE/nvm}"
+
+NVM_VERSION="${NVM_VERSION:-v0.40.1}"
+RIPGREP_VERSION="${RIPGREP_VERSION:-14.1.1}"
+FD_VERSION="${FD_VERSION:-10.2.0}"
+NEOVIM_CHANNEL="${NEOVIM_CHANNEL:-stable}"
+
+export PATH="$LOCAL_BIN:$PATH"
+
+mkdir -p "$LOCAL_BIN" "$LOCAL_OPT" "$LOCAL_SHARE" "$CACHE_DIR" "$HOME/.config"
+
+require_tools() {
+  local missing=()
+  local tool
+  for tool in bash tar uname chmod mktemp find awk readlink cp mv rm; do
+    exists "$tool" || missing+=("$tool")
+  done
+
+  if ! exists curl && ! exists wget; then
+    missing+=("curl-or-wget")
+  fi
+
+  if (( ${#missing[@]} > 0 )); then
+    error "Missing required bootstrap tools: ${missing[*]}"
+    error "Install them with your cluster or system package manager, then rerun this script."
+    exit 1
+  fi
+}
+
+download_to() {
+  local url="$1" dest="$2"
+  mkdir -p "$(dirname "$dest")"
+
+  if exists curl; then
+    curl -fsSL "$url" -o "$dest"
   else
-    # Fallback: choose whichever exists, otherwise .bashrc
-    [[ -f "$HOME/.zshrc" ]] && echo "$HOME/.zshrc" || echo "$HOME/.bashrc"
+    wget -qO "$dest" "$url"
   fi
 }
 
-append_once() {
-  # Append a line to a file only if it's not already present (literal match)
-  local line="$1" file="$2"
-  grep -Fqs -- "$line" "$file" || echo "$line" >> "$file"
+backup_path() {
+  local path="$1"
+  local ts
+  ts="$(date +%Y%m%d_%H%M%S)"
+  mv "$path" "${path}.bak_${ts}"
+  log "Backed up: $path -> ${path}.bak_${ts}"
 }
 
-backup_if_exists() {
-  # If path exists and is not the desired symlink, back it up with timestamp
-  local target="$1"
-  if [[ -e "$target" || -L "$target" ]]; then
-    if [[ -L "$target" ]]; then
-      # If it's a symlink, remove it to re-link cleanly
-      rm -f "$target"
-    else
-      local ts
-      ts="$(date +%Y%m%d_%H%M%S)"
-      mv -v "$target" "${target}.bak_${ts}"
-    fi
-  fi
-}
-
-link_config() {
-  # Create symlink from $1 (source) to $2 (destination)
+ensure_link() {
   local src="$1" dst="$2"
+
   if [[ ! -e "$src" ]]; then
-    warn "Source does not exist, skipping link: $src"
+    warn "Source missing, skipping: $src"
     return 0
   fi
+
   mkdir -p "$(dirname "$dst")"
-  backup_if_exists "$dst"
+
+  if [[ -L "$dst" ]]; then
+    local current_target
+    current_target="$(readlink "$dst")"
+    if [[ "$current_target" == "$src" ]]; then
+      log "Link already up to date: $dst"
+      return 0
+    fi
+    rm -f "$dst"
+  elif [[ -e "$dst" ]]; then
+    backup_path "$dst"
+  fi
+
   ln -s "$src" "$dst"
   log "Linked: $dst -> $src"
 }
 
-APT_UPDATED=0
-apt_update_once() {
-  if [[ $APT_UPDATED -eq 0 ]]; then
-    log "Updating apt package index..."
-    sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
-    APT_UPDATED=1
+upsert_block() {
+  local file="$1" marker="$2" content="$3"
+  local start="# >>> ${marker} >>>"
+  local end="# <<< ${marker} <<<"
+  local tmp out
+
+  mkdir -p "$(dirname "$file")"
+  touch "$file"
+
+  tmp="$(mktemp)"
+  out="$(mktemp)"
+
+  awk -v start="$start" -v end="$end" '
+    $0 == start { skip = 1; next }
+    $0 == end { skip = 0; next }
+    !skip { print }
+  ' "$file" > "$tmp"
+
+  {
+    cat "$tmp"
+    printf '\n%s\n' "$start"
+    printf '%s\n' "$content"
+    printf '%s\n' "$end"
+  } > "$out"
+
+  mv "$out" "$file"
+  rm -f "$tmp"
+}
+
+shell_bootstrap_block() {
+  local shell_name="$1"
+
+  if [[ "$shell_name" == "bash" ]]; then
+    cat <<EOF
+case ":\$PATH:" in
+  *":\$HOME/.local/bin:"*) ;;
+  *) export PATH="\$HOME/.local/bin:\$PATH" ;;
+esac
+
+export NVM_DIR="$NVM_DIR"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+[ -f "$HOME/.local/opt/fzf/shell/completion.bash" ] && source "$HOME/.local/opt/fzf/shell/completion.bash"
+[ -f "$HOME/.local/opt/fzf/shell/key-bindings.bash" ] && source "$HOME/.local/opt/fzf/shell/key-bindings.bash"
+command -v starship >/dev/null 2>&1 && eval "\$(starship init bash)"
+[ -f "$REPO_ROOT/config/bash/.bashrc" ] && source "$REPO_ROOT/config/bash/.bashrc"
+EOF
+  else
+    cat <<EOF
+case ":\$PATH:" in
+  *":\$HOME/.local/bin:"*) ;;
+  *) export PATH="\$HOME/.local/bin:\$PATH" ;;
+esac
+
+export NVM_DIR="$NVM_DIR"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+[ -f "$HOME/.local/opt/fzf/shell/completion.zsh" ] && source "$HOME/.local/opt/fzf/shell/completion.zsh"
+[ -f "$HOME/.local/opt/fzf/shell/key-bindings.zsh" ] && source "$HOME/.local/opt/fzf/shell/key-bindings.zsh"
+command -v starship >/dev/null 2>&1 && eval "\$(starship init zsh)"
+[ -f "$REPO_ROOT/config/zsh/.zshrc" ] && source "$REPO_ROOT/config/zsh/.zshrc"
+EOF
   fi
 }
 
-install_base_packages() {
-  log "Installing base packages via apt..."
-  apt_update_once
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    build-essential curl git ca-certificates pkg-config \
-    unzip zip tar wget xz-utils \
-    python3-venv \
-    ripgrep fd-find \
-    software-properties-common
-  # fd on Ubuntu is 'fdfind' binary; create user-friendly alias if missing
-  local rc_file
-  rc_file="$(detect_shell_rc)"
-  if ! exists fd && exists fdfind; then
-    log "Adding alias: fd -> fdfind"
-    append_once 'alias fd=fdfind' "$rc_file"
+configure_shell_rcs() {
+  local bash_block zsh_block
+  bash_block="$(shell_bootstrap_block bash)"
+  zsh_block="$(shell_bootstrap_block zsh)"
+
+  upsert_block "$HOME/.bashrc" "dot-bootstrap" "$bash_block"
+  upsert_block "$HOME/.zshrc" "dot-bootstrap" "$zsh_block"
+  log "Updated shell bootstrap blocks in ~/.bashrc and ~/.zshrc"
+}
+
+warn_if_repo_not_in_home_dot() {
+  if [[ "$REPO_ROOT" != "$HOME/dot" ]]; then
+    warn "This dotfiles repo is currently at $REPO_ROOT"
+    warn "Some sourced configs still assume the canonical location is $HOME/dot"
+  fi
+}
+
+load_nvm() {
+  export NVM_DIR
+  if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+    # shellcheck disable=SC1090
+    . "$NVM_DIR/nvm.sh"
   fi
 }
 
 install_uv() {
-  # Install uv (universal version manager) for managing multiple runtimes
   if exists uv; then
-    log "uv already installed: $(uv --version)"
+    log "uv already available: $(uv --version)"
     return 0
   fi
-  log "Installing uv (universal version manager)..."
-  # Official install script
-  curl -LsSf https://astral.sh/uv/install.sh | sh
+
+  local installer="$CACHE_DIR/uv-install.sh"
+  log "Installing uv into the user profile..."
+  download_to "https://astral.sh/uv/install.sh" "$installer"
+  UV_INSTALL_DIR="$LOCAL_BIN" INSTALLER_NO_MODIFY_PATH=1 sh "$installer"
 }
 
 install_nvm_and_node() {
-  # Install nvm if not present
-  if ! exists nvm; then
-    log "Installing nvm..."
-    # Official install script; pinned to latest release URL
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-
-    # Source nvm for current session
-    export NVM_DIR="$HOME/.nvm"
-    # shellcheck disable=SC1091
-    [[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
-    # Add sourcing to shell rc
-    local rc_file
-    rc_file="$(detect_shell_rc)"
-    append_once 'export NVM_DIR="$HOME/.nvm"' "$rc_file"
-    append_once '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm' "$rc_file"
+  if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
+    local installer="$CACHE_DIR/nvm-install.sh"
+    log "Installing nvm ${NVM_VERSION}..."
+    download_to "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" "$installer"
+    PROFILE=/dev/null NVM_DIR="$NVM_DIR" bash "$installer"
   else
     log "nvm already installed."
-    # shellcheck disable=SC1091
-    . "$HOME/.nvm/nvm.sh"
   fi
 
-  # Install latest LTS Node if not installed
-  if ! exists node; then
-    log "Installing latest LTS Node via nvm..."
-    nvm install --lts
-    nvm alias default 'lts/*'
-  else
-    log "Node is present: $(node -v). Ensuring nvm default is LTS..."
-    nvm install --lts >/dev/null 2>&1 || true
-    nvm alias default 'lts/*' >/dev/null 2>&1 || true
+  load_nvm
+  if ! type nvm >/dev/null 2>&1; then
+    error "nvm installation finished, but nvm could not be loaded."
+    exit 1
   fi
+
+  log "Installing Node.js LTS via nvm..."
+  nvm install --lts
+  nvm alias default 'lts/*'
 }
 
 install_fzf() {
-  # Prefer upstream git install for the latest fzf (includes keybindings + completion)
-  if ! exists fzf; then
-    log "Installing fzf from upstream (git)..."
-    if [[ ! -d "$HOME/.fzf" ]]; then
-      git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
-    fi
-    $HOME/.fzf/install --all
-    # Enable for bash/zsh explicitly (fzf installs snippets under ~/.fzf)
-    local rc_file
-    rc_file="$(detect_shell_rc)"
-    append_once '[ -f ~/.fzf.bash ] && source ~/.fzf.bash' "$rc_file"
+  local dest="$LOCAL_OPT/fzf"
+
+  if [[ -x "$dest/bin/fzf" ]]; then
+    log "fzf already installed under $dest"
   else
-    log "fzf already installed: $(fzf --version | head -n1)"
+    log "Installing fzf into $dest..."
+
+    if [[ -e "$dest" ]]; then
+      backup_path "$dest"
+    fi
+
+    if exists git; then
+      git clone --depth 1 https://github.com/junegunn/fzf.git "$dest"
+    else
+      local archive="$CACHE_DIR/fzf.tar.gz"
+      local tmpdir
+      tmpdir="$(mktemp -d)"
+      download_to "https://github.com/junegunn/fzf/archive/refs/heads/master.tar.gz" "$archive"
+      tar -xzf "$archive" -C "$tmpdir"
+      mv "$(find "$tmpdir" -mindepth 1 -maxdepth 1 -type d | head -n1)" "$dest"
+      rm -rf "$tmpdir"
+    fi
   fi
+
+  ln -sfn "$dest/bin/fzf" "$LOCAL_BIN/fzf"
+  [[ -f "$dest/bin/fzf-tmux" ]] && ln -sfn "$dest/bin/fzf-tmux" "$LOCAL_BIN/fzf-tmux"
+}
+
+install_binary_from_tarball() {
+  local name="$1" url="$2" binary_name="$3"
+  local archive="$CACHE_DIR/${name}.tar.gz"
+  local tmpdir binary_path
+
+  tmpdir="$(mktemp -d)"
+  download_to "$url" "$archive"
+  tar -xzf "$archive" -C "$tmpdir"
+
+  binary_path="$(find "$tmpdir" -type f -name "$binary_name" -perm -u+x | head -n1)"
+  if [[ -z "$binary_path" ]]; then
+    rm -rf "$tmpdir"
+    error "Could not find ${binary_name} inside ${name} archive."
+    exit 1
+  fi
+
+  cp "$binary_path" "$LOCAL_BIN/$binary_name"
+  chmod +x "$LOCAL_BIN/$binary_name"
+  rm -rf "$tmpdir"
+  log "Installed $binary_name -> $LOCAL_BIN/$binary_name"
+}
+
+install_ripgrep() {
+  if exists rg; then
+    log "ripgrep already available: $(rg --version | head -n1)"
+    return 0
+  fi
+
+  local arch url
+  case "$(uname -m)" in
+    x86_64|amd64)
+      arch="x86_64-unknown-linux-musl"
+      ;;
+    aarch64|arm64)
+      arch="aarch64-unknown-linux-gnu"
+      ;;
+    *)
+      warn "Unsupported architecture for bundled ripgrep: $(uname -m)"
+      return 0
+      ;;
+  esac
+
+  url="https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-${arch}.tar.gz"
+  log "Installing ripgrep ${RIPGREP_VERSION}..."
+  install_binary_from_tarball "ripgrep-${RIPGREP_VERSION}" "$url" "rg"
+}
+
+install_fd() {
+  if exists fd; then
+    log "fd already available: $(fd --version | head -n1)"
+    return 0
+  fi
+
+  local arch url
+  case "$(uname -m)" in
+    x86_64|amd64)
+      arch="x86_64-unknown-linux-musl"
+      ;;
+    aarch64|arm64)
+      arch="aarch64-unknown-linux-gnu"
+      ;;
+    *)
+      warn "Unsupported architecture for bundled fd: $(uname -m)"
+      return 0
+      ;;
+  esac
+
+  url="https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${arch}.tar.gz"
+  log "Installing fd ${FD_VERSION}..."
+  install_binary_from_tarball "fd-${FD_VERSION}" "$url" "fd"
+  ln -sfn "$LOCAL_BIN/fd" "$LOCAL_BIN/fdfind"
 }
 
 install_starship() {
-  if ! exists starship; then
-    log "Installing starship..."
-    # Non-interactive install (-y). Installs to /usr/local/bin by default.
-    curl -fsSL https://starship.rs/install.sh | sudo sh -s -- -y
-  else
-    log "starship present: $(starship --version)"
+  if exists starship; then
+    log "starship already available: $(starship --version)"
+    return 0
   fi
 
-  # Ensure starship init line (bash). This can live in your dot repo, but we add a safe default.
-  append_once 'eval "$(starship init bash)"' "$HOME/.bashrc"
+  local installer="$CACHE_DIR/starship-install.sh"
+  log "Installing starship into $LOCAL_BIN..."
+  download_to "https://starship.rs/install.sh" "$installer"
+  sh "$installer" -y -b "$LOCAL_BIN"
 }
 
-clone_dot_repo() {
-  local repo_url="https://github.com/mseok/dot.git"
-  local dest="$HOME/dot"
-  if [[ -d "$dest/.git" ]]; then
-    log "Updating existing dot repo at $dest"
-    git -C "$dest" pull --ff-only || warn "git pull failed; check your local changes."
-  else
-    log "Cloning dot repo -> $dest"
-    git clone "$repo_url" "$dest"
+install_neovim() {
+  if exists nvim; then
+    log "Neovim already available: $(nvim --version | head -n1)"
+    return 0
   fi
+
+  local asset url appimage_path nvim_root
+  case "$(uname -m)" in
+    x86_64|amd64)
+      asset="nvim-linux-x86_64.appimage"
+      ;;
+    aarch64|arm64)
+      asset="nvim-linux-arm64.appimage"
+      ;;
+    *)
+      warn "Unsupported architecture for bundled Neovim: $(uname -m)"
+      return 0
+      ;;
+  esac
+
+  if [[ "$NEOVIM_CHANNEL" == "nightly" ]]; then
+    url="https://github.com/neovim/neovim-releases/releases/download/nightly/${asset}"
+  else
+    url="https://github.com/neovim/neovim-releases/releases/latest/download/${asset}"
+  fi
+
+  nvim_root="$LOCAL_OPT/nvim"
+  appimage_path="$nvim_root/${asset}"
+  mkdir -p "$nvim_root"
+
+  log "Installing Neovim (${NEOVIM_CHANNEL}) into $nvim_root..."
+  download_to "$url" "$appimage_path"
+  chmod +x "$appimage_path"
+
+  if "$appimage_path" --version >/dev/null 2>&1; then
+    ln -sfn "$appimage_path" "$LOCAL_BIN/nvim"
+    log "Neovim AppImage is executable directly."
+    return 0
+  fi
+
+  log "FUSE is unavailable. Extracting the AppImage instead..."
+  rm -rf "$nvim_root/squashfs-root"
+  (
+    cd "$nvim_root"
+    "./${asset}" --appimage-extract >/dev/null
+  )
+
+  if [[ ! -x "$nvim_root/squashfs-root/usr/bin/nvim" ]]; then
+    error "Failed to extract Neovim AppImage."
+    exit 1
+  fi
+
+  ln -sfn "$nvim_root/squashfs-root/usr/bin/nvim" "$LOCAL_BIN/nvim"
+}
+
+install_optional_tmux_plugins() {
+  if [[ -d "$HOME/.tmux/plugins/tpm/.git" ]]; then
+    log "TPM already installed."
+    return 0
+  fi
+
+  if ! exists git; then
+    warn "git is unavailable, skipping TPM install."
+    return 0
+  fi
+
+  log "Installing tmux plugin manager (TPM)..."
+  mkdir -p "$HOME/.tmux/plugins"
+  git clone --depth 1 https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
 }
 
 link_dot_configs() {
-  # Ensure ~/.config exists
-  mkdir -p "$HOME/.config"
-
-  # Link nvim, tmux, starship configs (directory-based)
-  link_config "$HOME/dot/config/nvim"                   "$HOME/.config/nvim"
-  link_config "$HOME/dot/config/tmux/.tmux.conf"        "$HOME/.tmux.conf"
-  link_config "$HOME/dot/config/starship/starship.toml" "$HOME/.config/starship.toml"
-  link_config "$HOME/dot/config/git/.gitconfig"         "$HOME/.gitconfig"
-
-  # Some setups also keep a top-level ~/.tmux.conf — link if provided
-  if [[ -f "$HOME/dot/config/tmux/tmux.conf" ]]; then
-    link_config "$HOME/dot/config/tmux/tmux.conf" "$HOME/.tmux.conf"
-  fi
-}
-
-install_neovim_appimage() {
-  # Install latest Neovim AppImage to $HOME/appl/bin/nvim (FUSE-safe)
-  set -euo pipefail
-  local bindir="$HOME/appl/bin" cachedir="$HOME/.cache/nvim-appimage"
-  local url="https://github.com/neovim/neovim/releases/download/nightly/nvim-linux-x86_64.appimage"
-  mkdir -p "$bindir" "$cachedir"
-  log "Downloading Neovim AppImage (latest)..."
-  curl -fsSL -o "$cachedir/nvim.appimage" "$url"
-  chmod +x "$cachedir/nvim.appimage"
-
-  if "$cachedir/nvim.appimage" --version >/dev/null 2>&1; then
-    log "AppImage runs directly; copying to $bindir/nvim"
-    backup_if_exists "$bindir/nvim"
-    cp "$cachedir/nvim.appimage" "$bindir/nvim"
-    chmod +x "$bindir/nvim"
-  else
-    warn "Direct exec failed (FUSE). Extracting..."
-    ( cd "$cachedir" && ./nvim.appimage --appimage-extract >/dev/null )
-    [[ -x "$cachedir/squashfs-root/usr/bin/nvim" ]] || { error "Extraction failed"; exit 1; }
-    backup_if_exists "$bindir/nvim"
-    ln -s "$cachedir/squashfs-root/usr/bin/nvim" "$bindir/nvim"
-    log "Linked $bindir/nvim -> extracted binary"
-  fi
-
-  append_once 'export PATH="$HOME/appl/bin:$PATH"' "$HOME/.bashrc"
-}
-
-ensure_bashrc_source() {
-  # Append requested sourcing line exactly once
-  append_once 'source "$HOME/dot/config/bash/.bashrc"' "$HOME/.bashrc"
+  ensure_link "$REPO_ROOT/config/nvim" "$HOME/.config/nvim"
+  ensure_link "$REPO_ROOT/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
+  ensure_link "$REPO_ROOT/config/starship/starship.toml" "$HOME/.config/starship.toml"
+  ensure_link "$REPO_ROOT/config/git/.gitconfig" "$HOME/.gitconfig"
+  ensure_link "$REPO_ROOT/config/yazi" "$HOME/.config/yazi"
 }
 
 install_global_npm_clis() {
-  log "Installing global npm CLIs..."
-  export NVM_DIR="$HOME/.nvm"
-  [[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
-  npm install -g @google/gemini-cli @openai/codex task-master-ai
+  local packages=(
+    "@google/gemini-cli"
+    "@openai/codex"
+    "task-master-ai"
+  )
+  local pkg
+
+  load_nvm
+  if ! exists npm; then
+    warn "npm is unavailable, skipping global npm CLI installation."
+    return 0
+  fi
+
+  for pkg in "${packages[@]}"; do
+    log "Installing npm CLI: $pkg"
+    npm install -g "$pkg" >/dev/null 2>&1 || warn "Failed to install $pkg"
+  done
 }
 
 post_instructions() {
-  cat <<'EOS'
+  cat <<'EOF'
 
 ------------------------------------------------------------
-✅ Setup complete.
+✅ User-local Ubuntu bootstrap complete.
 
-What changed:
-• Installed/updated: base packages, nvm+Node LTS, fzf, starship, tmux, neovim.
-• Cloned/updated: $HOME/dot (from github.com/mseok/dot).
-• Symlinked:
-    ~/.config/nvim     	    -> $HOME/dot/config/nvim
-    ~/.config/starship.toml -> $HOME/dot/config/starship.toml
-    ~/.tmux.conf       	    -> $HOME/dot/config/tmux/.tmux.conf   
-• Neovim installed to: $HOME/appl/bin/nvim
-• npm global CLIs: gemini-cli, codex-cli, task-master-ai
-• Appended to ~/.bashrc (idempotent):
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-    [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-    eval "$(starship init bash)"
-    source "$HOME/dot/config/bash/.bashrc"
+Installed or configured:
+• Node.js LTS via nvm
+• uv, fzf, starship, ripgrep, fd, Neovim
+• tmux plugin manager (TPM), if git was available
+• Symlinks:
+    ~/.config/nvim          -> <repo>/config/nvim
+    ~/.config/starship.toml -> <repo>/config/starship/starship.toml
+    ~/.tmux.conf            -> <repo>/config/tmux/.tmux.conf
+    ~/.gitconfig            -> <repo>/config/git/.gitconfig
+    ~/.config/yazi          -> <repo>/config/yazi
+• Shell bootstrap blocks were added to ~/.bashrc and ~/.zshrc
+
+Notes:
+• No sudo or apt-get was used.
+• All binaries were installed under ~/.local/bin or ~/.local/opt.
+• Existing regular files were backed up before symlinks were created.
 
 Next steps:
-• Open a new terminal, or run:  exec $SHELL -l
+• Restart the shell: exec $SHELL -l
 • Verify:
-    starship --version
-    tmux -V
-    nvim --version | head -n 1
     node -v
-• If starship style doesn’t load, ensure your theme is configured under ~/.config/starship/.
+    npm -v
+    uv --version
+    nvim --version | head -n 1
+    rg --version | head -n 1
+    fd --version | head -n 1
+    starship --version
+
+If tmux is already installed on the system:
+• Start tmux, then press Ctrl+b followed by Shift+I to install plugins.
 ------------------------------------------------------------
-EOS
+EOF
 }
 
 main() {
-  install_base_packages
+  log "Starting Ubuntu bootstrap without sudo..."
+  log "Using repository: $REPO_ROOT"
+
+  require_tools
+  warn_if_repo_not_in_home_dot
+  install_uv
   install_nvm_and_node
   install_fzf
+  install_ripgrep
+  install_fd
   install_starship
-  install_uv
-  clone_dot_repo
+  install_neovim
+  install_optional_tmux_plugins
   link_dot_configs
-  ensure_bashrc_source
-  install_neovim_appimage
+  configure_shell_rcs
   install_global_npm_clis
   post_instructions
 }

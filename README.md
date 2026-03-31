@@ -134,17 +134,18 @@ Run the comprehensive bootstrap script:
 # Clone the repository first
 git clone https://github.com/mseok/dot.git $HOME/dot
 
-# Run automated setup (installs all dependencies)
+# Run automated setup (user-local install, no sudo required)
 bash $HOME/dot/bin/initialize_ubuntu.sh
 ```
 
 This script installs:
-- Base packages (build-essential, curl, git, etc.)
+- User-local tools under `~/.local/bin` / `~/.local/opt`
 - nvm + Node.js LTS
 - fzf (with shell integration)
 - Starship prompt
 - Neovim (latest AppImage)
 - UV (universal version manager)
+- ripgrep + fd
 - Symlinks configurations to `~/.config/`
 
 For manual installation details, see `bin/initialize_ubuntu.sh`.
