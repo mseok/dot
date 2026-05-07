@@ -1,4 +1,4 @@
-#	Reconstructed via infocmp from file: /Users/mseok/.terminfo/77/wezterm
+#	Reconstructed via infocmp from a local wezterm terminfo entry
 wezterm|Wez's terminal emulator,
 	am, bce, ccc, hs, km, mc5i, mir, msgr, npc, xenl, Su, Tc,
 	colors#256, cols#80, it#8, lines#24, pairs#32767,

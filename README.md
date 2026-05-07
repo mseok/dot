@@ -9,7 +9,7 @@ Personal dotfiles for macOS and Ubuntu environments with modular configurations 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # 2. Clone this repository
-git clone https://github.com/mseok/dot.git $HOME/dot
+git clone https://github.com/<owner>/dot.git $HOME/dot
 
 # 3. Run the macOS setup script (installs all dependencies)
 $HOME/dot/bin/setup_macos.sh
@@ -132,7 +132,7 @@ Run the comprehensive bootstrap script:
 
 ```bash
 # Clone the repository first
-git clone https://github.com/mseok/dot.git $HOME/dot
+git clone https://github.com/<owner>/dot.git $HOME/dot
 
 # Run automated setup (user-local install, no sudo required)
 bash $HOME/dot/bin/initialize_ubuntu.sh
@@ -159,7 +159,7 @@ For manual installation details, see `bin/initialize_ubuntu.sh`.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/mseok/dot.git $HOME/dot
+git clone https://github.com/<owner>/dot.git $HOME/dot
 ```
 
 ### 2. Shell Configuration
@@ -298,7 +298,7 @@ If you want a new macOS machine to reproduce the same setup, use this order exac
 #### 1. Run the normal macOS bootstrap first
 
 ```bash
-git clone https://github.com/mseok/dot.git $HOME/dot
+git clone https://github.com/<owner>/dot.git $HOME/dot
 bash $HOME/dot/bin/setup_macos.sh
 exec $SHELL -l
 ```

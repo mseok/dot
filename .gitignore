@@ -3,3 +3,13 @@
 CLAUDE.md
 .claude/
 __pycache__/
+
+# Machine-local secrets and scratch artifacts
+.env
+.env.*
+*.pem
+*.p12
+*.pfx
+*.key
+bin/rsync-poll.sh
+/*.src

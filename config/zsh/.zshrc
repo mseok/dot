@@ -22,8 +22,9 @@ export TERM="xterm-256color"
 export HISFILE=~/.config/zsh/.zsh_hitstory
 export EDITOR="nvim"
 
-if [[ -d "$HOME/mseok" ]]; then
-    export _HOME=$HOME/mseok
+_personal_tag="${PERSONAL_TAG:-${USER:-}}"
+if [[ -n "$_personal_tag" && -d "$HOME/$_personal_tag" ]]; then
+    export _HOME="$HOME/$_personal_tag"
 else
     export _HOME=$HOME
 fi

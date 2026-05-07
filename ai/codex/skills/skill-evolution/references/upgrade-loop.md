@@ -30,7 +30,7 @@ Run:
 
 ```bash
 python3 scripts/skill_audit.py <skill-dir>
-python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>
+python3 "$HOME/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py" <skill-dir>
 ```
 
 Use the audit output to separate structural issues from behavioral ones.

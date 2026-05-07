@@ -17,7 +17,7 @@ after-startup-command = [
   "exec-and-forget borders active_color=0xfff44336 inactive_color=0xff494d64 width=5.0 hidpi=on",
 ]
 exec-on-workspace-change = ['/bin/bash', '-c',
-    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE; /Users/mseok/.config/aerospace/follow-codex-pet.sh'
+    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE; "$HOME/.config/aerospace/follow-codex-pet.sh"'
 ]
 
 # Start AeroSpace at login

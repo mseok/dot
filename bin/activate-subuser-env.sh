@@ -3,8 +3,8 @@
 # Preserve the original shared HOME once
 export ORIG_HOME="${ORIG_HOME:-$HOME}"
 
-# Personal tag (directory name). Default: mseok
-export PERSONAL_TAG="${PERSONAL_TAG:-mseok}"
+# Personal tag (directory name). Default: current login user.
+export PERSONAL_TAG="${PERSONAL_TAG:-${USER:-user}}"
 
 # Override HOME to a per-user subdirectory
 export HOME="${ORIG_HOME}/${PERSONAL_TAG}"

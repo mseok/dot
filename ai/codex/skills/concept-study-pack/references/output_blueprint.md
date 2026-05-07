@@ -99,7 +99,7 @@ Run or perform equivalent checks:
 Use the validator flags that match the pack contract:
 
 ```bash
-python3 /Users/mseok/dot/ai/codex/skills/concept-study-pack/scripts/validate_pack.py PATH_TO_PACK \
+python3 "$HOME/dot/ai/codex/skills/concept-study-pack/scripts/validate_pack.py" PATH_TO_PACK \
   --required-file 00_beginner_route.md \
   --required-file offline_index.html \
   --offline-reader offline_reader.html \

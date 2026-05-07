@@ -61,7 +61,7 @@ when deciding whether to escalate.
   directly relevant references or scripts.
 - Run `python3 scripts/skill_audit.py <skill-dir>` for a structural audit.
 - Run
-  `python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
+  `python3 "$HOME/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py" <skill-dir>`
   when a real YAML parse check is available.
 - Classify the problem with
   [`references/failure-taxonomy.md`](references/failure-taxonomy.md).
@@ -113,7 +113,7 @@ when deciding whether to escalate.
 5. Read the target skill's core files and only the relevant helpers.
 6. Run structural validation before editing:
    - `python3 scripts/skill_audit.py <skill-dir>`
-   - `python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
+   - `python3 "$HOME/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py" <skill-dir>`
 7. Classify the failure using
    [`references/failure-taxonomy.md`](references/failure-taxonomy.md).
 8. Choose the smallest effective change:

@@ -14,7 +14,7 @@ Use this checklist before considering a skill revision complete.
 - `SKILL.md` names the patch-depth terms: `narrow patch`, `deep patch`.
 - The output contract includes `Diagnosis`, `Mode`, `Patch depth`,
   `Revision plan`, `Changes`, `Validation`, and `Next prompt`.
-- `python3 /Users/mseok/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-dir>`
+- `python3 "$HOME/dot/ai/codex/skills/.system/skill-creator/scripts/quick_validate.py" <skill-dir>`
   passes, or a missing `PyYAML` dependency is called out explicitly.
 - `python3 scripts/skill_audit.py <skill-dir>` reports no failures.
 

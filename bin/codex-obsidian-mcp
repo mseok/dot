@@ -42,5 +42,5 @@ for repo in "${repo_candidates[@]}"; do
 done
 
 echo "mcp-obsidian repo not found." >&2
-echo "Clone https://github.com/mseok/mcp-obsidian to ${HOME}/.codex/vendor/mcp-obsidian or set CODEX_OBSIDIAN_MCP_REPO." >&2
+echo "Clone your mcp-obsidian repo to ${HOME}/.codex/vendor/mcp-obsidian or set CODEX_OBSIDIAN_MCP_REPO." >&2
 exit 1

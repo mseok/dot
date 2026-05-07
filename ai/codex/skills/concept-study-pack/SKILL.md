@@ -91,7 +91,7 @@ Use `references/output_blueprint.md` when planning or auditing a full pack. Mini
 Run the bundled validator when the pack is file-based:
 
 ```bash
-python3 /Users/mseok/dot/ai/codex/skills/concept-study-pack/scripts/validate_pack.py PATH_TO_PACK \
+python3 "$HOME/dot/ai/codex/skills/concept-study-pack/scripts/validate_pack.py" PATH_TO_PACK \
   --required-file 00_beginner_route.md \
   --required-file offline_index.html \
   --check-all-html \
@@ -109,7 +109,7 @@ bash scripts/build_offline_reader.sh
 Then validate the reader, worksheet surface, answer-key mapping, and every top-level HTML file with the relevant flags:
 
 ```bash
-python3 /Users/mseok/dot/ai/codex/skills/concept-study-pack/scripts/validate_pack.py PATH_TO_PACK \
+python3 "$HOME/dot/ai/codex/skills/concept-study-pack/scripts/validate_pack.py" PATH_TO_PACK \
   --required-file 00_beginner_route.md \
   --required-file offline_index.html \
   --offline-reader offline_reader.html \
