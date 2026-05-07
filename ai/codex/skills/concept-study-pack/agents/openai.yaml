@@ -1,0 +1,4 @@
+interface:
+  display_name: "Concept Study Pack"
+  short_description: "Build bilingual offline-ready deep study packs for a concept."
+  default_prompt: "Use $concept-study-pack to create a comprehensive standalone offline study pack for this concept, with Korean-English bilingual learner scaffolding."

@@ -1,8 +1,16 @@
 {
   "plugins": {
+    "blink-cmp-copilot": {
+      "rev": "439cff78780c033aa23cf061d7315314b347e3c1",
+      "src": "https://github.com/giuxtaposition/blink-cmp-copilot"
+    },
     "blink.cmp": {
       "rev": "87433840b4d8cce053d6b8cd57f3d75a27c8cd8b",
       "src": "https://github.com/Saghen/blink.cmp"
+    },
+    "copilot.lua": {
+      "rev": "4383e05a47493d7ff77b058c0548129eb38ec7fb",
+      "src": "https://github.com/zbirenbaum/copilot.lua"
     },
     "gitsigns.nvim": {
       "rev": "20ad4419564d6e22b189f6738116b38871082332",
@@ -44,6 +52,14 @@
       "rev": "c3f116534c62730845f5fa537a3caa182a3ea13d",
       "src": "https://github.com/nvim-tree/nvim-web-devicons"
     },
+    "oil.nvim": {
+      "rev": "01cb3a8ad7d5e8707041edc775af83dbf33838f4",
+      "src": "https://github.com/stevearc/oil.nvim"
+    },
+    "opencode.nvim": {
+      "rev": "39a246b597d6050ca319142b5af5a8b81c74e7d9",
+      "src": "https://github.com/NickvanDyke/opencode.nvim"
+    },
     "plenary.nvim": {
       "rev": "b9fd5226c2f76c951fc8ed5923d85e4de065e509",
       "src": "https://github.com/nvim-lua/plenary.nvim"
@@ -51,6 +67,10 @@
     "sidekick.nvim": {
       "rev": "bd1f79a506b7447d44873f78ffc0de7ea232bc88",
       "src": "https://github.com/folke/sidekick.nvim"
+    },
+    "sshfs.nvim": {
+      "rev": "864ecb55c293674a5aafa8b1a1aeca2056c4972a",
+      "src": "https://github.com/uhs-robert/sshfs.nvim"
     },
     "telescope.nvim": {
       "rev": "a0bbec21143c7bc5f8bb02e0005fa0b982edc026",
