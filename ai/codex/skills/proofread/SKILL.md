@@ -170,5 +170,3 @@ Start at 100, deduct per issue found, apply verdict. Insert the Score Block into
 ## Cross-References
 
 - **`$validate-bib`** — For thorough bibliography cross-referencing
-- **Referee 2 agent** — For formal code + paper auditing
-- **`$devils-advocate`** — For argument quality and logical scrutiny

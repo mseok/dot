@@ -1,0 +1,4 @@
+interface:
+  display_name: "TeX Submission PDF"
+  short_description: "Build polished TeX-based PDFs in /tmp."
+  default_prompt: "Create a polished submission-ready PDF from the provided material using a temporary TeX project, with clean tables, code blocks, figures, and validation."
