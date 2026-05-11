@@ -745,8 +745,8 @@ function icon_map() {
  "企业微信" | "WeCom")
       icon_result=":wecom:"
       ;;
- "WezTerm")
-      icon_result=":wezterm:"
+ "Kaku")
+      icon_result=":terminal:"
       ;;
  "WhatsApp" | "‎WhatsApp")
       icon_result=":whats_app:"

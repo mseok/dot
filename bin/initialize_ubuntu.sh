@@ -469,7 +469,7 @@ install_optional_tmux_plugins() {
 }
 
 install_color_profile() {
-  tic -x -o $HOME/.terminfo "$REPO_ROOT/config/terminal/wezterm.src"
+  tic -x -o $HOME/.terminfo "$REPO_ROOT/config/terminal/kaku.src"
   tic -x -o $HOME/.terminfo "$REPO_ROOT/config/terminal/tmux-256color.src"
 }
 

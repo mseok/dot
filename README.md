@@ -40,7 +40,7 @@ For Ubuntu, see [Ubuntu Installation](#ubuntu-installation) below.
 
 This repository provides a comprehensive development environment setup including:
 
-- **Terminal**: WezTerm with tmux integration
+- **Terminal**: Kaku with tmux integration
 - **Shell**: Zsh/Bash with Starship prompt
 - **Editor**: Neovim with native vim.pack plugin management, LSP, and AI completions
 - **Window Management** (macOS): Aerospace + SketchyBar + SKHD + Borders
@@ -86,9 +86,10 @@ Install all core dependencies via Homebrew:
 brew tap nikitabobko/tap      # Aerospace window manager
 brew tap FelixKratz/formulae  # SketchyBar & Borders
 brew tap koekeishiya/formulae # SKHD hotkey daemon
+brew tap tw93/tap             # Kaku terminal
 
 # Install all tools at once
-brew install --cask wezterm aerospace
+brew install --cask tw93/tap/kakuku aerospace
 brew install neovim tmux git starship fzf ripgrep fd yazi \
              sketchybar borders skhd node python@3.11
 
@@ -101,7 +102,7 @@ brew services start skhd
 
 | Tool | Installation | Documentation |
 |------|-------------|---------------|
-| **WezTerm** | `brew install --cask wezterm` | [wezfurlong.org/wezterm](https://wezfurlong.org/wezterm/) |
+| **Kaku** | `brew install --cask tw93/tap/kakuku` | [github.com/tw93/Kaku](https://github.com/tw93/Kaku) |
 | **Aerospace** | `brew install --cask nikitabobko/tap/aerospace` | [nikitabobko.github.io/AeroSpace](https://nikitabobko.github.io/AeroSpace/) |
 | **SketchyBar** | `brew install sketchybar` | [felixkratz.github.io/SketchyBar](https://felixkratz.github.io/SketchyBar/) |
 | **SKHD** | `brew install koekeishiya/formulae/skhd` | [github.com/koekeishiya/skhd](https://github.com/koekeishiya/skhd) |
@@ -230,8 +231,10 @@ ln -s $HOME/dot/config/starship/starship.toml $HOME/.config/starship.toml
 # Yazi file manager
 ln -s $HOME/dot/config/yazi $HOME/.config/yazi
 
-# WezTerm terminal
-ln -s $HOME/dot/config/wezterm $HOME/.config/wezterm
+# Kaku terminal
+mkdir -p $HOME/.config/kaku
+ln -s $HOME/dot/config/kaku/kaku.lua $HOME/.config/kaku/kaku.lua
+ln -s $HOME/dot/config/kaku/assistant.toml $HOME/.config/kaku/assistant.toml
 
 # VS Code (optional)
 ln -s $HOME/dot/config/vscode/settings.json "$HOME/Library/Application Support/Code/User/settings.json"
@@ -511,7 +514,7 @@ dot/
 │   ├── git/            # Git config
 │   ├── chatgpt-obsidian-mcp/ # Templates for the launchd-managed MCP bridge
 │   ├── starship/       # Starship prompt (XDG)
-│   ├── wezterm/        # WezTerm terminal (XDG)
+│   ├── kaku/           # Kaku terminal (XDG)
 │   ├── yazi/           # Yazi file manager (XDG)
 │   ├── aerospace/      # Aerospace WM (macOS)
 │   ├── sketchybar/     # SketchyBar (macOS)

@@ -50,7 +50,6 @@ key-mapping.preset = 'qwerty'
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 on-focus-changed = [
   'move-mouse window-lazy-center',
-  'exec-and-forget ~/.config/aerospace/input-source-on-focus.sh',
 ]
 
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
@@ -116,7 +115,7 @@ outer.top = [
 # See: https://nikitabobko.github.io/AeroSpace/commands#layout
 alt-slash = 'layout tiles horizontal vertical'
 alt-comma = 'layout accordion horizontal vertical'
-alt-enter = "exec-and-forget open -n /Applications/WezTerm.app"
+alt-enter = "exec-and-forget open -n /Applications/Kaku.app"
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#focus
 alt-h = 'focus left'
@@ -221,7 +220,7 @@ alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
 [[on-window-detected]]
-if.app-id = "com.github.wez.wezterm"
+if.app-id = "fun.tw93.kaku"
 run = "move-node-to-workspace 1"
 [[on-window-detected]]
 if.app-id = "com.apple.Terminal"

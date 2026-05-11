@@ -79,11 +79,38 @@ fi
 
 set -o vi
 
-uv() {
-    if [[ "$1" == "add" || "$1" == "remove" || "$1" == "sync" ]]; then
-        export VIRTUAL_ENV=$CONDA_PREFIX
-        command uv "$@" --active
-    else
-        command uv "$@"
+if [[ -o interactive && -t 1 ]]; then
+    _dot_vi_cursor_set() {
+        case "${KEYMAP:-}" in
+            vicmd)
+                printf '\e[2 q'  # steady block
+                ;;
+            *)
+                printf '\e[6 q'  # steady bar
+                ;;
+        esac
+    }
+
+    _dot_vi_cursor_keymap_select() {
+        _dot_vi_cursor_set
+    }
+
+    _dot_vi_cursor_line_init() {
+        _dot_vi_cursor_set
+    }
+
+    _dot_vi_cursor_line_finish() {
+        printf '\e[6 q'
+    }
+
+    if [[ -z "${_DOT_VI_CURSOR_HOOKS_INSTALLED:-}" ]]; then
+        autoload -Uz add-zle-hook-widget
+        zle -N _dot_vi_cursor_keymap_select
+        zle -N _dot_vi_cursor_line_init
+        zle -N _dot_vi_cursor_line_finish
+        add-zle-hook-widget keymap-select _dot_vi_cursor_keymap_select
+        add-zle-hook-widget line-init _dot_vi_cursor_line_init
+        add-zle-hook-widget line-finish _dot_vi_cursor_line_finish
+        typeset -g _DOT_VI_CURSOR_HOOKS_INSTALLED=1
     fi
-}
+fi

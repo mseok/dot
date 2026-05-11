@@ -17,7 +17,7 @@ _copy_to_local_clipboard() {
     fi
   done
 
-  # 2) If we're in a terminal that supports OSC52 (VSCode, iTerm2, WezTerm)
+  # 2) If we're in a terminal that supports OSC52 (VSCode, iTerm2, Kaku)
   # Try to generate base64 safely without depending on external tools
   local encoded
   if command -v base64 >/dev/null 2>&1; then

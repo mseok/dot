@@ -1,5 +1,5 @@
-#	Reconstructed via infocmp from a local wezterm terminfo entry
-wezterm|Wez's terminal emulator,
+#	Reconstructed via infocmp from file: /Users/mseok/.terminfo/6b/kaku
+kaku|Kaku Terminal,
 	am, bce, ccc, hs, km, mc5i, mir, msgr, npc, xenl, Su, Tc,
 	colors#256, cols#80, it#8, lines#24, pairs#32767,
 	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
