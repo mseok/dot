@@ -50,6 +50,7 @@ key-mapping.preset = 'qwerty'
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 on-focus-changed = [
   'move-mouse window-lazy-center',
+  'exec-and-forget /bin/bash -lc "$HOME/.config/aerospace/follow-codex-pet.sh"',
 ]
 
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
