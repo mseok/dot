@@ -50,7 +50,6 @@ key-mapping.preset = 'qwerty'
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 on-focus-changed = [
   'move-mouse window-lazy-center',
-  'exec-and-forget /bin/bash -lc "$HOME/.config/aerospace/pin-ai-apps-to-workspace.sh"',
 ]
 
 # Gaps between windows (inner-*) and between monitor edges (outer-*).
@@ -249,7 +248,7 @@ if.app-id = "notion.id"
 run = "move-node-to-workspace 3"
 [[on-window-detected]]
 if.app-id = "com.openai.codex"
-run = "move-node-to-workspace 5"
+run = 'exec-and-forget /bin/bash -lc "$HOME/.config/aerospace/pin-ai-apps-to-workspace.sh"'
 [[on-window-detected]]
 if.app-id = "com.anthropic.claudefordesktop"
 run = "move-node-to-workspace 5"
