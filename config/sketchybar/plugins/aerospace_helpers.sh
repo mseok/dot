@@ -65,18 +65,69 @@ workspaces_for_monitor() {
 }
 
 workspace_apps() {
-  "$AEROSPACE_BIN" list-windows --workspace "$1" 2>/dev/null | awk -F'|' '
-    {
-      gsub(/^ *| *$/, "", $2)
-      if (length($2)) print $2
-    }
-  '
+  local sid="$1"
+  local window_id app_name _title
+
+  "$AEROSPACE_BIN" list-windows --workspace "$sid" --format '%{window-id}|%{app-name}|%{window-title}' 2>/dev/null |
+    while IFS='|' read -r window_id app_name _title; do
+      app_name="$(trim_spaces "$app_name")"
+      [ -n "$app_name" ] || continue
+
+      if [ "$app_name" = "Codex" ] && is_codex_pet_window_id "$window_id"; then
+        continue
+      fi
+
+      printf '%s\n' "$app_name"
+    done
+}
+
+trim_spaces() {
+  local value="$1"
+
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  printf '%s\n' "$value"
+}
+
+is_codex_pet_window_id() {
+  local window_id="$1"
+  local debug
+
+  [ -n "$window_id" ] || return 1
+  debug="$("$AEROSPACE_BIN" debug-windows --window-id "$window_id" 2>/dev/null || true)"
+  is_codex_pet_window_debug "$debug"
+}
+
+is_codex_pet_window_debug() {
+  local debug="$1"
+  local width="" height=""
+
+  if [[ "$debug" == *'"AXSubrole" : "AXDialog"'* ]] &&
+     { [[ "$debug" == *'"Aero.windowLevel" : "{\"alwaysOnTopWindow\":{}}"'* ]] ||
+       [[ "$debug" == *'"Aero.windowLevel" : "alwaysOnTopWindow"'* ]]; }; then
+    return 0
+  fi
+
+  [[ "$debug" == *'"AXSubrole" : "AXStandardWindow"'* ]] || return 1
+  [[ "$debug" == *'"AXTitle" : "Codex"'* ]] || return 1
+
+  if [[ "$debug" =~ w[[:space:]]*[:=][[:space:]]*([0-9]+)(\.[0-9]+)?[[:space:]]+h[[:space:]]*[:=][[:space:]]*([0-9]+)(\.[0-9]+)? ]]; then
+    width="${BASH_REMATCH[1]}"
+    height="${BASH_REMATCH[3]}"
+  elif [[ "$debug" =~ width[[:space:]]*=[[:space:]]*([0-9]+)(\.[0-9]+)?[^0-9]+height[[:space:]]*=[[:space:]]*([0-9]+)(\.[0-9]+)? ]]; then
+    width="${BASH_REMATCH[1]}"
+    height="${BASH_REMATCH[3]}"
+  fi
+
+  [[ -n "$width" && -n "$height" ]] || return 1
+  (( width >= 280 && width <= 520 && height >= 240 && height <= 440 ))
 }
 
 build_icon_strip() {
   local apps="$1"
   local icon_strip=""
   local app
+  local icon
 
   if [ -z "$apps" ]; then
     printf '\n'
@@ -85,7 +136,9 @@ build_icon_strip() {
 
   while IFS= read -r app; do
     [ -n "$app" ] || continue
-    icon_strip="${icon_strip} $("${CONFIG_DIR}/plugins/icon_map_fn.sh" "$app")"
+    icon="$(trim_spaces "$("${CONFIG_DIR}/plugins/icon_map_fn.sh" "$app")")"
+    [ -n "$icon" ] || continue
+    icon_strip="${icon_strip} $icon"
   done <<< "$apps"
 
   printf '%s\n' "${icon_strip# }"
