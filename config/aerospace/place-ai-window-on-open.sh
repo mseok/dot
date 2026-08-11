@@ -22,9 +22,12 @@ fi
 is_codex_pet_window() {
   local debug="$1"
 
+  # ChatGPT 26.803+ renders Pet as one root dialog plus several composition
+  # surfaces. They must share one sticky layout; moving the layers between
+  # workspaces individually detaches them into black rounded rectangles.
   if [[ "$debug" == *'"AXSubrole" : "AXDialog"'* ]] &&
-     { [[ "$debug" == *'"Aero.windowLevel" : "{\"alwaysOnTopWindow\":{}}"'* ]] ||
-       [[ "$debug" == *'"Aero.windowLevel" : "alwaysOnTopWindow"'* ]]; }; then
+     { [[ "$debug" == *'"AXTitle" : "Codex"'* ]] ||
+       [[ "$debug" == *'"AXTitle" : "Codex Pet Composition Surface"'* ]]; }; then
     return 0
   fi
 
@@ -46,13 +49,10 @@ is_codex_pet_window() {
 
 debug="$("$AEROSPACE_BIN" debug-windows --window-id "$window_id" 2>/dev/null || true)"
 if is_codex_pet_window "$debug"; then
-  focused_workspace="${AEROSPACE_FOCUSED_WORKSPACE:-}"
-  if [[ -z "$focused_workspace" ]]; then
-    focused_workspace="$("$AEROSPACE_BIN" list-workspaces --focused 2>/dev/null || true)"
-  fi
-
-  if [[ -n "$focused_workspace" && "${AEROSPACE_WORKSPACE:-}" != "$focused_workspace" ]]; then
-    "$AEROSPACE_BIN" move-node-to-workspace --window-id "$window_id" "$focused_workspace" >/dev/null 2>&1 || true
+  if "$AEROSPACE_BIN" layout --help 2>/dev/null | grep -q 'sticky'; then
+    "$AEROSPACE_BIN" layout --window-id "$window_id" sticky >/dev/null 2>&1 || true
+  else
+    "$AEROSPACE_BIN" layout --window-id "$window_id" floating >/dev/null 2>&1 || true
   fi
   exit 0
 fi

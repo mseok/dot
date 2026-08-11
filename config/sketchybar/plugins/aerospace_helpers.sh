@@ -66,15 +66,25 @@ workspaces_for_monitor() {
 
 workspace_apps() {
   local sid="$1"
-  local window_id app_name _title
+  local window_id app_name window_title
 
   "$AEROSPACE_BIN" list-windows --workspace "$sid" --format '%{window-id}|%{app-name}|%{window-title}' 2>/dev/null |
-    while IFS='|' read -r window_id app_name _title; do
+    while IFS='|' read -r window_id app_name window_title; do
       app_name="$(trim_spaces "$app_name")"
+      window_title="$(trim_spaces "$window_title")"
       [ -n "$app_name" ] || continue
 
       if [ "$app_name" = "Codex" ] && is_codex_pet_window_id "$window_id"; then
         continue
+      fi
+
+      # ChatGPT 26.803+ exposes one Pet root dialog and several composition
+      # surfaces as independent AeroSpace windows. They are implementation
+      # layers, not apps, so do not render one ChatGPT icon per surface.
+      if [ "$app_name" = "ChatGPT" ]; then
+        case "$window_title" in
+          Codex|"Codex Pet "*) continue ;;
+        esac
       fi
 
       printf '%s\n' "$app_name"

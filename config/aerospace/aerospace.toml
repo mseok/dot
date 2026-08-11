@@ -3,6 +3,8 @@
 
 # It's not necessary to copy all keys to your config.
 # If the key is missing in your config, "default-config.toml" will serve as a fallback
+# Codex Pet requires the pinned fork with `layout sticky` support:
+# bash "$HOME/dot/bin/install_aerospace_pet_fork.sh"
 
 # You can use it to add commands that run after login to macOS user session.
 # 'start-at-login' needs to be 'true' for 'after-login-command' to work
