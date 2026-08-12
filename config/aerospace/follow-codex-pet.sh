@@ -7,6 +7,8 @@ if [[ -z "$AEROSPACE_BIN" ]]; then
   exit 0
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 lock_dir="${TMPDIR:-/tmp}/follow-codex-pet.lock"
 if ! mkdir "$lock_dir" 2>/dev/null; then
   exit 0
@@ -18,54 +20,29 @@ if [[ "$version" == *"server version: Unknown"* ]] || [[ "$version" == *"server 
   exit 0
 fi
 
-# Stable AeroSpace has no sticky windows. Never emulate sticky by moving Pet's
-# individual composition layers: that breaks their native parent relationship.
-if ! "$AEROSPACE_BIN" layout --help 2>/dev/null | grep -q 'sticky'; then
+focused_workspace="${AEROSPACE_FOCUSED_WORKSPACE:-}"
+if [[ -z "$focused_workspace" ]]; then
+  focused_workspace="$("$AEROSPACE_BIN" list-workspaces --focused 2>/dev/null || true)"
+fi
+if [[ -z "$focused_workspace" ]]; then
   exit 0
 fi
 
-windows="$("$AEROSPACE_BIN" list-windows --all --format '%{window-id}|%{workspace}|%{app-name}|%{window-title}' 2>/dev/null || true)"
-if [[ -z "$windows" ]]; then
+target_monitor="$(
+  "$AEROSPACE_BIN" list-workspaces --monitor all --visible --format '%{workspace}|%{monitor-name}' 2>/dev/null |
+    awk -F'|' -v workspace="$focused_workspace" '$1 == workspace { print $2; exit }'
+)"
+if [[ -z "$target_monitor" ]]; then
+  target_monitor="$("$AEROSPACE_BIN" list-monitors --focused --format '%{monitor-name}' 2>/dev/null || true)"
+fi
+if [[ -z "$target_monitor" ]]; then
   exit 0
 fi
 
-is_codex_pet_window() {
-  local debug="$1"
-
-  # ChatGPT 26.803+ renders Pet as one root dialog plus several composition
-  # surfaces. Mark every layer sticky so their native relationship is kept.
-  if [[ "$debug" == *'"AXSubrole" : "AXDialog"'* ]] &&
-     { [[ "$debug" == *'"AXTitle" : "Codex"'* ]] ||
-       [[ "$debug" == *'"AXTitle" : "Codex Pet Composition Surface"'* ]]; }; then
-    return 0
-  fi
-
-  # Current Codex builds expose the pet overlay as a small AXStandardWindow
-  # titled "Codex". The main Codex window has the same title, so size is the
-  # discriminant here. The observed overlay is 356x320; keep the range loose
-  # for UI scale and future padding changes.
-  [[ "$debug" == *'"AXSubrole" : "AXStandardWindow"'* ]] || return 1
-  [[ "$debug" == *'"AXTitle" : "Codex"'* ]] || return 1
-
-  local width="" height=""
-  if [[ "$debug" =~ w[[:space:]]*[:=][[:space:]]*([0-9]+)(\.[0-9]+)?[[:space:]]+h[[:space:]]*[:=][[:space:]]*([0-9]+)(\.[0-9]+)? ]]; then
-    width="${BASH_REMATCH[1]}"
-    height="${BASH_REMATCH[3]}"
-  elif [[ "$debug" =~ width[[:space:]]*=[[:space:]]*([0-9]+)(\.[0-9]+)?[^0-9]+height[[:space:]]*=[[:space:]]*([0-9]+)(\.[0-9]+)? ]]; then
-    width="${BASH_REMATCH[1]}"
-    height="${BASH_REMATCH[3]}"
-  fi
-
-  [[ -n "$width" && -n "$height" ]] || return 1
-  (( width >= 280 && width <= 520 && height >= 240 && height <= 440 ))
-}
-
-while IFS='|' read -r window_id workspace app_name _title; do
-  [[ "$app_name" == "Codex" || "$app_name" == "ChatGPT" ]] || continue
-  [[ -n "$window_id" ]] || continue
-
-  debug="$("$AEROSPACE_BIN" debug-windows --window-id "$window_id" 2>/dev/null || true)"
-  is_codex_pet_window "$debug" || continue
-
-  "$AEROSPACE_BIN" layout --window-id "$window_id" sticky >/dev/null 2>&1 || true
-done <<< "$windows"
+if [[ "${CODEX_PET_DEBUG:-0}" == "1" ]]; then
+  AEROSPACE_TARGET_MONITOR="$target_monitor" \
+    osascript -l JavaScript "$SCRIPT_DIR/move-codex-pet-to-monitor.js" || true
+else
+  AEROSPACE_TARGET_MONITOR="$target_monitor" \
+    osascript -l JavaScript "$SCRIPT_DIR/move-codex-pet-to-monitor.js" >/dev/null 2>&1 || true
+fi

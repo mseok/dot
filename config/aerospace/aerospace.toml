@@ -1,10 +1,9 @@
-# Place a copy of this config to ~/.aerospace.toml
-# After that, you can edit ~/.aerospace.toml to your liking
+# Active through ~/.config/aerospace/aerospace.toml (symlinked to this file).
 
 # It's not necessary to copy all keys to your config.
 # If the key is missing in your config, "default-config.toml" will serve as a fallback
-# Codex Pet requires the pinned fork with `layout sticky` support:
-# bash "$HOME/dot/bin/install_aerospace_pet_fork.sh"
+# Codex Pet is a native popup, so its workspace-following helper moves all
+# popup layers together through macOS Accessibility rather than AeroSpace layout.
 
 # You can use it to add commands that run after login to macOS user session.
 # 'start-at-login' needs to be 'true' for 'after-login-command' to work
@@ -17,6 +16,7 @@ after-login-command = []
 after-startup-command = [
   "exec-and-forget sketchybar",
   "exec-and-forget borders active_color=0xfff44336 inactive_color=0xff494d64 width=5.0 hidpi=on",
+  'exec-and-forget /bin/bash -lc "$HOME/.config/aerospace/pin-ai-apps-to-workspace.sh"',
 ]
 exec-on-workspace-change = ['/bin/bash', '-c',
     'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE; "$HOME/.config/aerospace/follow-codex-pet.sh"'
@@ -142,7 +142,7 @@ alt-3 = 'workspace 3'
 alt-4 = 'workspace 4'
 alt-5 = 'workspace 5'
 alt-6 = 'workspace 6'
-alt-7 = 'workspace 7'
+alt-7 = 'exec-and-forget bash /Users/mseok/.config/aerospace/focus-workspace-7.sh'
 alt-8 = 'workspace 8'
 alt-9 = 'workspace 9'
 
@@ -152,7 +152,7 @@ alt-e = 'workspace 3'
 alt-r = 'workspace 4'
 alt-t = 'workspace 5'
 alt-y = 'workspace 6'
-alt-u = 'workspace 7'
+alt-u = 'exec-and-forget bash /Users/mseok/.config/aerospace/focus-workspace-7.sh'
 alt-i = 'workspace 8'
 alt-o = 'workspace 9'
 

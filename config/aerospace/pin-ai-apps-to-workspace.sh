@@ -7,6 +7,10 @@ if [[ -z "$AEROSPACE_BIN" ]]; then
   exit 0
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=codex-window.sh
+source "$SCRIPT_DIR/codex-window.sh"
+
 lock_dir="${TMPDIR:-/tmp}/pin-ai-apps-to-workspace.lock"
 if ! mkdir "$lock_dir" 2>/dev/null; then
   exit 0
@@ -28,38 +32,23 @@ if [[ "$version" == *"server version: Unknown"* ]] || [[ "$version" == *"server 
   exit 0
 fi
 
-windows="$("$AEROSPACE_BIN" list-windows --all --format '%{window-id}|%{workspace}|%{app-name}|%{window-title}' 2>/dev/null || true)"
+windows="$("$AEROSPACE_BIN" list-windows --all --format '%{window-id}|%{workspace}|%{app-name}|%{app-bundle-id}|%{window-title}' 2>/dev/null || true)"
 if [[ -z "$windows" ]]; then
   exit 0
 fi
 
-is_codex_pet_window() {
-  local debug="$1"
-  local width="" height=""
-
-  [[ "$debug" == *'"Aero.windowLevel" : "alwaysOnTopWindow"'* ]] || return 1
-
-  if [[ "$debug" =~ w[[:space:]]*[:=][[:space:]]*([0-9]+)(\.[0-9]+)?[[:space:]]+h[[:space:]]*[:=][[:space:]]*([0-9]+)(\.[0-9]+)? ]]; then
-    width="${BASH_REMATCH[1]}"
-    height="${BASH_REMATCH[3]}"
-  fi
-
-  [[ -n "$width" && -n "$height" ]] || return 1
-  (( width >= 280 && width <= 520 && height >= 240 && height <= 440 ))
-}
-
-while IFS='|' read -r window_id workspace app_name _title; do
-  case "$app_name" in
-    Codex|Claude) ;;
+while IFS='|' read -r window_id workspace _app_name app_bundle_id _title; do
+  case "$app_bundle_id" in
+    com.openai.codex|com.anthropic.claudefordesktop) ;;
     *) continue ;;
   esac
 
   [[ -n "$window_id" ]] || continue
 
   destination="$target_workspace"
-  if [[ "$app_name" == "Codex" ]]; then
+  if is_codex_app_bundle_id "$app_bundle_id"; then
     debug="$("$AEROSPACE_BIN" debug-windows --window-id "$window_id" 2>/dev/null || true)"
-    if [[ -n "$focused_workspace" ]] && is_codex_pet_window "$debug"; then
+    if [[ -n "$focused_workspace" ]] && is_codex_pet_window_debug "$debug"; then
       destination="$focused_workspace"
     fi
   fi

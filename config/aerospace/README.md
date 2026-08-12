@@ -1,20 +1,19 @@
 # AeroSpace and Codex Pet
 
-The Codex Pet overlay configuration requires the pinned AeroSpace fork
-`0.20.3-Beta-fork.8`. The stable Homebrew build does not provide the
-`layout ... sticky` command used to keep the Pet's native popup layers visible
-across workspace changes.
+ChatGPT exposes Codex Pet as a group of native macOS popup windows. AeroSpace
+intentionally leaves these popups outside its workspace tree, so neither
+`move-node-to-workspace` nor `layout sticky` can safely attach Pet to a
+workspace. Applying either command to an individual composition layer risks
+detaching the native overlay.
 
-Install the pinned app and CLI with:
+`follow-codex-pet.sh` therefore resolves the focused workspace's visible
+monitor and invokes `move-codex-pet-to-monitor.js`. The helper moves every Pet
+layer by one shared Accessibility-coordinate offset, preserving their relative
+geometry while placing the Pet on the correct monitor (including workspace 7).
+It is a no-op when the Pet is absent or already on that monitor, and it never
+moves a normal ChatGPT or Claude window.
 
-```bash
-bash "$HOME/dot/bin/install_aerospace_pet_fork.sh"
-```
-
-The installer downloads the release from
-`vitorebatista/AeroSpace`, verifies its SHA-256, preserves existing app/CLI
-paths with timestamped backups, installs the fork at `/Applications/AeroSpace.app`
-and links its CLI as `$(brew --prefix)/bin/aerospace`.
-
-After replacing the app, macOS may require AeroSpace to be enabled again in
+The existing pinned AeroSpace fork may remain installed for its other features,
+but Pet following no longer depends on its experimental `layout sticky` command.
+If macOS asks, allow `/usr/bin/osascript` to control ChatGPT under
 System Settings > Privacy & Security > Accessibility.
