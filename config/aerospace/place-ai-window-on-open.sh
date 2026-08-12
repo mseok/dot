@@ -25,8 +25,8 @@ fi
 
 debug="$("$AEROSPACE_BIN" debug-windows --window-id "$window_id" 2>/dev/null || true)"
 if is_codex_pet_window_debug "$debug"; then
-  # Pet is a native popup rather than an AeroSpace-managed window. Move all of
-  # its layers together through Accessibility instead of touching this one
+  # Pet is a native popup rather than an AeroSpace-managed window. Move only
+  # its verified render owners through Accessibility instead of touching this
   # layer with `layout` or `move-node-to-workspace`.
   "$SCRIPT_DIR/follow-codex-pet.sh" >/dev/null 2>&1 || true
   exit 0
