@@ -31,9 +31,11 @@ Before launching a result that may be compared, cited, resumed, or used for a la
 
 1. State the intent, hypothesis, comparison surface, and decision criterion.
 2. Ensure every result-affecting source, configuration, and launch-script change is committed in the source repository. Reuse `HEAD` when there are no relevant changes; never make an empty commit.
-3. Stage only experiment-relevant files. Never absorb unrelated dirty changes. If relevant and unrelated edits cannot be separated safely, stop before launch and ask the user.
-4. Record the full source SHA and branch or worktree caveat. A source push is not required unless the user asks.
-5. Record the applicable data or manifest, checkpoint and hash, resolved configuration, seeds, comparison population, command, Slurm job and resources, output artifact name and digest, W&B run and `trainer/global_step`, and stop condition. Use `N/A` when a surface does not exist and `UNVERIFIED` when it was not retained or re-authenticated.
+3. Treat committed source as a scoped invariant: result-affecting files must match the recorded commit. A pristine repository is not required.
+4. Use the current checkout by default. Unrelated dirty or untracked files are neither a blocker nor a reason to create a branch or worktree; preserve and ignore them.
+5. Stage only experiment-relevant files. Never absorb unrelated dirty changes. If relevant and unrelated edits cannot be separated safely, stop before launch and ask the user. Create a worktree only when the user asks or when a distinct checkout is genuinely necessary for concurrent or conflicting work, never for experiment bookkeeping alone.
+6. Record the full source SHA and only checkout caveats that can affect reproduction. A source push is not required unless the user asks.
+7. Record only result-affecting surfaces that actually exist, such as the data or manifest, checkpoint and hash, resolved configuration, seeds, comparison population, command, Slurm job and resources, output artifact name and digest, W&B run and `trainer/global_step`, and stop condition. Do not invent a fixed roster, checkpoint list, seed grid, validation, or bookkeeping surface merely because a run is comparable. Use `N/A` only where the vault template requires a field and `UNVERIFIED` when a relevant fact was not retained or re-authenticated.
 
 Do not put raw logs, full configs, datasets, results, or bare absolute server paths in the vault. Keep stable identifiers, compact evidence, conclusions, and repository-relative implementation pointers.
 
