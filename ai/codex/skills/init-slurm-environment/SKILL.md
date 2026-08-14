@@ -45,13 +45,14 @@ Change durable configuration only when the user asked to initialize or refresh i
 
 - If no override exists, create the generated document once. If an existing override has the generator marker, regenerate it from the current base and refreshed facts. If an existing override lacks that marker, do not overwrite it; stop and ask the user how to preserve it.
 - Do not copy a generated override into the portable dotfiles source or commit it to Git. Removing the generated override restores the portable base, but remove it only when the user asks to disable the local Slurm configuration.
-- Record only stable topology such as confirmed shared roots, confirmed node-local staging roots, and durable scheduler/client constraints. Do not record current jobs, allocations, free GPUs, utilization, memory pressure, or other transient observations.
+- Because `CODEX_HOME` may be shared across nodes, record only facts and policies that are stable cluster-wide, such as confirmed shared roots, confirmed node-local staging roots, and durable scheduler/client constraints. Never encode one node's hostname, current jobs, allocations, free GPUs, utilization, memory pressure, or other host-specific or transient observations. If one `CODEX_HOME` serves multiple clusters with different topology, stop and ask the user to choose an explicit profile boundary instead of generating an ambiguous override.
 - Avoid duplicating an equivalent base instruction in the local block. After creating or regenerating the override, state that a new Codex task is required because global instructions are discovered once per task.
 
 ### Preserve unrelated rules
 
-- Keep Slurm, GPU inspection, and explicitly authorized direct launchers in `$CODEX_HOME/rules/hpc.rules`.
-- Never replace unrelated existing rules. If equivalent Slurm coverage already exists, leave it unchanged. Otherwise add or refresh one clearly delimited initializer-owned block and preserve everything outside it.
+- Treat `$CODEX_HOME/rules/hpc.rules` as the Git-managed portable permission policy for Slurm, GPU inspection, and explicitly authorized direct launchers. Do not generate per-cluster rules from discovered scheduler or node state.
+- Verify the relevant command basenames against the existing rules. Add a site-specific permission only after an actual permission failure is observed, and then make the smallest explicit change that fixes that failure; do not add speculative command paths or launchers.
+- Never replace unrelated existing rules. If equivalent Slurm coverage already exists, leave it unchanged. If baseline coverage is missing during installation, update the Git-managed portable rules source and sync its live copy without embedding cluster facts; do not create a per-cluster generated rules block.
 - Prefer command basenames and standard system paths; do not hard-code usernames, cluster hostnames, mount names, or user-specific executable paths in the portable rules source.
 - If `sacct` requires a named-host SSH workaround, treat that as a Slurm client configuration defect. Report or fix the canonical Slurm configuration instead of making the workaround part of the portable rules template.
 - After changing `.rules`, state that a new Codex task is required before the new decisions are loaded.
