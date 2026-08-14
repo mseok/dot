@@ -1,62 +1,78 @@
 ---
 name: init-slurm-environment
-description: Bootstrap or deliberately refresh a minimal Codex setup on an arbitrary Slurm cluster. Use after installing Codex or these dotfiles on a new Slurm system, after scheduler or storage topology changes, or when the user explicitly asks to reinitialize the Slurm environment. Do not use per session or for routine coding, job execution, and ordinary debugging.
+description: Bootstrap or deliberately refresh a Codex Slurm storage-topology policy. Use after installing Codex or these dotfiles on a new Slurm system, after scheduler or storage topology changes, or when the user explicitly asks to reinitialize the Slurm environment. Do not use per session or for routine coding, job execution, and ordinary debugging.
 ---
 
 # Initialize a Slurm environment
 
-Run this as a one-time bootstrap or an explicit refresh. Start with read-only discovery. Do not launch a job merely to prove that the skill works.
+Run this as a one-time bootstrap or explicit refresh. Start with read-only discovery. The default is a minimal audit; run the full cross-node storage audit only when the user explicitly requests it. Do not submit a job merely to prove the initializer works.
 
-## Discover without path or host assumptions
+## Modes and scope
 
-1. Identify the short hostname and cluster name. Check the controller with `scontrol ping`, then retain only relevant fields from `scontrol show config`, including controller, accounting, temporary-filesystem, and cluster settings.
-2. Determine the current node role from Slurm evidence. Try the exact short hostname with `scontrol show node`; a matching node is a compute node. A non-match only proves that the host is not registered as a compute node. Distinguish controller, login/client, compute, and unknown instead of guessing from the hostname.
-3. Inspect `sinfo` and a bounded `squeue` view. Use a bounded `sacct` query only when accounting is relevant. If local accounting fails, inspect `AccountingStorageType`, `AccountingStorageHost`, and `AccountingStoragePort` and report the configuration problem. Do not guess an SSH destination or encode a controller hostname as a fallback.
-4. Identify the paths that actual work will use: the working tree, `CODEX_HOME`, user-named data, checkpoint, output, cache, and temporary paths. Run `findmnt -T` on those exact paths. If important storage roots are not yet known, inspect the mount table with `findmnt` without traversing file contents, then ask which roots matter.
-5. Classify topology from evidence, not names. Network and cluster filesystems are shared candidates; block-backed filesystems and tmpfs are node-local candidates. Bind mounts and unclear sources remain unknown until resolved. Never assume that names such as `home`, `mnt`, `scratch`, `cache`, or `tmp` imply sharing or locality.
-6. On a GPU node, compare Slurm GRES state with one concise `nvidia-smi` query. Treat allocation, running processes, memory use, and utilization as separate facts. If the query fails once, report it without blind retries.
+- **Minimal audit:** discover the scheduler, the initiating host role, and the concrete roots already in scope. It never uses SSH or submits work.
+- **Full topology audit:** only for an explicit request to verify compute-node storage. It uses Slurm-provided hostnames and bounded, read-only SSH probes; it does not submit a job.
+- Audit only the working tree, `CODEX_HOME`, and explicitly named data, checkpoint, output, cache, or staging roots. A user-named compute-only root remains in scope even when it is absent from the controller or login host.
 
-Treat shared or unknown storage conservatively. Do not recursively scan broad trees or perform high-fanout small-file I/O there. Choose a confirmed node-local staging location for metadata-heavy work, and keep inputs or results that must cross nodes on confirmed shared storage.
+## Core discovery in every mode
 
-Cross-node visibility is not proven by a path existing on the current host. Verify it only when an actual planned workflow requires the fact, using an existing allocation when possible. Do not submit a smoke job solely for environment initialization.
+1. Identify the short hostname and cluster name. Check `scontrol ping`, then retain only controller, accounting, temporary-filesystem, and cluster fields from `scontrol show config`.
+2. Determine the initiating node role from Slurm evidence. `scontrol show node <short-hostname>` proves a matching compute node; a non-match proves only that it is not registered as one. Report controller, login/client, compute, or unknown without relying on hostname conventions.
+3. Inspect `sinfo` and a bounded `squeue` view. Query `sacct` only when accounting is relevant. If accounting fails, report `AccountingStorageType`, `AccountingStorageHost`, and `AccountingStoragePort`; never add an SSH workaround for accounting.
+4. Run `findmnt -T` for every in-scope root. If important roots are still unknown, inspect the mount table without traversing file contents and ask which roots matter.
+5. Classify a local observation from evidence, never path names: a network or cluster filesystem is a shared candidate; a block-backed filesystem or tmpfs is a node-local candidate; bind mounts and unclear sources remain unknown.
+6. On a GPU node only, compare Slurm GRES with one concise `nvidia-smi` query. Allocation, processes, memory use, and utilization are separate facts.
+
+Treat an unverified root conservatively. Do not recursively scan broad trees or create high-fanout metadata I/O on a candidate shared filesystem.
+
+## Full cross-node storage topology audit
+
+### Inventory and probe boundaries
+
+1. Obtain `scontrol show nodes -o` and retain `NodeName`, `NodeAddr`, `NodeHostName`, state, partitions, and GRES. The exact `NodeHostName` returned by Slurm is the only permitted direct-SSH target; never construct a hostname or choose another route.
+2. For a full audit, inspect every responding compute node. Do not SSH `DOWN`, `NOT_RESPONDING`, `UNKNOWN`, or future nodes. Report those nodes as unverified; never infer their storage from a responding node.
+3. For every in-scope root, run a noninteractive read-only probe such as `ssh -n -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=yes "$NodeHostName" findmnt -T "$root" -o TARGET,SOURCE,FSTYPE,OPTIONS`. The `-n` is mandatory whenever hosts are read from a pipe, otherwise SSH consumes the remaining inventory.
+4. For each observed NFS root, collect the matching `nfsstat -m` mount record. Report the export and mount semantics that affect behavior, including NFS version, transport, hard/soft behavior, timeout/retry, and attribute-cache policy when present. Report a `soft` mount as a durability-sensitive infrastructure fact, but do not change it or turn any observed option into a performance claim.
+5. Do not inspect SSH configuration, keys, agent state, or authentication material. Do not relax host-key checking, use `accept-new`, alter known-host files, copy data, or open an interactive shell. A connection, authentication, host-key, or command failure remains unresolved.
+6. If direct SSH is unavailable but a relevant allocation already exists, execute the same bounded probes inside it. Otherwise report the gap; do not submit an initializer-only verification job.
+
+### Storage classifications
+
+- **shared network root:** every audited responding node resolves the exact path to a consistent network or cluster filesystem. This verifies mount-level cross-node visibility, not application-level performance or write-coherence under load.
+- **node-local root:** every audited responding node resolves the path to a local block-backed filesystem or tmpfs.
+- **mixed local root:** the path is local on every audited node but its mount point or backing device differs. It is safe only for allocation-scoped staging; do not assume uniform capacity or filesystem layout.
+- **unverified root:** a node is unavailable, a probe fails, or observations disagree. Do not generate a durable policy for it.
+
+## Derive workload policy
+
+- Keep source, immutable inputs, durable checkpoints, and cross-node results on a verified shared root.
+- Keep metadata-heavy caches, sharded preprocessing, temporary downloads, and ephemeral intermediates on a verified node-local root. Use a job-unique directory inside the allocation; never make a local path an inter-node handoff.
+- For NFS roots, avoid turning cache directories or high-fanout small-file workloads into a shared metadata hotspot. Stage from the shared root to local storage when the workload needs it, then persist only necessary results back to shared storage.
+- Treat a mixed local root as staging only even if the pathname exists everywhere. Do not infer capacity, quota, cleanup, or persistence from its name.
 
 ## Generate the minimal Codex configuration
 
-Change durable configuration only when the user asked to initialize or refresh it. Preserve existing configuration by default.
+Change durable configuration only for an explicit initialize or refresh request. Preserve existing configuration by default.
 
-### Keep the portable base and generate a local override
+- Treat `$CODEX_HOME/AGENTS.md` as the Git-managed portable base and never modify it during initialization.
+- If no override exists, create `$CODEX_HOME/AGENTS.override.md`. If an existing override has the generator marker, regenerate it from the current base and refreshed facts. If it lacks the marker, stop and ask how to preserve it.
+- The override begins with `<!-- Generated by init-slurm-environment. Edit AGENTS.md or rerun the initializer; do not edit this file directly. -->`, followed by the base copied exactly, then one `BEGIN`/`END init-slurm-environment` block.
+- Record only stable aggregate conclusions. Do not encode node names, controller names, jobs, allocations, free GPUs, current load, or raw NFS server/export details. Report NFS options and unverified nodes separately instead.
+- Use one compact storage-topology bullet rather than one repeated policy per root. For example: `Storage topology (audited responding compute nodes): shared /home (NFS) for cross-node and durable data; node-local /tmp and /scratch for allocation-scoped staging only; /scratch layout varies by node.`
+- Omit unverified roots from the generated block. Do not persist a statement merely saying that a root was not verified.
+- If one `CODEX_HOME` serves different clusters with different topology, stop and ask the user to choose a profile boundary. A new Codex task is required after creating or regenerating the override.
 
-- Treat `$CODEX_HOME/AGENTS.md` as the Git-managed portable base. Never modify it during Slurm initialization.
-- Codex reads only `AGENTS.override.md` at global scope when that file exists, so the override must be a complete generated document rather than a fragment.
-- Build `$CODEX_HOME/AGENTS.override.md` by copying the current base exactly, then appending one initializer-owned block containing only missing, stable, verified Slurm facts and policies.
-- Mark the generated file and local block clearly:
+## Permissions and sandbox boundary
 
-```markdown
-<!-- Generated by init-slurm-environment. Edit AGENTS.md or rerun the initializer; do not edit this file directly. -->
+- The read-only filesystem sandbox cannot open Slurm-controller sockets, inspect GPUs, or establish SSH connections. No instruction or rule can make these operations happen inside the sandbox; use an explicit host-side escalation for the exact read-only command.
+- Treat `$CODEX_HOME/rules/hpc.rules` as the Git-managed portable policy for Slurm and GPU inspection. Do not generate per-cluster rules from topology observations.
+- Do not add a generic SSH allow rule: SSH can execute arbitrary remote commands. Keep topology probes explicit, noninteractive, and individually escalated.
+- Add a site-specific permission only after an observed permission failure and only when the smallest explicit rule solves it. Preserve unrelated rules and state that a new task is required after changing them.
 
-<exact contents of AGENTS.md>
+## Acceptance check before publication
 
-<!-- BEGIN init-slurm-environment -->
-## Local Slurm environment
+1. Test override generation in a temporary `CODEX_HOME` fixture. Verify that the base body is byte-identical, exactly one generated block exists, and the compact block contains no host-specific, transient, or unverified facts.
+2. Run a read-only live-cluster check without submitting a job: verify Slurm inventory, then feed at least two responding Slurm-provided hostnames through the `ssh -n` probe. Confirm both results are returned; this guards against SSH consuming the inventory stream.
+3. When an audited root is NFS, confirm that `findmnt -T` and the matching `nfsstat -m` record agree on the mount target. When a local root is mixed, verify the policy calls it staging-only.
+4. After syncing the portable source to the live skill, compare the two files exactly. Do not publish if the fixture or read-only checks fail.
 
-- <stable verified cluster or storage fact>
-<!-- END init-slurm-environment -->
-```
-
-- If no override exists, create the generated document once. If an existing override has the generator marker, regenerate it from the current base and refreshed facts. If an existing override lacks that marker, do not overwrite it; stop and ask the user how to preserve it.
-- Do not copy a generated override into the portable dotfiles source or commit it to Git. Removing the generated override restores the portable base, but remove it only when the user asks to disable the local Slurm configuration.
-- Because `CODEX_HOME` may be shared across nodes, record only facts and policies that are stable cluster-wide, such as confirmed shared roots, confirmed node-local staging roots, and durable scheduler/client constraints. Never encode one node's hostname, current jobs, allocations, free GPUs, utilization, memory pressure, or other host-specific or transient observations. If one `CODEX_HOME` serves multiple clusters with different topology, stop and ask the user to choose an explicit profile boundary instead of generating an ambiguous override.
-- Avoid duplicating an equivalent base instruction in the local block. After creating or regenerating the override, state that a new Codex task is required because global instructions are discovered once per task.
-
-### Preserve unrelated rules
-
-- Treat `$CODEX_HOME/rules/hpc.rules` as the Git-managed portable permission policy for Slurm, GPU inspection, and explicitly authorized direct launchers. Do not generate per-cluster rules from discovered scheduler or node state.
-- Verify the relevant command basenames against the existing rules. Add a site-specific permission only after an actual permission failure is observed, and then make the smallest explicit change that fixes that failure; do not add speculative command paths or launchers.
-- Never replace unrelated existing rules. If equivalent Slurm coverage already exists, leave it unchanged. If baseline coverage is missing during installation, update the Git-managed portable rules source and sync its live copy without embedding cluster facts; do not create a per-cluster generated rules block.
-- Prefer command basenames and standard system paths; do not hard-code usernames, cluster hostnames, mount names, or user-specific executable paths in the portable rules source.
-- If `sacct` requires a named-host SSH workaround, treat that as a Slurm client configuration defect. Report or fix the canonical Slurm configuration instead of making the workaround part of the portable rules template.
-- After changing `.rules`, state that a new Codex task is required before the new decisions are loaded.
-
-Do not add hooks, wrappers, background tracking, snapshots, or extra skills as part of initialization. Do not inspect authentication data, environment secrets, sessions, memories, archived data, backups, or earlier harness material; they are not environment-discovery inputs.
-
-Report only the detected cluster and node role, relevant storage classifications, scheduler/accounting and GPU facts, exact additive configuration changes, whether a new task is required, and unresolved facts.
+Do not add hooks, wrappers, background tracking, snapshots, or extra skills as part of initialization. Report the cluster and node role, storage classifications, NFS mount facts, scheduler/accounting and GPU facts, exact additive configuration changes, whether a new task is required, and unresolved facts.
