@@ -1,4 +1,4 @@
-# The user manages this HPC cluster and explicitly chose direct scheduler access.
+# The user explicitly chose direct access to Slurm commands.
 prefix_rule(
     pattern = [[
         "squeue", "/usr/bin/squeue", "/bin/squeue",
@@ -10,42 +10,19 @@ prefix_rule(
         "scancel", "/usr/bin/scancel", "/bin/scancel",
     ]],
     decision = "allow",
-    justification = "Allow all direct Slurm operations on the user-managed cluster, including submission, cancellation, and scontrol changes",
+    justification = "Allow direct Slurm inspection, submission, execution, cancellation, and control operations",
     match = [
         "squeue --me",
         "/usr/bin/sinfo --Node",
         "sacct --starttime today",
-        "scontrol show node gpu22",
+        "scontrol show node compute01",
         "sbatch job.sh",
         "srun hostname",
         "scancel 12345",
     ],
     not_match = [
-        "ssh gpu22 squeue --me",
+        "ssh compute01 squeue --me",
         "slurmrestd -a rest_auth/local",
-    ],
-)
-
-# Compute nodes point sacct at localhost, while slurmdbd runs on master.
-# Keep this exception restricted to the sacct remote command.
-prefix_rule(
-    pattern = [
-        ["ssh", "/usr/bin/ssh", "/bin/ssh"],
-        "-o",
-        "BatchMode=yes",
-        "master",
-        ["sacct", "/usr/bin/sacct", "/bin/sacct"],
-    ],
-    decision = "allow",
-    justification = "Query Slurm accounting on master because compute-node sacct is configured for an unavailable localhost slurmdbd",
-    match = [
-        "ssh -o BatchMode=yes master sacct --starttime now --allocations",
-        "/usr/bin/ssh -o BatchMode=yes master /usr/bin/sacct --jobs 12345",
-    ],
-    not_match = [
-        "ssh master sacct --starttime now",
-        "ssh -o BatchMode=yes master bash",
-        "ssh -o BatchMode=yes gpu22 sacct --starttime now",
     ],
 )
 
@@ -61,23 +38,20 @@ prefix_rule(
     not_match = ["watch nvidia-smi"],
 )
 
-# This is intentionally broad: the user explicitly allowed direct GPU launchers
-# outside the sandbox when Slurm allocation alone blocks an actually idle GPU.
+# This is intentionally broad: the user explicitly allowed direct host-side
+# launchers when scheduler allocation alone blocks an actually idle GPU.
 prefix_rule(
     pattern = [[
         "bash", "/usr/bin/bash", "/bin/bash",
         "sh", "/usr/bin/sh", "/bin/sh",
         "env", "/usr/bin/env", "/bin/env",
-        "python", "python3", "/usr/bin/python3", "/bin/python3",
+        "python", "/usr/bin/python", "/bin/python",
+        "python3", "/usr/bin/python3", "/bin/python3",
         ".venv/bin/python", "./.venv/bin/python",
-        "uv",
-        "/mnt/parallel_storage/wykim_lab/icl_mseok/appl/bin/uv",
-        "/home/icl_mseok/.local/bin/uv",
-        "/scratch/icl_mseok/tools/bin/uv",
-        "/usr/local/bin/uv",
+        "uv", "/usr/bin/uv", "/usr/local/bin/uv",
     ]],
     decision = "allow",
-    justification = "Allow broad host-side shell and Python launchers for user-approved direct GPU fallback; these commands can execute arbitrary code outside the sandbox",
+    justification = "Allow broad host-side shell and Python launchers for user-approved direct execution; these commands can execute arbitrary code outside the sandbox",
     match = [
         "bash -lc 'python3 -V'",
         "env CUDA_VISIBLE_DEVICES=0 python3 job.py",

@@ -1,8 +1,8 @@
 [credential]
 	helper = store
 [user]
-	name = Your Name
-	email = you@example.com
+	name = Moon Seokhyun
+	email = 45076203+mseok@users.noreply.github.com
 [init]
 	defaultBranch = main
 	templateDir = ~/.config/git/template
