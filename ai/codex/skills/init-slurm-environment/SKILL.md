@@ -1,6 +1,6 @@
 ---
-name: init-environment
-description: Bootstrap or deliberately refresh a minimal Codex setup on an arbitrary Slurm cluster. Use after installing Codex or these dotfiles on a new Slurm system, after scheduler or storage topology changes, or when the user explicitly asks to reinitialize the environment. Do not use per session or for routine coding, job execution, and ordinary debugging.
+name: init-slurm-environment
+description: Bootstrap or deliberately refresh a minimal Codex setup on an arbitrary Slurm cluster. Use after installing Codex or these dotfiles on a new Slurm system, after scheduler or storage topology changes, or when the user explicitly asks to reinitialize the Slurm environment. Do not use per session or for routine coding, job execution, and ordinary debugging.
 ---
 
 # Initialize a Slurm environment
@@ -20,15 +20,36 @@ Treat shared or unknown storage conservatively. Do not recursively scan broad tr
 
 Cross-node visibility is not proven by a path existing on the current host. Verify it only when an actual planned workflow requires the fact, using an existing allocation when possible. Do not submit a smoke job solely for environment initialization.
 
-## Apply the minimal Codex configuration
+## Merge the minimal Codex configuration
 
-Change durable configuration only when the user asked to initialize or refresh it.
+Change durable configuration only when the user asked to initialize or refresh it. Preserve existing configuration by default.
 
-- Keep `$CODEX_HOME/AGENTS.md` limited to stable, topology-independent operating principles. Do not persist a mount or node inventory there.
-- Keep Slurm, GPU inspection, and explicitly authorized direct launchers in one `$CODEX_HOME/rules/hpc.rules` file. Prefer command basenames and standard system paths; do not hard-code usernames, cluster hostnames, mount names, or user-specific executable paths.
+### Add to AGENTS.md without replacing it
+
+- Never replace the whole `$CODEX_HOME/AGENTS.md`, and never delete, reorder, or rephrase unrelated existing instructions.
+- Read the exact file when it exists. Add only stable, verified facts or policies that are missing and materially useful on this Slurm system.
+- Put initializer-owned additions in one bounded block:
+
+```markdown
+<!-- BEGIN init-slurm-environment -->
+## Local Slurm environment
+
+- <stable verified cluster or storage fact>
+<!-- END init-slurm-environment -->
+```
+
+- If that block already exists, update only its contents. If it does not exist, append it once. If no new stable fact is needed because equivalent guidance already exists, leave the file unchanged.
+- Record only stable topology such as confirmed shared roots, confirmed node-local staging roots, and durable scheduler/client constraints. Do not record current jobs, allocations, free GPUs, utilization, memory pressure, or other transient observations.
+- Keep portable principles in the dotfiles source. Add discovered cluster-specific facts only to the live `$CODEX_HOME/AGENTS.md` unless the user explicitly asks to publish those facts.
+
+### Preserve unrelated rules
+
+- Keep Slurm, GPU inspection, and explicitly authorized direct launchers in `$CODEX_HOME/rules/hpc.rules`.
+- Never replace unrelated existing rules. If equivalent Slurm coverage already exists, leave it unchanged. Otherwise add or refresh one clearly delimited initializer-owned block and preserve everything outside it.
+- Prefer command basenames and standard system paths; do not hard-code usernames, cluster hostnames, mount names, or user-specific executable paths in the portable rules source.
 - If `sacct` requires a named-host SSH workaround, treat that as a Slurm client configuration defect. Report or fix the canonical Slurm configuration instead of making the workaround part of the portable rules template.
-- Do not add hooks, wrappers, background tracking, snapshots, or extra skills as part of initialization.
-- Do not inspect authentication data, environment secrets, sessions, memories, archived data, backups, or earlier harness material. They are not environment-discovery inputs.
 - After changing `.rules`, state that a new Codex task is required before the new decisions are loaded.
 
-Report only the detected cluster and node role, relevant storage classifications, scheduler/accounting and GPU facts, exact configuration changes, whether a new task is required, and unresolved facts.
+Do not add hooks, wrappers, background tracking, snapshots, or extra skills as part of initialization. Do not inspect authentication data, environment secrets, sessions, memories, archived data, backups, or earlier harness material; they are not environment-discovery inputs.
+
+Report only the detected cluster and node role, relevant storage classifications, scheduler/accounting and GPU facts, exact additive configuration changes, whether a new task is required, and unresolved facts.
