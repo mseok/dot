@@ -1,0 +1,93 @@
+# The user manages this HPC cluster and explicitly chose direct scheduler access.
+prefix_rule(
+    pattern = [[
+        "squeue", "/usr/bin/squeue", "/bin/squeue",
+        "sinfo", "/usr/bin/sinfo", "/bin/sinfo",
+        "sacct", "/usr/bin/sacct", "/bin/sacct",
+        "scontrol", "/usr/bin/scontrol", "/bin/scontrol",
+        "sbatch", "/usr/bin/sbatch", "/bin/sbatch",
+        "srun", "/usr/bin/srun", "/bin/srun",
+        "scancel", "/usr/bin/scancel", "/bin/scancel",
+    ]],
+    decision = "allow",
+    justification = "Allow all direct Slurm operations on the user-managed cluster, including submission, cancellation, and scontrol changes",
+    match = [
+        "squeue --me",
+        "/usr/bin/sinfo --Node",
+        "sacct --starttime today",
+        "scontrol show node gpu22",
+        "sbatch job.sh",
+        "srun hostname",
+        "scancel 12345",
+    ],
+    not_match = [
+        "ssh gpu22 squeue --me",
+        "slurmrestd -a rest_auth/local",
+    ],
+)
+
+# Compute nodes point sacct at localhost, while slurmdbd runs on master.
+# Keep this exception restricted to the sacct remote command.
+prefix_rule(
+    pattern = [
+        ["ssh", "/usr/bin/ssh", "/bin/ssh"],
+        "-o",
+        "BatchMode=yes",
+        "master",
+        ["sacct", "/usr/bin/sacct", "/bin/sacct"],
+    ],
+    decision = "allow",
+    justification = "Query Slurm accounting on master because compute-node sacct is configured for an unavailable localhost slurmdbd",
+    match = [
+        "ssh -o BatchMode=yes master sacct --starttime now --allocations",
+        "/usr/bin/ssh -o BatchMode=yes master /usr/bin/sacct --jobs 12345",
+    ],
+    not_match = [
+        "ssh master sacct --starttime now",
+        "ssh -o BatchMode=yes master bash",
+        "ssh -o BatchMode=yes gpu22 sacct --starttime now",
+    ],
+)
+
+# GPU state must be visible outside the filesystem sandbox.
+prefix_rule(
+    pattern = [["nvidia-smi", "/usr/bin/nvidia-smi", "/bin/nvidia-smi"]],
+    decision = "allow",
+    justification = "Inspect physical GPU usage before scheduler or direct execution decisions",
+    match = [
+        "nvidia-smi",
+        "/usr/bin/nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv,noheader",
+    ],
+    not_match = ["watch nvidia-smi"],
+)
+
+# This is intentionally broad: the user explicitly allowed direct GPU launchers
+# outside the sandbox when Slurm allocation alone blocks an actually idle GPU.
+prefix_rule(
+    pattern = [[
+        "bash", "/usr/bin/bash", "/bin/bash",
+        "sh", "/usr/bin/sh", "/bin/sh",
+        "env", "/usr/bin/env", "/bin/env",
+        "python", "python3", "/usr/bin/python3", "/bin/python3",
+        ".venv/bin/python", "./.venv/bin/python",
+        "uv",
+        "/mnt/parallel_storage/wykim_lab/icl_mseok/appl/bin/uv",
+        "/home/icl_mseok/.local/bin/uv",
+        "/scratch/icl_mseok/tools/bin/uv",
+        "/usr/local/bin/uv",
+    ]],
+    decision = "allow",
+    justification = "Allow broad host-side shell and Python launchers for user-approved direct GPU fallback; these commands can execute arbitrary code outside the sandbox",
+    match = [
+        "bash -lc 'python3 -V'",
+        "env CUDA_VISIBLE_DEVICES=0 python3 job.py",
+        "python3 job.py",
+        ".venv/bin/python job.py",
+        "uv run python job.py",
+    ],
+    not_match = [
+        "rm -rf /tmp/example",
+        "git status",
+        "torchrun train.py",
+    ],
+)
