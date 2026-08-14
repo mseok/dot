@@ -49,6 +49,14 @@ Treat an unverified root conservatively. Do not recursively scan broad trees or 
 - For NFS roots, avoid turning cache directories or high-fanout small-file workloads into a shared metadata hotspot. Stage from the shared root to local storage when the workload needs it, then persist only necessary results back to shared storage.
 - Treat a mixed local root as staging only even if the pathname exists everywhere. Do not infer capacity, quota, cleanup, or persistence from its name.
 
+### NFS durability and concurrency constraints
+
+- A consistent NFS mount proves mount-level visibility only. It does not prove availability under load, application write durability, lock behavior, cache coherence, server failover behavior, or performance. Never report that NFS issues are impossible or resolved solely because the topology audit passed.
+- Treat a `soft` NFS mount as unsuitable for an unconditional durability claim: RPC failure can reach the application as an I/O error. Report the setting and keep critical persistence error-aware; do not change the mount option, add a blanket retry, or claim that retries make the path safe.
+- For a critical artifact on a shared NFS root, require the producing application to finish and close a temporary file on that same filesystem, surface any write or close error, then publish through its supported atomic rename/replace operation. Do not add `fsync`, retry, or error-handling code speculatively during initialization; verify the application's existing persistence contract before relying on it.
+- Assign exactly one writer to each checkpoint or result artifact. Coordinate any multi-process publish through the workload's existing synchronization; do not rely on pathname sharing or client-side cache behavior as a lock protocol.
+- If a workflow needs evidence beyond mount topology, propose a bounded allocation-specific persistence check with its real application and artifact path. Do not submit that check as initializer-only work.
+
 ## Generate the minimal Codex configuration
 
 Change durable configuration only for an explicit initialize or refresh request. Preserve existing configuration by default.
@@ -72,7 +80,7 @@ Change durable configuration only for an explicit initialize or refresh request.
 
 1. Test override generation in a temporary `CODEX_HOME` fixture. Verify that the base body is byte-identical, exactly one generated block exists, and the compact block contains no host-specific, transient, or unverified facts.
 2. Run a read-only live-cluster check without submitting a job: verify Slurm inventory, then feed at least two responding Slurm-provided hostnames through the `ssh -n` probe. Confirm both results are returned; this guards against SSH consuming the inventory stream.
-3. When an audited root is NFS, confirm that `findmnt -T` and the matching `nfsstat -m` record agree on the mount target. When a local root is mixed, verify the policy calls it staging-only.
+3. When an audited root is NFS, confirm that `findmnt -T` and the matching `nfsstat -m` record agree on the mount target, and that a `soft` mount is reported as durability-sensitive rather than treated as safe. When a local root is mixed, verify the policy calls it staging-only.
 4. After syncing the portable source to the live skill, compare the two files exactly. Do not publish if the fixture or read-only checks fail.
 
 Do not add hooks, wrappers, background tracking, snapshots, or extra skills as part of initialization. Report the cluster and node role, storage classifications, NFS mount facts, scheduler/accounting and GPU facts, exact additive configuration changes, whether a new task is required, and unresolved facts.
