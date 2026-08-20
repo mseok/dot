@@ -1,0 +1,7 @@
+interface:
+  display_name: "Slurm Execution Contract"
+  short_description: "Opt-in contract for Slurm job operations."
+  default_prompt: "Use $slurm-execution-contract to plan and launch this explicitly requested Slurm job."
+
+policy:
+  allow_implicit_invocation: false

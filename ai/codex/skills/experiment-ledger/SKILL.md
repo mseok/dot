@@ -78,6 +78,7 @@ If no core algorithm is involved, omit the section or say why it is not applicab
 - Before launch, create or update a decision-complete plan with status `planned`.
 - After submission or direct launch, record the exact command, job or process identifier, resources, output artifact, and status `running`. Commit the note once the launch contract is complete; do not commit every scheduler poll.
 - At termination, update the same note to `completed`, `failed`, `inconclusive`, or `cancelled`. Put observed evidence before interpretation, preserve limitations, and name the next decision.
+- Do not add a `retry observation` section or append routine retry/poll snapshots to the note. Scheduler state, GPU utilization, partial cache counts, startup excerpts, and transient progress belong in chat or durable run artifacts. Add retry evidence only when it changes the source/launch contract, terminal status, first failure boundary, or next decision.
 
 Use the vault's helper from the vault root so only the note is staged:
 
