@@ -34,3 +34,11 @@
 
 - For durable or comparable experiments—not short checks or disposable debugging—run from committed source and use the `experiment-ledger` skill to record the hypothesis, core pseudocode, execution, artifacts, and result.
 - Use the current checkout by default. Before a durable experiment records `HEAD` as its source commit, require a clean index and tracked working tree and no execution-affecting untracked repository file. Preserve unrelated files; never alter them or create a worktree solely to satisfy cleanliness, and ask the user if unrelated tracked changes block the launch.
+
+## Obsidian main
+
+- The iCloud Obsidian vault is human-owned. Agents never edit Vault files or a remote mirror directly; use the host-local `obsidian_main` MCP bridge.
+- Search/read covers `Notes/` and `Inbox/Agents/`. New permanent agent records go only to `Inbox/Agents/<authenticated-host>/`; `Notes/` remains human-owned.
+- Upload approved files with `attachment_upload`, which streams raw HTTPS bytes. Never pass original attachment bytes or base64 through MCP JSON.
+- Use `record_create` only for a verified reusable outcome and `record_append` only for the same host's gateway-owned record. Remote records require the canonical project. There is no promotion, overwrite, delete, rename, move, or automatic merge tool.
+- Git is Mac mini backup-only. Do not use `un note`, `un push`, `codex_note_commit`, `obsidian_branch_publish.py`, or Git synchronization as a note-writing fallback.

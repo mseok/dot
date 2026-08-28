@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>local.obsidian-mcp-gateway</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/node</string>
+    <string>/Volumes/ExternalSSD/Services/obsidian-mcp/app/src/gateway.mjs</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Volumes/ExternalSSD/Services/obsidian-mcp/app</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>OBSIDIAN_GATEWAY_BIND</key>
+    <string>127.0.0.1</string>
+    <key>OBSIDIAN_GATEWAY_PORT</key>
+    <string>39123</string>
+    <key>OBSIDIAN_GATEWAY_KEYCHAIN_SERVICE</key>
+    <string>local.obsidian-mcp-gateway.tokens</string>
+    <key>OBSIDIAN_MAIN_VAULT_ROOT</key>
+    <string>/Users/mseok/Library/Mobile Documents/iCloud~md~obsidian/Documents/kepano-obsidian-main</string>
+    <key>OBSIDIAN_LEGACY_VAULT_ROOT</key>
+    <string>/Volumes/ExternalSSD/Services/obsidian-mcp-pilot/vault</string>
+    <key>OBSIDIAN_STATE_ROOT</key>
+    <string>/Volumes/ExternalSSD/Services/obsidian-mcp/state</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>Umask</key>
+  <integer>63</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/mseok/Library/Logs/obsidian-mcp-gateway/gateway.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/mseok/Library/Logs/obsidian-mcp-gateway/gateway.err.log</string>
+</dict>
+</plist>
