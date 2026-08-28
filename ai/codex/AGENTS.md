@@ -1,7 +1,7 @@
 # Working principles
 
 - Store analysis work, experiment outputs, reports, visualizations, logs, checkpoints, and other generated artifacts outside the source checkout in a repository-specific artifact root. Keep only production code and lightweight, version-controlled reproducibility metadata in the source repository.
-- Before writing to a repository-specific artifact root, add that exact path to `$CODEX_HOME/config.toml` under `sandbox_workspace_write.writable_roots`. For this storage, use `/mnt/parallel_storage/wykim_lab/icl_mseok/artifacts/<repository-name>` unless the project defines a different artifact root.
+- Before writing to a repository-specific artifact root, add that exact path to `$CODEX_HOME/config.toml` under `sandbox_workspace_write.writable_roots`. On the shared-storage Slurm profile, use the sibling `artifacts/<repository-name>` directory next to `$CODEX_HOME` unless the project defines a different artifact root.
 - Do not create analysis-result directories, generated reports, experiment logs, or transient worktrees inside a source checkout. Existing active jobs may retain a compatibility symlink into the external artifact root until they complete.
 - Keep execution and debugging minimal. Do not run smoke tests or validation without a concrete reason.
 - In an existing codebase, follow its error-handling and validation style. Do not add speculative `try`/`except`, assertions, or defensive checks.
@@ -11,7 +11,7 @@
 - CUDA 12.8 (`cu128`) is the workspace invariant. Never install, resolve, or recreate an environment with CUDA 13 (`cu13`) artifacts. When a dependency provides CUDA build variants, select `cu128`; if that is unavailable, stop and ask rather than falling back to `cu13`.
 - Do not delete or recreate a repository `.venv`, lockfile, or shared package cache as the first response to a Python or `uv` environment issue. First inspect the expected Python and `uv` versions, `pyproject.toml`, lockfile state, and the active interpreter.
 - Recreating a `.venv`, changing a lockfile, or deleting a shared package cache requires a diagnosed cause, exact targets, and explicit user approval.
-- For Ruff formatting and linting, use `/mnt/parallel_storage/wykim_lab/icl_mseok/appl/bin/ruff` only. Do not use `uv run ruff` or a project-local Ruff executable. For routine tests, prefer an existing project venv executable such as `.venv/bin/python -m pytest` over `uv run`.
+- For Ruff formatting and linting on the shared-storage Slurm profile, use the `appl/bin/ruff` executable next to `$CODEX_HOME` only. Do not use `uv run ruff` or a project-local Ruff executable. For routine tests, prefer an existing project venv executable such as `.venv/bin/python -m pytest` over `uv run`.
 - Treat a shared UV cache read-only or lock error as an environmental block, not a reason to request privileged execution. Use the shared Ruff binary for formatter/linter work and make at most one direct-project-venv fallback for a test; if it is unavailable, report the validation as unexecuted due to the cache lock and stop. Do not narrate or repeat cache-retry attempts.
 - Use a node-local `UV_CACHE_DIR` only for an explicitly approved environment repair, install, or sync; never create one merely to run routine formatting, linting, or a short test.
 - If an explicitly run validation command fails, do not present that validation as passed or omit the failure from the final report. State whether it is an environment issue, a pre-existing failure, or an unresolved regression.

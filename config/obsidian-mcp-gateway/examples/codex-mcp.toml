@@ -1,9 +1,0 @@
-[mcp_servers.obsidian_main]
-command = "/Volumes/ExternalSSD/Services/obsidian-mcp/app/scripts/run-local-bridge.zsh"
-env = {
-  OBSIDIAN_UPLOAD_ROOTS = "/Users/mseok/Documents:/Users/mseok/Downloads:/Users/mseok/work:/Volumes/ExternalSSD",
-  OBSIDIAN_UPLOAD_DENY_ROOTS = "/Volumes/ExternalSSD/Services/obsidian-mcp:/Volumes/ExternalSSD/Services/obsidian-mcp-pilot"
-}
-startup_timeout_sec = 15
-tool_timeout_sec = 900
-default_tools_approval_mode = "writes"
