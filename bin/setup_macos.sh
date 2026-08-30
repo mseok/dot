@@ -5,6 +5,8 @@
 
 set -euo pipefail
 
+DOT_HOME="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 # --------------- helpers ---------------
 log()   { printf "\033[1;32m[INFO]\033[0m %s\n" "$*"; }
 warn()  { printf "\033[1;33m[WARN]\033[0m %s\n" "$*"; }
@@ -59,7 +61,6 @@ install_homebrew_packages() {
   log "Adding Homebrew taps..."
   brew tap nikitabobko/tap      2>/dev/null || true  # Aerospace
   brew tap FelixKratz/formulae  2>/dev/null || true  # SketchyBar & Borders
-  brew tap koekeishiya/formulae 2>/dev/null || true  # SKHD
   brew tap tw93/tap             2>/dev/null || true  # Kaku
 
   log "Installing core packages via Homebrew..."
@@ -68,10 +69,6 @@ install_homebrew_packages() {
 
   log "Installing cask applications..."
   brew install --cask --quiet tw93/tap/kakuku aerospace || true
-
-  # Optional: SKHD (hotkey daemon)
-  # Uncomment if you want to install skhd:
-  # brew install koekeishiya/formulae/skhd
 }
 
 setup_shell_integration() {
@@ -84,17 +81,13 @@ setup_shell_integration() {
 
   log "Configuring shell integration in $rc_file..."
 
-  # Backup existing RC file
-  if [[ -f "$rc_file" ]]; then
-    backup_if_exists "$rc_file"
-    touch "$rc_file"
-  fi
+  touch "$rc_file"
 
   # Add dotfiles sourcing
   if [[ "$rc_file" == *".zshrc"* ]]; then
-    append_once 'source $HOME/dot/config/zsh/.zshrc' "$rc_file"
+    append_once "source $DOT_HOME/config/zsh/.zshrc" "$rc_file"
   else
-    append_once 'source $HOME/dot/config/bash/.bashrc' "$rc_file"
+    append_once "source $DOT_HOME/config/bash/.bashrc" "$rc_file"
   fi
 
   log "Shell integration configured"
@@ -102,7 +95,7 @@ setup_shell_integration() {
 
 setup_neovim() {
   log "Setting up Neovim configuration..."
-  link_config "$HOME/dot/config/nvim" "$HOME/.config/nvim"
+  link_config "$DOT_HOME/config/nvim" "$HOME/.config/nvim"
 
   # Neovim plugins will auto-install on first launch via vim.pack
   log "Neovim plugins will install automatically on first launch"
@@ -119,13 +112,13 @@ setup_tmux() {
     log "TPM already installed"
   fi
 
-  link_config "$HOME/dot/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
+  link_config "$DOT_HOME/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
   log "Tmux configured. Press Ctrl+b then Shift+I inside tmux to install plugins"
 }
 
 setup_git() {
   log "Setting up Git configuration..."
-  link_config "$HOME/dot/config/git/.gitconfig" "$HOME/.gitconfig"
+  link_config "$DOT_HOME/config/git/.gitconfig" "$HOME/.gitconfig"
 
   # Install pre-commit if not present
   if ! exists pre-commit; then
@@ -136,38 +129,37 @@ setup_git() {
 
 setup_starship() {
   log "Setting up Starship prompt..."
-  link_config "$HOME/dot/config/starship/starship.toml" "$HOME/.config/starship.toml"
+  link_config "$DOT_HOME/config/starship/starship.toml" "$HOME/.config/starship.toml"
 }
 
 setup_kaku() {
   log "Setting up Kaku configuration..."
   mkdir -p "$HOME/.config/kaku"
-  link_config "$HOME/dot/config/kaku/kaku.lua" "$HOME/.config/kaku/kaku.lua"
-  link_config "$HOME/dot/config/kaku/assistant.toml" "$HOME/.config/kaku/assistant.toml"
+  link_config "$DOT_HOME/config/kaku/kaku.lua" "$HOME/.config/kaku/kaku.lua"
+  link_config "$DOT_HOME/config/kaku/assistant.toml" "$HOME/.config/kaku/assistant.toml"
 }
 
 setup_yazi() {
   log "Setting up Yazi file manager..."
-  link_config "$HOME/dot/config/yazi" "$HOME/.config/yazi"
+  mkdir -p "$HOME/.config/yazi"
+  link_config "$DOT_HOME/config/yazi/yazi.toml" "$HOME/.config/yazi/yazi.toml"
 }
 
 setup_macos_window_management() {
   log "Setting up macOS window management..."
 
-  # Aerospace
-  link_config "$HOME/dot/config/aerospace/aerospace.toml" "$HOME/.aerospace.toml"
+  link_config "$DOT_HOME/config/aerospace" "$HOME/.config/aerospace"
 
   # SketchyBar
   link_config "$HOME/dot/config/sketchybar" "$HOME/.config/sketchybar"
 
-  # Start services
   log "Starting window management services..."
-  brew services start aerospace 2>/dev/null || warn "Failed to start aerospace"
   brew services start sketchybar 2>/dev/null || warn "Failed to start sketchybar"
 
-  # Optional: Start SKHD if installed
-  if exists skhd; then
-    brew services start skhd 2>/dev/null || warn "Failed to start skhd"
+  if [[ -d "/Applications/AeroSpace.app" ]]; then
+    open -a AeroSpace || warn "Failed to launch AeroSpace"
+  else
+    warn "AeroSpace.app not found after installation"
   fi
 
   log "Window management services started"
@@ -177,8 +169,8 @@ setup_vscode() {
   log "Setting up VS Code configuration (optional)..."
   local vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
 
-  if [[ -f "$HOME/dot/config/vscode/settings.json" ]]; then
-    link_config "$HOME/dot/config/vscode/settings.json" "$vscode_settings"
+  if [[ -f "$DOT_HOME/config/vscode/settings.json" ]]; then
+    link_config "$DOT_HOME/config/vscode/settings.json" "$vscode_settings"
   else
     log "VS Code config not found, skipping"
   fi
@@ -205,7 +197,7 @@ What was configured:
 • Kaku → ~/.config/kaku/kaku.lua
 • Kaku Assistant → ~/.config/kaku/assistant.toml
 • Yazi → ~/.config/yazi
-• Aerospace → ~/.aerospace.toml
+• Aerospace → ~/.config/aerospace
 • SketchyBar → ~/.config/sketchybar
 
 Next steps:

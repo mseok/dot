@@ -3,6 +3,9 @@
 # It's not necessary to copy all keys to your config.
 # If the key is missing in your config, "default-config.toml" will serve as a fallback
 
+config-version = 2
+persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
 # You can use it to add commands that run after login to macOS user session.
 # 'start-at-login' needs to be 'true' for 'after-login-command' to work
 # Available commands: https://nikitabobko.github.io/AeroSpace/commands
@@ -65,7 +68,7 @@ on-focus-changed = [
 4 = 'main'
 5 = 'main'
 6 = 'main'
-7 = ['LG UltraFine']
+7 = 'main'
 8 = 'built-in'
 9 = ['sidecar display (airplay)', 'sidecar display']
 
@@ -139,7 +142,7 @@ alt-3 = 'workspace 3'
 alt-4 = 'workspace 4'
 alt-5 = 'workspace 5'
 alt-6 = 'workspace 6'
-alt-7 = 'exec-and-forget bash /Users/mseok/.config/aerospace/focus-workspace-7.sh'
+alt-7 = 'workspace 7'
 alt-8 = 'workspace 8'
 alt-9 = 'workspace 9'
 
@@ -149,7 +152,7 @@ alt-e = 'workspace 3'
 alt-r = 'workspace 4'
 alt-t = 'workspace 5'
 alt-y = 'workspace 6'
-alt-u = 'exec-and-forget bash /Users/mseok/.config/aerospace/focus-workspace-7.sh'
+alt-u = 'workspace 7'
 alt-i = 'workspace 8'
 alt-o = 'workspace 9'
 
