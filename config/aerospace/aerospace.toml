@@ -2,8 +2,6 @@
 
 # It's not necessary to copy all keys to your config.
 # If the key is missing in your config, "default-config.toml" will serve as a fallback
-# Codex Pet is a native popup outside AeroSpace's workspace tree. Workspace
-# callbacks deliberately leave its popup layers untouched.
 
 # You can use it to add commands that run after login to macOS user session.
 # 'start-at-login' needs to be 'true' for 'after-login-command' to work
@@ -16,10 +14,9 @@ after-login-command = []
 after-startup-command = [
   "exec-and-forget sketchybar",
   "exec-and-forget borders active_color=0xfff44336 inactive_color=0xff494d64 width=5.0 hidpi=on",
-  'exec-and-forget /bin/bash -lc "$HOME/.config/aerospace/pin-ai-apps-to-workspace.sh"',
 ]
 exec-on-workspace-change = ['/bin/bash', '-c',
-    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE; "$HOME/.config/aerospace/follow-codex-pet.sh"'
+    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE PREV_WORKSPACE=$AEROSPACE_PREV_WORKSPACE'
 ]
 
 # Start AeroSpace at login
@@ -212,7 +209,6 @@ esc = 'mode main'
 esc = ['reload-config', 'mode main']
 s = ['exec-and-forget sketchybar --reload', 'mode main']
 r = ['flatten-workspace-tree', 'mode main'] # reset layout
-#s = ['layout sticky tiling', 'mode main'] # sticky is not yet supported https://github.com/nikitabobko/AeroSpace/issues/2
 f = ['layout floating tiling', 'mode main'] # Toggle between floating and tiling layout
 backspace = ['close-all-windows-but-current', 'mode main']
 
@@ -251,7 +247,7 @@ run = "move-node-to-workspace 3"
 [[on-window-detected]]
 if.app-id = "com.openai.codex"
 if.during-aerospace-startup = false
-run = 'exec-and-forget bash $HOME/.config/aerospace/place-ai-window-on-open.sh'
+run = "move-node-to-workspace 5"
 [[on-window-detected]]
 if.app-id = "com.anthropic.claudefordesktop"
 if.during-aerospace-startup = false
