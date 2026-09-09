@@ -4,26 +4,28 @@ local wezterm = require("wezterm")
 local config = wezterm.config_builder()
 local opacity = 0.8
 
-local function appearance_for_window_environment()
-    -- wezterm.gui is unavailable when the config is evaluated by the mux
-    -- server, so keep a deterministic fallback for that context.
-    if wezterm.gui then
-        return wezterm.gui.get_appearance()
+local day_start = 7
+local night_start = 19
+
+local function mode_for_time()
+    local hour = tonumber(os.date("%H"))
+    if hour >= day_start and hour < night_start then
+        return "Light"
     end
     return "Dark"
 end
 
-local function scheme_for_appearance(appearance)
-    if appearance:find("Dark") then
+local function scheme_for_mode(mode)
+    if mode == "Dark" then
         return "Catppuccin Mocha"
     end
     return "Catppuccin Latte"
 end
 
-local function theme_for_appearance(appearance)
-    if appearance:find("Dark") then
+local function theme_for_mode(mode)
+    if mode == "Dark" then
         return {
-            scheme = scheme_for_appearance(appearance),
+            scheme = scheme_for_mode(mode),
             window_frame = {
                 active_titlebar_bg = "#1e1e2e",
                 inactive_titlebar_bg = "#181825",
@@ -63,7 +65,7 @@ local function theme_for_appearance(appearance)
     end
 
     return {
-        scheme = scheme_for_appearance(appearance),
+        scheme = scheme_for_mode(mode),
         window_frame = {
             active_titlebar_bg = "#eff1f5",
             inactive_titlebar_bg = "#e6e9ef",
@@ -103,7 +105,7 @@ local function theme_for_appearance(appearance)
 end
 
 local function apply_theme_to_window(window)
-    local theme = theme_for_appearance(window:get_appearance())
+    local theme = theme_for_mode(mode_for_time())
     local overrides = window:get_config_overrides() or {}
     local current_frame = overrides.window_frame or {}
     local current_colors = overrides.colors or {}
@@ -123,14 +125,21 @@ local function apply_theme_to_window(window)
     end
 end
 
--- WezTerm emits this event when the macOS appearance changes. Applying the
--- same theme through per-window overrides keeps the native/fancy tab bar in
--- sync with the terminal palette instead of leaving its default dark strip.
+-- Reapply the same theme through per-window overrides when the configuration
+-- is reloaded. This also keeps the native/fancy tab bar in sync with the
+-- terminal palette instead of leaving its default dark strip.
 wezterm.on("window-config-reloaded", function(window, _pane)
     apply_theme_to_window(window)
 end)
 
-local initial_theme = theme_for_appearance(appearance_for_window_environment())
+-- WezTerm does not emit a callback merely because the wall clock crossed
+-- 07:00 or 19:00. Poll once per minute so the terminal changes at the same
+-- time as the Neovim and tmux themes.
+wezterm.on("update-status", function(window, _pane)
+    apply_theme_to_window(window)
+end)
+
+local initial_theme = theme_for_mode(mode_for_time())
 
 -- Font
 config.font = wezterm.font_with_fallback({
@@ -151,6 +160,7 @@ config.window_close_confirmation = "NeverPrompt"
 config.win32_system_backdrop = "Acrylic"
 config.max_fps = 144
 config.animation_fps = 60
+config.status_update_interval = 60 * 1000
 config.cursor_blink_rate = 250
 config.default_cursor_style = "BlinkingBar"
 
