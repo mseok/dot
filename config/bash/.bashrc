@@ -13,6 +13,7 @@ case ":${PATH:-}:" in
     *) export PATH="$HOME/.local/bin:${PATH:-}" ;;
 esac
 export EDITOR="nvim"
+export VISUAL="$EDITOR"
 
 if command -v micromamba &>/dev/null; then
     micromamba config set changeps1 False
@@ -60,6 +61,10 @@ source $HOME/dot/bin/slurm-commands.sh
 export PATH=$HOME/dot/bin:$PATH
 
 set -o vi
+
+if command -v fzf >/dev/null 2>&1 && fzf --bash >/dev/null 2>&1; then
+    eval "$(fzf --bash)"
+fi
 
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init bash)"

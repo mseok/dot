@@ -33,6 +33,7 @@ if [[ -z "${TERM:-}" || "$TERM" == "dumb" ]]; then
 fi
 export HISFILE=~/.config/zsh/.zsh_hitstory
 export EDITOR="nvim"
+export VISUAL="$EDITOR"
 
 _personal_tag="${PERSONAL_TAG:-${USER:-}}"
 if [[ -n "$_personal_tag" && -d "$HOME/$_personal_tag" ]]; then
@@ -97,6 +98,10 @@ if [[ -o interactive ]] && [[ -t 0 ]] && command -v codex >/dev/null 2>&1; then
 fi
 
 set -o vi
+
+if command -v fzf >/dev/null 2>&1 && fzf --zsh >/dev/null 2>&1; then
+    source <(fzf --zsh)
+fi
 
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init zsh)"
