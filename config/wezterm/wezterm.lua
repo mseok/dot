@@ -20,6 +20,118 @@ local function scheme_for_appearance(appearance)
     return "Catppuccin Latte"
 end
 
+local function theme_for_appearance(appearance)
+    if appearance:find("Dark") then
+        return {
+            scheme = scheme_for_appearance(appearance),
+            window_frame = {
+                active_titlebar_bg = "#1e1e2e",
+                inactive_titlebar_bg = "#181825",
+                active_titlebar_fg = "#cdd6f4",
+                inactive_titlebar_fg = "#a6adc8",
+                active_titlebar_border_bottom = "#313244",
+                inactive_titlebar_border_bottom = "#181825",
+                button_bg = "#181825",
+                button_fg = "#a6adc8",
+                button_hover_bg = "#313244",
+                button_hover_fg = "#cdd6f4",
+            },
+            tab_bar = {
+                inactive_tab_edge = "#313244",
+                active_tab = {
+                    bg_color = "#313244",
+                    fg_color = "#cdd6f4",
+                },
+                inactive_tab = {
+                    bg_color = "#181825",
+                    fg_color = "#a6adc8",
+                },
+                inactive_tab_hover = {
+                    bg_color = "#45475a",
+                    fg_color = "#cdd6f4",
+                },
+                new_tab = {
+                    bg_color = "#181825",
+                    fg_color = "#a6adc8",
+                },
+                new_tab_hover = {
+                    bg_color = "#45475a",
+                    fg_color = "#cdd6f4",
+                },
+            },
+        }
+    end
+
+    return {
+        scheme = scheme_for_appearance(appearance),
+        window_frame = {
+            active_titlebar_bg = "#eff1f5",
+            inactive_titlebar_bg = "#e6e9ef",
+            active_titlebar_fg = "#4c4f69",
+            inactive_titlebar_fg = "#6c6f85",
+            active_titlebar_border_bottom = "#ccd0da",
+            inactive_titlebar_border_bottom = "#e6e9ef",
+            button_bg = "#e6e9ef",
+            button_fg = "#6c6f85",
+            button_hover_bg = "#ccd0da",
+            button_hover_fg = "#4c4f69",
+        },
+        tab_bar = {
+            inactive_tab_edge = "#ccd0da",
+            active_tab = {
+                bg_color = "#ccd0da",
+                fg_color = "#4c4f69",
+            },
+            inactive_tab = {
+                bg_color = "#e6e9ef",
+                fg_color = "#6c6f85",
+            },
+            inactive_tab_hover = {
+                bg_color = "#dce0e8",
+                fg_color = "#4c4f69",
+            },
+            new_tab = {
+                bg_color = "#e6e9ef",
+                fg_color = "#6c6f85",
+            },
+            new_tab_hover = {
+                bg_color = "#dce0e8",
+                fg_color = "#4c4f69",
+            },
+        },
+    }
+end
+
+local function apply_theme_to_window(window)
+    local theme = theme_for_appearance(window:get_appearance())
+    local overrides = window:get_config_overrides() or {}
+    local current_frame = overrides.window_frame or {}
+    local current_colors = overrides.colors or {}
+    local current_tab_bar = current_colors.tab_bar or {}
+
+    local needs_update = overrides.color_scheme ~= theme.scheme
+        or current_frame.active_titlebar_bg ~= theme.window_frame.active_titlebar_bg
+        or current_frame.inactive_titlebar_bg ~= theme.window_frame.inactive_titlebar_bg
+        or current_tab_bar.inactive_tab_edge ~= theme.tab_bar.inactive_tab_edge
+
+    if needs_update then
+        overrides.color_scheme = theme.scheme
+        overrides.window_frame = theme.window_frame
+        current_colors.tab_bar = theme.tab_bar
+        overrides.colors = current_colors
+        window:set_config_overrides(overrides)
+    end
+end
+
+-- WezTerm emits this event when the macOS appearance changes. Applying the
+-- same theme through per-window overrides keeps the native/fancy tab bar in
+-- sync with the terminal palette instead of leaving its default dark strip.
+wezterm.on("window-config-reloaded", function(window, _pane)
+    apply_theme_to_window(window)
+end)
+
+local initial_theme = theme_for_appearance(appearance_for_window_environment())
+
 -- Font
 config.font = wezterm.font_with_fallback({
     {
@@ -43,7 +155,11 @@ config.cursor_blink_rate = 250
 config.default_cursor_style = "BlinkingBar"
 
 -- Colors
-config.color_scheme = scheme_for_appearance(appearance_for_window_environment())
+config.color_scheme = initial_theme.scheme
+config.window_frame = initial_theme.window_frame
+config.colors = {
+    tab_bar = initial_theme.tab_bar,
+}
 
 -- Shell
 config.default_prog = { "zsh" }
