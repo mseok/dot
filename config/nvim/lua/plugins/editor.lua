@@ -1,51 +1,106 @@
 local map = vim.keymap.set
 
-if vim.fn.has("nvim-0.11") == 1 then
+local treesitter_languages = { "python", "bash", "lua", "vim", "vimdoc", "query" }
+local treesitter_filetypes = { "python", "bash", "sh", "lua", "vim", "vimdoc", "query" }
+
+local treesitter_textobjects = {
+  ["af"] = "@function.outer",
+  ["if"] = "@function.inner",
+  ["ac"] = "@class.outer",
+  ["ic"] = "@class.inner",
+  ["al"] = "@loop.outer",
+  ["il"] = "@loop.inner",
+  ["aa"] = "@parameter.outer",
+  ["ia"] = "@parameter.inner",
+  ["ai"] = "@conditional.outer",
+  ["ii"] = "@conditional.inner",
+  ["ab"] = "@block.outer",
+  ["ib"] = "@block.inner",
+  ["acm"] = "@comment.outer",
+}
+
+local function start_treesitter(bufnr)
+  local ok, err = pcall(vim.treesitter.start, bufnr)
+  if not ok and not tostring(err):match("No parser") then
+    vim.notify("Tree-sitter could not start: " .. tostring(err), vim.log.levels.WARN)
+  end
+end
+
+-- nvim-treesitter/main is a Neovim 0.12+ rewrite. Keep a small fallback so
+-- an already-running session can reload this config before its next restart,
+-- while the normal path uses the current upstream API.
+local has_new_treesitter = pcall(require, "nvim-treesitter.config")
+if has_new_treesitter then
+  local treesitter = require("nvim-treesitter")
+  treesitter.setup({
+    install_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "site"),
+  })
+
+  local treesitter_group = vim.api.nvim_create_augroup("dot_treesitter", { clear = true })
+  vim.api.nvim_create_autocmd("FileType", {
+    group = treesitter_group,
+    pattern = treesitter_filetypes,
+    callback = function(args)
+      start_treesitter(args.buf)
+    end,
+  })
+
+  local ok_textobjects, textobjects = pcall(require, "nvim-treesitter-textobjects")
+  local ok_select, select = pcall(require, "nvim-treesitter-textobjects.select")
+  if ok_textobjects and ok_select then
+    textobjects.setup({
+      select = { lookahead = true },
+    })
+
+    for lhs, query in pairs(treesitter_textobjects) do
+      map({ "x", "o" }, lhs, function()
+        select.select_textobject(query, "textobjects")
+      end, { desc = "Select Tree-sitter " .. query })
+    end
+  end
+
+  -- Install only the small language set used by this config. This is
+  -- asynchronous and therefore does not block an SSH login; set
+  -- DOT_TS_AUTO_INSTALL=0 on a cluster where parser downloads are disallowed.
+  if vim.env.DOT_TS_AUTO_INSTALL ~= "0" then
+    vim.schedule(function()
+      local installed = {}
+      for _, language in ipairs(treesitter.get_installed("parsers")) do
+        installed[language] = true
+      end
+
+      local missing = vim.tbl_filter(function(language)
+        return not installed[language]
+      end, treesitter_languages)
+      if #missing > 0 then
+        local ok, task = pcall(treesitter.install, missing)
+        if not ok then
+          vim.notify("Tree-sitter parser install failed: " .. tostring(task), vim.log.levels.WARN)
+        end
+      end
+    end)
+  end
+else
+  -- Compatibility path for an older nvim-treesitter checkout. It is only
+  -- used during a transition; the managed branch above is the supported one.
   local ok, configs = pcall(require, "nvim-treesitter.configs")
   if ok then
     configs.setup({
-      ensure_installed = { "python", "bash", "lua", "vim", "vimdoc", "query" },
+      ensure_installed = treesitter_languages,
       highlight = { enable = true },
-
       textobjects = {
         select = {
           enable = true,
-
-          -- Automatically jump forward to textobj if cursor is before it
           lookahead = true,
-
-          keymaps = {
-            ["af"] = "@function.outer",
-            ["if"] = "@function.inner",
-
-            ["ac"] = "@class.outer",
-            ["ic"] = "@class.inner",
-
-            ["al"] = "@loop.outer",
-            ["il"] = "@loop.inner",
-
-            ["aa"] = "@parameter.outer",
-            ["ia"] = "@parameter.inner",
-
-            ["ai"] = "@conditional.outer",
-            ["ii"] = "@conditional.inner",
-
-            ["ab"] = "@block.outer",
-            ["ib"] = "@block.inner",
-
-            ["acm"] = "@comment.outer",
-          },
+          keymaps = treesitter_textobjects,
         },
       },
     })
+  else
+    vim.schedule(function()
+      vim.notify("Tree-sitter is unavailable: install nvim-treesitter.", vim.log.levels.WARN)
+    end)
   end
-else
-  vim.schedule(function()
-    vim.notify(
-      "Tree-sitter disabled: this config expects Neovim 0.11+ for the current nvim-treesitter setup.",
-      vim.log.levels.WARN
-    )
-  end)
 end
 
 -- nvim-tree file explorer

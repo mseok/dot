@@ -190,11 +190,12 @@ made safely by a generic script.
 Package policy:
 
 - macOS: `Brewfile` is the desired package set. Homebrew resolves current
-  compatible versions, including the Codex CLI cask; `--apply` uses `brew
-  bundle ... --upgrade`.
+  compatible versions, including the Codex CLI cask and the Tree-sitter CLI
+  needed to build parser updates; `--apply` uses `brew bundle ... --upgrade`.
 - Linux/HPC: `config/tools/pixi-terminal-packages.txt` is the user-local
-  terminal/image package set. Pixi keeps the global `dot-terminal` environment
-  and `--apply` runs `pixi global update dot-terminal`.
+  terminal/image package set. It includes the Tree-sitter CLI needed to build
+  parser updates. Pixi keeps the global `dot-terminal` environment and
+  `--apply` runs `pixi global update dot-terminal`.
 - Linux/HPC Codex CLI is installed through the user-local nvm/npm toolchain and
   refreshed to `@openai/codex@latest` during `--apply`.
 - Neovim and Yazi plugin lock/state are not silently rewritten during a normal
@@ -423,10 +424,12 @@ dot/
 
 #### Neovim
 - **Plugin Manager**: Native `vim.pack` (no external managers)
-- **LSP**: Mason for language server installation (Pyright, Ruff, Lua LS, Bash LS)
+- **Tree-sitter/completion**: Current `nvim-treesitter/main` API and
+  `blink.cmp` v2, requiring Neovim 0.12+
+- **LSP**: Mason for language server installation (ty, Ruff, Lua LS, Bash LS)
 - **Completion**: Blink.cmp with Vim-style navigation
 - **AI**: GitHub Copilot with Claude Haiku 4.5
-- **File Explorer**: Oil.nvim (press `-`)
+- **File Explorer**: nvim-tree (press `<leader>e`)
 - **Fuzzy Finder**: Telescope (`<leader>ff`, `<leader>fg`)
 
 #### macOS Window Management
@@ -472,6 +475,23 @@ nvim
 # They should auto-install on first launch
 # Check: ~/.local/share/nvim/site/pack/
 ```
+
+#### Tree-sitter decoration provider errors
+
+This configuration uses the current `nvim-treesitter/main` API and requires
+Neovim 0.12+. After an upgrade, close and reopen Neovim so the old parser and
+highlighter are not left in the running process:
+
+```bash
+$HOME/dot/bin/update_environment.sh --check
+nvim
+:checkhealth nvim-treesitter
+```
+
+The `--plugins` update path refreshes the `vim.pack` lockfile and waits for
+installed Tree-sitter parsers to finish updating. On a cluster login node that
+cannot download parsers, set `DOT_TS_AUTO_INSTALL=0` and run the parser update
+from a node with network access.
 
 #### Tmux plugins not working
 

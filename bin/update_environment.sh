@@ -149,6 +149,7 @@ print_versions() {
   version_line "Codex" codex --version
   version_line "Yazi" yazi --version
   version_line "fzf" fzf --version
+  version_line "Tree-sitter" tree-sitter --version
   version_line "ripgrep" rg --version
   version_line "fd" fd --version
   version_line "Pixi" pixi --version
@@ -173,8 +174,12 @@ update_plugins() {
 
   if exists nvim; then
     log "Updating Neovim plugins via vim.pack..."
-    if ! nvim --headless '+lua vim.pack.update()' +qa </dev/null; then
+    if ! nvim --headless -n -i NONE '+lua vim.pack.update(nil, { force = true })' +qa! </dev/null; then
       warn "Neovim plugin update failed; inspect the next nvim startup output."
+    fi
+    log "Updating installed Tree-sitter parsers..."
+    if ! nvim --headless -n -i NONE '+lua require("nvim-treesitter").update(nil, { summary = true }):wait(300000)' +qa! </dev/null; then
+      warn "Tree-sitter parser update failed; run :TSUpdate inside Neovim."
     fi
   else
     warn "Neovim is unavailable; skipping Neovim plugin update."
