@@ -340,10 +340,11 @@ ln -s $HOME/dot/config/vscode/settings.json "$HOME/Library/Application Support/C
 ```
 
 WezTerm follows the macOS appearance automatically: Catppuccin Latte in Light
-mode and Catppuccin Mocha in Dark mode. macOS's automatic appearance schedule
-therefore controls the terminal transition as well. Neovim switches between its
-TokyoNight day/night variants on its own schedule while running; ANSI-based
-applications such as Starship and Yazi follow the terminal palette.
+mode and Catppuccin Mocha in Dark mode. Neovim reads the terminal's reported
+background color through OSC 11, so it follows the same appearance locally and
+through SSH/tmux when the terminal supports the query. `DOT_THEME=light|dark`
+can be used as an explicit override for unusual or older terminal paths.
+ANSI-based applications such as Starship and Yazi follow the terminal palette.
 
 ### 6. macOS Window Management
 
