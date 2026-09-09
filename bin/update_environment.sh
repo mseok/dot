@@ -25,7 +25,7 @@ Options:
   --check               Report versions and configuration health (default).
   --apply               Fast-forward the dotfiles checkout and update apps.
   --plugins             Also update Yazi and Neovim plugins.
-  --with-services       Allow the macOS setup to start/relaunch services.
+  --with-services       Allow the macOS setup to start missing services.
   -h, --help            Show this help.
 
 The apply path refuses to run with tracked or untracked Git changes. Review,
@@ -209,7 +209,9 @@ apply_update() {
   if [[ "$START_SERVICES" -eq 1 ]]; then
     unset DOT_SETUP_SKIP_SERVICES
   else
-    export DOT_SETUP_SKIP_SERVICES=1
+  # install.sh still reloads configurations for services that are already
+  # running; this flag only prevents launching missing applications/services.
+  export DOT_SETUP_SKIP_SERVICES=1
   fi
 
   log "Updating managed applications and relinking configuration..."

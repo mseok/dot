@@ -181,17 +181,23 @@ $HOME/dot/bin/update_environment.sh --apply --plugins
 ```
 
 The update command refuses tracked or untracked Git changes, never resets or
-force-pulls, and does not restart the existing macOS window-management apps by
-default. It validates tmux and WezTerm configuration after the update. If an
-application release requires a config migration, the repository change should
-be reviewed as a normal Git diff; arbitrary upstream version changes cannot be
-made safely by a generic script.
+force-pulls, and does not launch missing macOS window-management apps by
+default. When AeroSpace, SketchyBar, or a tmux server is already running, the
+updated configuration is reloaded automatically. WezTerm watches its linked
+configuration and reloads it through its normal config-reload behavior. It
+validates tmux and WezTerm configuration after the update. If an application
+release requires a config migration, the repository change should be reviewed
+as a normal Git diff; arbitrary upstream version changes cannot be made safely
+by a generic script.
 
 Package policy:
 
 - macOS: `Brewfile` is the desired package set. Homebrew resolves current
   compatible versions, including the Codex CLI cask and the Tree-sitter CLI
   needed to build parser updates; `--apply` uses `brew bundle ... --upgrade`.
+  The non-official AeroSpace, SketchyBar, and Borders entries declare
+  item-level trust so Homebrew 6 can load them without an interactive trust
+  repair step.
 - Linux/HPC: `config/tools/pixi-terminal-packages.txt` is the user-local
   terminal/image package set. It includes the Tree-sitter CLI needed to build
   parser updates. Pixi keeps the global `dot-terminal` environment and

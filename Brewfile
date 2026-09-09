@@ -33,9 +33,9 @@ brew "uv"
 brew "pixi"
 brew "node"
 brew "python@3.11"
-brew "sketchybar"
-brew "borders"
+brew "FelixKratz/formulae/sketchybar", trusted: true
+brew "FelixKratz/formulae/borders", trusted: true
 
 cask "wezterm"
-cask "aerospace"
+cask "nikitabobko/tap/aerospace", trusted: true
 cask "codex"

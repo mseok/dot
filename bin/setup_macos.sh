@@ -103,6 +103,18 @@ check_homebrew() {
   log "Homebrew found: $(brew --version | head -1)"
 }
 
+trust_homebrew_external_packages() {
+  if ! brew help trust >/dev/null 2>&1; then
+    log "Homebrew tap trust is unavailable; no explicit trust setup is needed."
+    return 0
+  fi
+
+  log "Trusting the non-official Homebrew packages declared by this setup..."
+  brew trust --formula FelixKratz/formulae/sketchybar
+  brew trust --formula FelixKratz/formulae/borders
+  brew trust --cask nikitabobko/tap/aerospace
+}
+
 install_homebrew_packages() {
   if [[ -f "$DOT_HOME/Brewfile" ]] && brew bundle --help >/dev/null 2>&1; then
     log "Reconciling Homebrew packages from Brewfile..."
@@ -117,10 +129,12 @@ install_homebrew_packages() {
   warn "brew bundle is unavailable; using the legacy package list."
   brew tap nikitabobko/tap
   brew tap FelixKratz/formulae
+  trust_homebrew_external_packages
   brew install neovim tmux git gh pre-commit starship eza fzf ripgrep fd yazi \
                chafa imagemagick ffmpeg poppler resvg sevenzip jq zoxide bat \
-               lazygit uv pixi node python@3.11 sketchybar borders
-  brew install --cask wezterm aerospace codex
+               lazygit uv pixi node python@3.11 \
+               FelixKratz/formulae/sketchybar FelixKratz/formulae/borders
+  brew install --cask wezterm nikitabobko/tap/aerospace codex
 }
 
 setup_shell_integration() {
@@ -171,6 +185,10 @@ setup_tmux() {
   fi
 
   link_config "$DOT_HOME/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
+  if tmux list-sessions >/dev/null 2>&1; then
+    tmux source-file "$HOME/.tmux.conf" || warn "Failed to reload the active tmux configuration"
+    log "Reloaded the active tmux configuration"
+  fi
   log "Tmux configured. Press Ctrl+b then Shift+I inside tmux to install plugins"
 }
 
@@ -250,6 +268,35 @@ setup_yazi_plugins() {
   (cd "$HOME/.config/yazi" && ya pkg install) || warn "Failed to install Yazi plugins"
 }
 
+reload_aerospace_config() {
+  if ! exists aerospace || ! aerospace list-workspaces --focused >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if aerospace reload-config >/dev/null 2>&1; then
+    log "Reloaded the active AeroSpace configuration"
+  else
+    warn "Failed to reload the active AeroSpace configuration"
+  fi
+}
+
+reload_sketchybar_config() {
+  if ! exists sketchybar || ! pgrep -x sketchybar >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if sketchybar --reload >/dev/null 2>&1; then
+    log "Reloaded the active SketchyBar configuration"
+  else
+    warn "Failed to reload the active SketchyBar configuration"
+  fi
+}
+
+reload_macos_window_management_configs() {
+  reload_aerospace_config
+  reload_sketchybar_config
+}
+
 setup_macos_window_management() {
   log "Setting up macOS window management..."
 
@@ -260,6 +307,7 @@ setup_macos_window_management() {
 
   if [[ "${DOT_SETUP_SKIP_SERVICES:-0}" == "1" ]]; then
     log "Skipping window-management service startup (DOT_SETUP_SKIP_SERVICES=1)."
+    reload_macos_window_management_configs
     return 0
   fi
 
@@ -271,6 +319,8 @@ setup_macos_window_management() {
   else
     warn "AeroSpace.app not found after installation"
   fi
+
+  reload_macos_window_management_configs
 
   log "Window management services started"
 }
@@ -338,6 +388,9 @@ main() {
   log "Starting macOS dotfiles setup..."
 
   check_homebrew
+  if [[ -f "$DOT_HOME/Brewfile" ]] && brew bundle --help >/dev/null 2>&1; then
+    log "Homebrew trust is declared in Brewfile for non-official packages"
+  fi
   install_homebrew_packages
   setup_shell_integration
   setup_neovim
