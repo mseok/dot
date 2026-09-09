@@ -68,7 +68,7 @@ on-focus-changed = [
 4 = 'main'
 5 = 'main'
 6 = 'main'
-7 = 'main'
+7 = ['secondary', 'main']
 8 = 'built-in'
 9 = ['sidecar display (airplay)', 'sidecar display']
 
@@ -117,7 +117,7 @@ outer.top = [
 # See: https://nikitabobko.github.io/AeroSpace/commands#layout
 alt-slash = 'layout tiles horizontal vertical'
 alt-comma = 'layout accordion horizontal vertical'
-alt-enter = "exec-and-forget open -n /Applications/Kaku.app"
+alt-enter = "exec-and-forget open -n /Applications/WezTerm.app"
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#focus
 alt-h = 'focus left'
@@ -221,7 +221,7 @@ alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
 
 [[on-window-detected]]
-if.app-id = "fun.tw93.kaku"
+if.app-id = "com.github.wez.wezterm"
 run = "move-node-to-workspace 1"
 [[on-window-detected]]
 if.app-id = "com.apple.Terminal"

@@ -17,8 +17,10 @@ LOCAL_OPT="${LOCAL_OPT:-$HOME/.local/opt}"
 LOCAL_SHARE="${LOCAL_SHARE:-$HOME/.local/share}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dot-bootstrap"
 NVM_DIR="${NVM_DIR:-$LOCAL_SHARE/nvm}"
+PIXI_HOME="${PIXI_HOME:-$LOCAL_OPT/pixi}"
+PIXI_ENVIRONMENT="${PIXI_ENVIRONMENT:-dot-terminal}"
 
-mkdir -p $LOCAL_BIN $LOCAL_OPT $LOCAL_SHARE $CACHE_DIR $NVM_DIR
+mkdir -p "$LOCAL_BIN" "$LOCAL_OPT" "$LOCAL_SHARE" "$CACHE_DIR" "$NVM_DIR"
 
 NVM_VERSION="${NVM_VERSION:-v0.40.1}"
 RIPGREP_VERSION="${RIPGREP_VERSION:-14.1.1}"
@@ -129,28 +131,28 @@ shell_bootstrap_block() {
   if [[ "$shell_name" == "bash" ]]; then
     cat <<EOF
 case ":\$PATH:" in
-  *":\$HOME/.local/bin:"*) ;;
-  *) export PATH="\$HOME/.local/bin:\$PATH" ;;
+  *":${LOCAL_BIN}:"*) ;;
+  *) export PATH="${LOCAL_BIN}:\$PATH" ;;
 esac
 
 export NVM_DIR="$NVM_DIR"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-[ -f "$HOME/.local/opt/fzf/shell/completion.bash" ] && source "$HOME/.local/opt/fzf/shell/completion.bash"
-[ -f "$HOME/.local/opt/fzf/shell/key-bindings.bash" ] && source "$HOME/.local/opt/fzf/shell/key-bindings.bash"
+[ -f "${LOCAL_OPT}/fzf/shell/completion.bash" ] && source "${LOCAL_OPT}/fzf/shell/completion.bash"
+[ -f "${LOCAL_OPT}/fzf/shell/key-bindings.bash" ] && source "${LOCAL_OPT}/fzf/shell/key-bindings.bash"
 command -v starship >/dev/null 2>&1 && eval "\$(starship init bash)"
 [ -f "$REPO_ROOT/config/bash/.bashrc" ] && source "$REPO_ROOT/config/bash/.bashrc"
 EOF
   else
     cat <<EOF
 case ":\$PATH:" in
-  *":\$HOME/.local/bin:"*) ;;
-  *) export PATH="\$HOME/.local/bin:\$PATH" ;;
+  *":${LOCAL_BIN}:"*) ;;
+  *) export PATH="${LOCAL_BIN}:\$PATH" ;;
 esac
 
 export NVM_DIR="$NVM_DIR"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-[ -f "$HOME/.local/opt/fzf/shell/completion.zsh" ] && source "$HOME/.local/opt/fzf/shell/completion.zsh"
-[ -f "$HOME/.local/opt/fzf/shell/key-bindings.zsh" ] && source "$HOME/.local/opt/fzf/shell/key-bindings.zsh"
+[ -f "${LOCAL_OPT}/fzf/shell/completion.zsh" ] && source "${LOCAL_OPT}/fzf/shell/completion.zsh"
+[ -f "${LOCAL_OPT}/fzf/shell/key-bindings.zsh" ] && source "${LOCAL_OPT}/fzf/shell/key-bindings.zsh"
 command -v starship >/dev/null 2>&1 && eval "\$(starship init zsh)"
 [ -f "$REPO_ROOT/config/zsh/.zshrc" ] && source "$REPO_ROOT/config/zsh/.zshrc"
 EOF
@@ -447,6 +449,37 @@ install_neovim() {
   ln -sfn "$nvim_root/squashfs-root/usr/bin/nvim" "$LOCAL_BIN/nvim"
 }
 
+install_pixi_terminal_tools() {
+  if [[ "${DOT_BOOTSTRAP_SKIP_PIXI:-0}" == "1" ]]; then
+    log "Skipping optional Pixi terminal tools (DOT_BOOTSTRAP_SKIP_PIXI=1)."
+    return 0
+  fi
+
+  if ! exists pixi; then
+    warn "pixi is unavailable; skipping optional Yazi/image tools."
+    warn "Install pixi or set DOT_BOOTSTRAP_SKIP_PIXI=1, then rerun this script."
+    return 0
+  fi
+
+  log "Installing optional terminal/image tools into Pixi environment '$PIXI_ENVIRONMENT'..."
+  if ! PIXI_HOME="$PIXI_HOME" pixi global install \
+      --environment "$PIXI_ENVIRONMENT" \
+      --no-progress \
+      yazi chafa imagemagick ffmpeg poppler resvg 7zip jq zoxide eza bat lazygit; then
+    warn "Pixi terminal/image tools failed to install; core bootstrap will continue."
+    return 0
+  fi
+
+  # Pixi exposes global applications from PIXI_HOME/bin. Mirror only the
+  # user-facing executables into LOCAL_BIN so LOCAL_BIN remains the sole
+  # PATH entry required by the shell bootstrap block.
+  for tool in yazi ya chafa magick convert ffmpeg pdftoppm pdftocairo resvg 7zz jq zoxide eza bat lazygit; do
+    if [[ -x "$PIXI_HOME/bin/$tool" ]]; then
+      ln -sfn "$PIXI_HOME/bin/$tool" "$LOCAL_BIN/$tool"
+    fi
+  done
+}
+
 install_optional_tmux_plugins() {
   if [[ -d "$HOME/.tmux/plugins/tpm/.git" ]]; then
     log "TPM already installed."
@@ -469,8 +502,15 @@ install_optional_tmux_plugins() {
 }
 
 install_color_profile() {
-  tic -x -o $HOME/.terminfo "$REPO_ROOT/config/terminal/kaku.src"
-  tic -x -o $HOME/.terminfo "$REPO_ROOT/config/terminal/tmux-256color.src"
+  if ! exists tic; then
+    warn "tic is unavailable; skipping user terminfo installation."
+    warn "Basic xterm-256color still works, but advanced terminal capabilities may be limited."
+    return 0
+  fi
+
+  mkdir -p "$HOME/.terminfo"
+  tic -x -o "$HOME/.terminfo" "$REPO_ROOT/config/terminal/wezterm.src"
+  tic -x -o "$HOME/.terminfo" "$REPO_ROOT/config/terminal/tmux-256color.src"
 }
 
 link_dot_configs() {
@@ -482,6 +522,11 @@ link_dot_configs() {
 }
 
 install_global_npm_clis() {
+  if [[ "${DOT_BOOTSTRAP_SKIP_NPM:-0}" == "1" ]]; then
+    log "Skipping global npm CLIs (DOT_BOOTSTRAP_SKIP_NPM=1)."
+    return 0
+  fi
+
   local package_specs=(
     "@openai/codex:codex"
   )
@@ -516,6 +561,8 @@ post_instructions() {
 Installed or configured:
 • Node.js LTS via nvm
 • uv, fzf, starship, ripgrep, fd, tmux, gh, Neovim
+• Optional Pixi terminal tools: Yazi, chafa, ImageMagick, ffmpeg, poppler,
+  resvg, 7zip, jq, zoxide, eza, bat, lazygit
 • tmux plugin manager (TPM), if git was available
 • Symlinks:
     ~/.config/nvim          -> <repo>/config/nvim
@@ -527,7 +574,7 @@ Installed or configured:
 
 Notes:
 • No sudo or apt-get was used.
-• All binaries were installed under ~/.local/bin or ~/.local/opt.
+• All binaries were installed under the configured user-owned bin/opt paths.
 • Existing regular files were backed up before symlinks were created.
 
 Next steps:
@@ -542,6 +589,11 @@ Next steps:
     rg --version | head -n 1
     fd --version | head -n 1
     starship --version
+
+For image previews in WezTerm over SSH:
+• Run: TERM_PROGRAM=WezTerm yazi (or use the `y`/`yw` shell helpers).
+• In Yazi, press T to maximize the preview pane, + / - to zoom.
+• Run `ya env` and check that the adapter is `Iip`.
 
 If tmux is already installed on the system:
 • Start tmux, then press Ctrl+b followed by Shift+I to install plugins.
@@ -564,9 +616,15 @@ main() {
   install_tmux
   install_gh
   install_neovim
+  install_pixi_terminal_tools
+  install_color_profile
   install_optional_tmux_plugins
   link_dot_configs
-  configure_shell_rcs
+  if [[ "${DOT_BOOTSTRAP_SKIP_SHELL_RC:-0}" == "1" ]]; then
+    log "Skipping shell rc changes (DOT_BOOTSTRAP_SKIP_SHELL_RC=1)."
+  else
+    configure_shell_rcs
+  fi
   install_global_npm_clis
   post_instructions
 }

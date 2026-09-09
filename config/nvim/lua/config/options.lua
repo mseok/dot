@@ -58,6 +58,12 @@ vim.opt.incsearch = true
 
 if not vim.g.vscode then
   vim.opt.termguicolors = true
+  vim.opt.guicursor = {
+    "n-v-c:block-Cursor/lCursor",
+    "i-ci:ver25-blinkwait700-blinkon400-blinkoff250-Cursor/lCursor",
+    "r-cr:hor20-Cursor/lCursor",
+    "o:hor50-Cursor/lCursor",
+  }
 
   vim.opt.scrolloff = 8
   vim.opt.signcolumn = "yes"

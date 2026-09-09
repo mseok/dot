@@ -40,11 +40,11 @@ For Ubuntu, see [Ubuntu Installation](#ubuntu-installation) below.
 
 This repository provides a comprehensive development environment setup including:
 
-- **Terminal**: Kaku with tmux integration
+- **Terminal**: WezTerm with tmux integration
 - **Shell**: Zsh/Bash with Starship prompt
 - **Editor**: Neovim with native vim.pack plugin management, LSP, and AI completions
 - **Window Management** (macOS): AeroSpace + SketchyBar + Borders
-- **Development Tools**: Git, fzf, ripgrep, fd, Yazi file manager
+- **Development Tools**: Git, eza, fzf, ripgrep, fd, Yazi file manager
 - **AI Tools**: GitHub Copilot
 - **Optional AI Integrations**: private single-writer Obsidian MCP gateway on macOS
 
@@ -85,11 +85,10 @@ Install all core dependencies via Homebrew:
 # Add taps for specialized tools
 brew tap nikitabobko/tap      # Aerospace window manager
 brew tap FelixKratz/formulae  # SketchyBar & Borders
-brew tap tw93/tap             # Kaku terminal
 
 # Install all tools at once
-brew install --cask tw93/tap/kakuku aerospace
-brew install neovim tmux git starship fzf ripgrep fd yazi \
+brew install --cask wezterm aerospace
+brew install neovim tmux git starship eza fzf ripgrep fd yazi \
              sketchybar borders node python@3.11
 
 # Start window management services (macOS only)
@@ -101,13 +100,14 @@ open -a AeroSpace
 
 | Tool | Installation | Documentation |
 |------|-------------|---------------|
-| **Kaku** | `brew install --cask tw93/tap/kakuku` | [github.com/tw93/Kaku](https://github.com/tw93/Kaku) |
+| **WezTerm** | `brew install --cask wezterm` | [wezfurlong.org/wezterm](https://wezfurlong.org/wezterm/) |
 | **Aerospace** | `brew install --cask nikitabobko/tap/aerospace` | [nikitabobko.github.io/AeroSpace](https://nikitabobko.github.io/AeroSpace/) |
 | **SketchyBar** | `brew install sketchybar` | [felixkratz.github.io/SketchyBar](https://felixkratz.github.io/SketchyBar/) |
 | **Borders** | `brew install FelixKratz/formulae/borders` | [github.com/FelixKratz/JankyBorders](https://github.com/FelixKratz/JankyBorders) |
 | **Neovim** | `brew install neovim` | [neovim.io](https://neovim.io/) |
 | **Tmux** | `brew install tmux` | [github.com/tmux/tmux](https://github.com/tmux/tmux) |
 | **Starship** | `brew install starship` | [starship.rs](https://starship.rs/) |
+| **eza** | `brew install eza` | [github.com/eza-community/eza](https://github.com/eza-community/eza) |
 | **fzf** | `brew install fzf` | [github.com/junegunn/fzf](https://github.com/junegunn/fzf) |
 | **ripgrep** | `brew install ripgrep` | [github.com/BurntSushi/ripgrep](https://github.com/BurntSushi/ripgrep) |
 | **fd** | `brew install fd` | [github.com/sharkdp/fd](https://github.com/sharkdp/fd) |
@@ -219,14 +219,18 @@ ln -s $HOME/dot/config/starship/starship.toml $HOME/.config/starship.toml
 # Yazi file manager
 ln -s $HOME/dot/config/yazi $HOME/.config/yazi
 
-# Kaku terminal
-mkdir -p $HOME/.config/kaku
-ln -s $HOME/dot/config/kaku/kaku.lua $HOME/.config/kaku/kaku.lua
-ln -s $HOME/dot/config/kaku/assistant.toml $HOME/.config/kaku/assistant.toml
+# WezTerm terminal
+ln -s $HOME/dot/config/wezterm $HOME/.config/wezterm
 
 # VS Code (optional)
 ln -s $HOME/dot/config/vscode/settings.json "$HOME/Library/Application Support/Code/User/settings.json"
 ```
+
+WezTerm follows the macOS appearance automatically: Catppuccin Latte in Light
+mode and Catppuccin Mocha in Dark mode. macOS's automatic appearance schedule
+therefore controls the terminal transition as well. Neovim switches between its
+TokyoNight day/night variants on its own schedule while running; ANSI-based
+applications such as Starship and Yazi follow the terminal palette.
 
 ### 6. macOS Window Management
 
@@ -283,7 +287,7 @@ dot/
 │   ├── bash/           # Bash shell
 │   ├── git/            # Git config
 │   ├── starship/       # Starship prompt (XDG)
-│   ├── kaku/           # Kaku terminal (XDG)
+│   ├── wezterm/        # WezTerm terminal (XDG)
 │   ├── yazi/           # Yazi file manager (XDG)
 │   ├── aerospace/      # Aerospace WM (macOS)
 │   ├── sketchybar/     # SketchyBar (macOS)

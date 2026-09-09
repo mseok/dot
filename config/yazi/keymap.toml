@@ -1,0 +1,11 @@
+#:schema https://yazi-rs.github.io/schemas/keymap.json
+
+[mgr]
+prepend_keymap = [
+  { on = "e", run = "open", desc = "Edit or open selected files" },
+  { on = "o", run = "open", desc = "Edit or open selected files" },
+  { on = "<Enter>", run = "enter", desc = "Enter the child directory" },
+  { on = "T", run = "plugin toggle-pane max-preview", desc = "Maximize or restore preview pane" },
+  { on = "+", run = "plugin zoom 1", desc = "Zoom in preview image" },
+  { on = "-", run = "plugin zoom -1", desc = "Zoom out preview image" },
+]

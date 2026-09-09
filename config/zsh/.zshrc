@@ -1,3 +1,9 @@
+if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
+
 PATH="${PATH//\$HOME\/.codex\/bin/}"
 PATH="${PATH//::/:}"
 PATH="${PATH#:}"
@@ -18,7 +24,13 @@ if [[ -d "$HOME/.codex/bin" ]]; then
 fi
 
 export PATH="/usr/local/sbin:$PATH"
-export TERM="xterm-256color"
+if [[ -z "${TERM:-}" || "$TERM" == "dumb" ]]; then
+    if [[ -n "${TMUX:-}" ]]; then
+        export TERM="tmux-256color"
+    else
+        export TERM="xterm-256color"
+    fi
+fi
 export HISFILE=~/.config/zsh/.zsh_hitstory
 export EDITOR="nvim"
 
@@ -41,6 +53,13 @@ alias sz="source $HOME/.zshrc"
 alias ta="tmux a -t"
 alias tn="tmux new -s"
 alias tl="tmux ls"
+
+if command -v eza >/dev/null 2>&1; then
+    alias ls="eza --group-directories-first"
+    alias ll="eza -lah --group-directories-first"
+    alias la="eza -a --group-directories-first"
+    alias l="eza -l --group-directories-first"
+fi
 
 # Git Aliases
 alias gs="git status"
@@ -79,6 +98,40 @@ fi
 
 set -o vi
 
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init zsh)"
+fi
+
+y() {
+    if ! command -v yazi >/dev/null 2>&1; then
+        print -u2 "yazi is not installed or not on PATH"
+        return 127
+    fi
+
+    local tmp cwd yazi_status
+    tmp="$(mktemp "${TMPDIR:-/tmp}/yazi-cwd.XXXXXX")" || return 1
+
+    if [[ "${YAZI_FORCE_WEZTERM:-0}" == 1 ]]; then
+        TERM_PROGRAM=WezTerm command yazi "$@" --cwd-file="$tmp"
+    else
+        command yazi "$@" --cwd-file="$tmp"
+    fi
+    yazi_status=$?
+
+    if [[ -r "$tmp" ]]; then
+        cwd="$(<"$tmp")"
+        if [[ -n "$cwd" && -d "$cwd" && "$cwd" != "$PWD" ]]; then
+            builtin cd -- "$cwd"
+        fi
+    fi
+    rm -f "$tmp"
+    return "$yazi_status"
+}
+
+yw() {
+    YAZI_FORCE_WEZTERM=1 y "$@"
+}
+
 if [[ -o interactive && -t 1 ]]; then
     _dot_vi_cursor_set() {
         case "${KEYMAP:-}" in
@@ -86,7 +139,7 @@ if [[ -o interactive && -t 1 ]]; then
                 printf '\e[2 q'  # steady block
                 ;;
             *)
-                printf '\e[6 q'  # steady bar
+                printf '\e[5 q'  # blinking bar
                 ;;
         esac
     }
@@ -100,7 +153,7 @@ if [[ -o interactive && -t 1 ]]; then
     }
 
     _dot_vi_cursor_line_finish() {
-        printf '\e[6 q'
+        printf '\e[5 q'
     }
 
     if [[ -z "${_DOT_VI_CURSOR_HOOKS_INSTALLED:-}" ]]; then
@@ -113,4 +166,9 @@ if [[ -o interactive && -t 1 ]]; then
         add-zle-hook-widget line-finish _dot_vi_cursor_line_finish
         typeset -g _DOT_VI_CURSOR_HOOKS_INSTALLED=1
     fi
+fi
+
+if [[ -o interactive && -t 0 && -n "${TMUX:-}" && -x "$HOME/dot/bin/tmux-time-theme.sh" ]]; then
+    "$HOME/dot/bin/tmux-time-theme.sh" >/dev/null 2>&1
+    tmux run-shell -b "$HOME/dot/bin/tmux-time-theme.sh --watch" >/dev/null 2>&1
 fi

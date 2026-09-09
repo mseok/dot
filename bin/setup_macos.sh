@@ -61,14 +61,13 @@ install_homebrew_packages() {
   log "Adding Homebrew taps..."
   brew tap nikitabobko/tap      2>/dev/null || true  # Aerospace
   brew tap FelixKratz/formulae  2>/dev/null || true  # SketchyBar & Borders
-  brew tap tw93/tap             2>/dev/null || true  # Kaku
 
   log "Installing core packages via Homebrew..."
-  brew install --quiet neovim tmux git starship fzf ripgrep fd yazi \
+  brew install --quiet neovim tmux git starship eza fzf ripgrep fd yazi \
                sketchybar borders node python@3.11 || true
 
   log "Installing cask applications..."
-  brew install --cask --quiet tw93/tap/kakuku aerospace || true
+  brew install --cask --quiet wezterm aerospace || true
 }
 
 setup_shell_integration() {
@@ -132,17 +131,17 @@ setup_starship() {
   link_config "$DOT_HOME/config/starship/starship.toml" "$HOME/.config/starship.toml"
 }
 
-setup_kaku() {
-  log "Setting up Kaku configuration..."
-  mkdir -p "$HOME/.config/kaku"
-  link_config "$DOT_HOME/config/kaku/kaku.lua" "$HOME/.config/kaku/kaku.lua"
-  link_config "$DOT_HOME/config/kaku/assistant.toml" "$HOME/.config/kaku/assistant.toml"
+setup_wezterm() {
+  log "Setting up WezTerm configuration..."
+  link_config "$DOT_HOME/config/wezterm" "$HOME/.config/wezterm"
 }
 
 setup_yazi() {
   log "Setting up Yazi file manager..."
   mkdir -p "$HOME/.config/yazi"
   link_config "$DOT_HOME/config/yazi/yazi.toml" "$HOME/.config/yazi/yazi.toml"
+  link_config "$DOT_HOME/config/yazi/keymap.toml" "$HOME/.config/yazi/keymap.toml"
+  link_config "$DOT_HOME/config/yazi/package.toml" "$HOME/.config/yazi/package.toml"
 }
 
 setup_macos_window_management() {
@@ -183,8 +182,8 @@ print_post_install() {
 ✅ macOS Setup Complete!
 
 What was installed:
-• Core tools: Neovim, Tmux, Git, Starship, fzf, ripgrep, fd, Yazi
-• Terminal: Kaku
+• Core tools: Neovim, Tmux, Git, Starship, eza, fzf, ripgrep, fd, Yazi
+• Terminal: WezTerm
 • Window Management: Aerospace, SketchyBar, Borders
 • Languages: Node.js, Python 3.11
 
@@ -194,8 +193,7 @@ What was configured:
 • Tmux → ~/.tmux.conf
 • Git → ~/.gitconfig
 • Starship → ~/.config/starship.toml
-• Kaku → ~/.config/kaku/kaku.lua
-• Kaku Assistant → ~/.config/kaku/assistant.toml
+• WezTerm → ~/.config/wezterm
 • Yazi → ~/.config/yazi
 • Aerospace → ~/.config/aerospace
 • SketchyBar → ~/.config/sketchybar
@@ -234,7 +232,7 @@ main() {
   setup_tmux
   setup_git
   setup_starship
-  setup_kaku
+  setup_wezterm
   setup_yazi
   setup_macos_window_management
   setup_vscode
