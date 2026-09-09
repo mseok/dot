@@ -23,6 +23,7 @@ PIXI_ENVIRONMENT="${PIXI_ENVIRONMENT:-dot-terminal}"
 mkdir -p "$LOCAL_BIN" "$LOCAL_OPT" "$LOCAL_SHARE" "$CACHE_DIR" "$NVM_DIR"
 
 NVM_VERSION="${NVM_VERSION:-v0.40.1}"
+FZF_VERSION="${FZF_VERSION:-0.74.1}"
 RIPGREP_VERSION="${RIPGREP_VERSION:-14.1.1}"
 FD_VERSION="${FD_VERSION:-10.2.0}"
 NEOVIM_CHANNEL="${NEOVIM_CHANNEL:-stable}"
@@ -237,6 +238,11 @@ install_fzf() {
     return 0
   fi
 
+  if exists pixi; then
+    log "pixi is available; fzf will be installed with the optional terminal tools."
+    return 0
+  fi
+
   log "Installing fzf into $dest..."
 
   if [[ -e "$dest" ]]; then
@@ -255,7 +261,33 @@ install_fzf() {
     rm -rf "$tmpdir"
   fi
 
-  ln -sfn "$dest/bin/fzf" "$LOCAL_BIN/fzf"
+  # The fzf source checkout contains shell integration but not a built
+  # executable. Fetch the official release binary when no package manager is
+  # available to provide it.
+  if [[ ! -x "$dest/bin/fzf" ]]; then
+    local fzf_arch archive binary_tmp binary_path
+    case "$(uname -m)" in
+      x86_64|amd64) fzf_arch="amd64" ;;
+      aarch64|arm64) fzf_arch="arm64" ;;
+      *)
+        warn "Unsupported architecture for bundled fzf: $(uname -m)"
+        return 0
+        ;;
+    esac
+
+    archive="$CACHE_DIR/fzf-${FZF_VERSION}.tar.gz"
+    binary_tmp="$(mktemp -d)"
+    download_to "https://github.com/junegunn/fzf/releases/download/v${FZF_VERSION}/fzf-${FZF_VERSION}-linux_${fzf_arch}.tar.gz" "$archive"
+    tar -xzf "$archive" -C "$binary_tmp"
+    binary_path="$(find "$binary_tmp" -type f -name fzf -perm -u+x | head -n1)"
+    if [[ -n "$binary_path" ]]; then
+      cp "$binary_path" "$dest/bin/fzf"
+      chmod +x "$dest/bin/fzf"
+    fi
+    rm -rf "$binary_tmp"
+  fi
+
+  [[ -x "$dest/bin/fzf" ]] && ln -sfn "$dest/bin/fzf" "$LOCAL_BIN/fzf"
   [[ -f "$dest/bin/fzf-tmux" ]] && ln -sfn "$dest/bin/fzf-tmux" "$LOCAL_BIN/fzf-tmux"
 }
 
@@ -345,9 +377,17 @@ install_starship() {
 }
 
 install_tmux() {
-  if exists tmux; then
-    log "tmux already available: $(tmux -V)"
+  if [[ -x "$LOCAL_BIN/tmux" ]]; then
+    log "User-local tmux already available: $($LOCAL_BIN/tmux -V)"
     return 0
+  fi
+
+  if exists tmux; then
+    if [[ "${DOT_BOOTSTRAP_FORCE_USER_TMUX:-0}" != "1" ]]; then
+      log "tmux already available: $(tmux -V)"
+      return 0
+    fi
+    log "Forcing user-local tmux despite the system tmux: ${TMUX_VERSION}"
   fi
 
   local asset url
@@ -465,7 +505,7 @@ install_pixi_terminal_tools() {
   if ! PIXI_HOME="$PIXI_HOME" pixi global install \
       --environment "$PIXI_ENVIRONMENT" \
       --no-progress \
-      yazi chafa imagemagick ffmpeg poppler resvg 7zip jq zoxide eza bat lazygit; then
+      yazi chafa imagemagick ffmpeg poppler resvg 7zip jq zoxide eza bat lazygit fzf; then
     warn "Pixi terminal/image tools failed to install; core bootstrap will continue."
     return 0
   fi
@@ -473,7 +513,7 @@ install_pixi_terminal_tools() {
   # Pixi exposes global applications from PIXI_HOME/bin. Mirror only the
   # user-facing executables into LOCAL_BIN so LOCAL_BIN remains the sole
   # PATH entry required by the shell bootstrap block.
-  for tool in yazi ya chafa magick convert ffmpeg pdftoppm pdftocairo resvg 7zz jq zoxide eza bat lazygit; do
+  for tool in yazi ya chafa magick convert ffmpeg pdftoppm pdftocairo resvg 7zz jq zoxide eza bat lazygit fzf; do
     if [[ -x "$PIXI_HOME/bin/$tool" ]]; then
       ln -sfn "$PIXI_HOME/bin/$tool" "$LOCAL_BIN/$tool"
     fi
