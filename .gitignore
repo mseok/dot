@@ -4,6 +4,10 @@ CLAUDE.md
 .claude/
 __pycache__/
 
+# Codex installs app-managed system skills outside this repository. This
+# ignores a legacy checkout-local copy left by older whole-directory links.
+/ai/codex/skills/.system/
+
 # Machine-local secrets and scratch artifacts
 .env
 .env.*

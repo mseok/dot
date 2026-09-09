@@ -1,24 +1,33 @@
 # Dotfiles
 
-Personal dotfiles for macOS and Ubuntu environments with modular configurations for development tools, window management, and AI-assisted coding.
+Personal dotfiles for macOS, Linux, and sudo-less HPC environments with modular configurations for development tools, window management, and AI-assisted coding.
 
-## Quick Start (macOS)
+## Quick Start (macOS/Linux)
+
+After reviewing the bootstrap script, a fresh machine can be installed with:
 
 ```bash
-# 1. Install Homebrew (if not already installed)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+curl -fsSL https://raw.githubusercontent.com/mseok/dot/main/bootstrap.sh | bash
+```
 
-# 2. Clone this repository
-git clone https://github.com/<owner>/dot.git $HOME/dot
+This clones the repository into `$HOME/dot` and dispatches to the correct
+platform installer. On macOS, Homebrew is the only step that may still need
+the normal administrator/password confirmation:
 
-# 3. Run the macOS setup script (installs all dependencies)
-$HOME/dot/bin/setup_macos.sh
+```bash
+curl -fsSL https://raw.githubusercontent.com/mseok/dot/main/bootstrap.sh | bash -s -- --install-homebrew
+```
 
-# 4. Restart your shell
+The safer reviewed form is equivalent but keeps the repository visible:
+
+```bash
+git clone https://github.com/mseok/dot.git $HOME/dot
+$HOME/dot/install.sh
 exec $SHELL -l
 ```
 
-For Ubuntu, see [Ubuntu Installation](#ubuntu-installation) below.
+The installer is idempotent. Existing regular config files are backed up before
+links are created, while an existing non-empty directory is never overwritten.
 
 ---
 
@@ -28,7 +37,9 @@ For Ubuntu, see [Ubuntu Installation](#ubuntu-installation) below.
 - [Prerequisites](#prerequisites)
 - [Tool Installation](#tool-installation)
   - [macOS Installation](#macos-installation)
-  - [Ubuntu Installation](#ubuntu-installation)
+  - [Linux/HPC Installation](#linuxhpc-installation)
+- [Updates and version compatibility](#updates-and-version-compatibility)
+- [Codex and HPC policy](#codex-and-hpc-policy)
 - [Repository Setup](#repository-setup)
 - [ChatGPT + Obsidian MCP Stack](#chatgpt--obsidian-mcp-stack-macos-optional)
 - [Configuration Details](#configuration-details)
@@ -46,6 +57,7 @@ This repository provides a comprehensive development environment setup including
 - **Window Management** (macOS): AeroSpace + SketchyBar + Borders
 - **Development Tools**: Git, eza, fzf, ripgrep, fd, Yazi file manager
 - **AI Tools**: GitHub Copilot
+- **Codex**: portable AGENTS policy, HPC rules, and repository-owned skills
 - **Optional AI Integrations**: private single-writer Obsidian MCP gateway on macOS
 
 All configurations follow the XDG Base Directory specification (`~/.config/`).
@@ -61,15 +73,17 @@ All configurations follow the XDG Base Directory specification (`~/.config/`).
    ```bash
    xcode-select --install
    ```
-3. **Homebrew** (package manager):
-   ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
+3. Network access for Homebrew and the package downloads. The installer can
+   install Homebrew itself with `--install-homebrew`.
 
-### Ubuntu Requirements
+### Linux/HPC Requirements
 
-- **Ubuntu** 20.04 LTS or later
-- **curl** and **git** (usually pre-installed)
+- A POSIX Linux account with Bash, `curl` or `wget`, `tar`, and a writable home
+  or user-owned application directory.
+- `sudo` and `apt` are not required. The bootstrap installs Pixi, terminal
+  tools, and configuration under user-owned paths.
+- For an HPC login node, set `LOCAL_BIN`, `LOCAL_OPT`, `LOCAL_SHARE`, and/or
+  `PIXI_HOME` to persistent parallel storage if the home quota is small.
 
 ---
 
@@ -79,33 +93,30 @@ All configurations follow the XDG Base Directory specification (`~/.config/`).
 
 #### Core Tools
 
-Install all core dependencies via Homebrew:
+The checked-in [`Brewfile`](Brewfile) is the macOS desired state. The setup
+script runs:
 
 ```bash
-# Add taps for specialized tools
-brew tap nikitabobko/tap      # Aerospace window manager
-brew tap FelixKratz/formulae  # SketchyBar & Borders
-
-# Install all tools at once
-brew install --cask wezterm aerospace
-brew install neovim tmux git starship eza fzf ripgrep fd yazi \
-             sketchybar borders node python@3.11
-
-# Start window management services (macOS only)
-brew services start sketchybar
-open -a AeroSpace
+brew bundle install --file=$HOME/dot/Brewfile --no-upgrade
 ```
+
+It includes WezTerm, Neovim, tmux, Yazi plus the image-preview dependencies
+(ImageMagick, chafa, ffmpeg, poppler, resvg), and the terminal workflow tools.
+The normal macOS window-management services are started on a fresh install;
+use `$HOME/dot/install.sh --no-services` when setting up without launching them.
 
 #### Tool Sources and Documentation
 
 | Tool | Installation | Documentation |
 |------|-------------|---------------|
 | **WezTerm** | `brew install --cask wezterm` | [wezfurlong.org/wezterm](https://wezfurlong.org/wezterm/) |
+| **Codex CLI** | `brew install --cask codex` | [github.com/openai/codex](https://github.com/openai/codex) |
 | **Aerospace** | `brew install --cask nikitabobko/tap/aerospace` | [nikitabobko.github.io/AeroSpace](https://nikitabobko.github.io/AeroSpace/) |
 | **SketchyBar** | `brew install sketchybar` | [felixkratz.github.io/SketchyBar](https://felixkratz.github.io/SketchyBar/) |
 | **Borders** | `brew install FelixKratz/formulae/borders` | [github.com/FelixKratz/JankyBorders](https://github.com/FelixKratz/JankyBorders) |
 | **Neovim** | `brew install neovim` | [neovim.io](https://neovim.io/) |
 | **Tmux** | `brew install tmux` | [github.com/tmux/tmux](https://github.com/tmux/tmux) |
+| **GitHub CLI** | `brew install gh` | [cli.github.com](https://cli.github.com/) |
 | **Starship** | `brew install starship` | [starship.rs](https://starship.rs/) |
 | **eza** | `brew install eza` | [github.com/eza-community/eza](https://github.com/eza-community/eza) |
 | **fzf** | `brew install fzf` | [github.com/junegunn/fzf](https://github.com/junegunn/fzf) |
@@ -114,22 +125,24 @@ open -a AeroSpace
 | **Yazi** | `brew install yazi` | [yazi-rs.github.io](https://yazi-rs.github.io/) |
 | **Node.js** | `brew install node` | [nodejs.org](https://nodejs.org/) |
 | **Python** | `brew install python@3.11` | [python.org](https://www.python.org/) |
+| **uv** | `brew install uv` | [docs.astral.sh/uv](https://docs.astral.sh/uv/) |
 
-### Ubuntu Installation
+### Linux/HPC Installation
 
 Run the comprehensive bootstrap script:
 
 ```bash
 # Clone the repository first
-git clone https://github.com/<owner>/dot.git $HOME/dot
+git clone https://github.com/mseok/dot.git $HOME/dot
 
 # Run automated setup (user-local install, no sudo required)
-bash $HOME/dot/bin/initialize_ubuntu.sh
+$HOME/dot/install.sh
 ```
 
 This script installs:
-- User-local tools under `~/.local/bin` / `~/.local/opt`
+- User-local tools under `~/.local/bin` / `~/.local/opt` (overridable)
 - nvm + Node.js LTS
+- Pixi + a global `dot-terminal` environment for Git, Yazi, and image previews
 - fzf (with shell integration)
 - Starship prompt
 - tmux
@@ -138,17 +151,113 @@ This script installs:
 - UV (universal version manager)
 - ripgrep + fd
 - Symlinks configurations to `~/.config/`
+- User terminfo entries for WezTerm and tmux when `tic` is available
 
-For manual installation details, see `bin/initialize_ubuntu.sh`.
+For manual installation details and environment overrides, see
+`bin/initialize_ubuntu.sh`.
 
 ---
+
+## Updates and version compatibility
+
+Check the current machine without changing anything:
+
+```bash
+$HOME/dot/bin/update_environment.sh --check
+```
+
+Apply a fast-forward-only repository update and then reconcile the platform
+packages/configuration:
+
+```bash
+$HOME/dot/bin/update_environment.sh --apply
+```
+
+Optional plugin updates are explicit because plugin APIs can change more
+quickly than the base applications:
+
+```bash
+$HOME/dot/bin/update_environment.sh --apply --plugins
+```
+
+The update command refuses tracked or untracked Git changes, never resets or
+force-pulls, and does not restart the existing macOS window-management apps by
+default. It validates tmux and WezTerm configuration after the update. If an
+application release requires a config migration, the repository change should
+be reviewed as a normal Git diff; arbitrary upstream version changes cannot be
+made safely by a generic script.
+
+Package policy:
+
+- macOS: `Brewfile` is the desired package set. Homebrew resolves current
+  compatible versions, including the Codex CLI cask; `--apply` uses `brew
+  bundle ... --upgrade`.
+- Linux/HPC: `config/tools/pixi-terminal-packages.txt` is the user-local
+  terminal/image package set. Pixi keeps the global `dot-terminal` environment
+  and `--apply` runs `pixi global update dot-terminal`.
+- Linux/HPC Codex CLI is installed through the user-local nvm/npm toolchain and
+  refreshed to `@openai/codex@latest` during `--apply`.
+- Neovim and Yazi plugin lock/state are not silently rewritten during a normal
+  update. Pass `--plugins` when you explicitly want those updates.
+
+No background updater is installed by default: unattended upgrades can change
+an active terminal or invalidate a plugin while an HPC job is running. If you
+want fully unattended updates, schedule `bin/update_environment.sh --apply`
+with a user-level launchd/systemd/cron mechanism appropriate to that machine.
+
+For a smaller home quota on HPC, keep the repository and package cache on
+parallel storage, for example:
+
+```bash
+LOCAL_BIN=/mnt/parallel_storage/$USER/appl/bin \
+LOCAL_OPT=/mnt/parallel_storage/$USER/appl/opt \
+PIXI_HOME=/mnt/parallel_storage/$USER/appl/pixi \
+$HOME/dot/install.sh
+```
+
+## Codex and HPC policy
+
+The installer also configures the portable part of Codex. On Linux/HPC it
+installs or refreshes:
+
+- `$CODEX_HOME/AGENTS.md` as a link to `ai/codex/AGENTS.md`;
+- `$CODEX_HOME/rules/hpc.rules` as a link to the repository policy; and
+- each repository-owned skill as an individual link below
+  `$CODEX_HOME/skills/`.
+
+Individual skill links are intentional. Codex-managed system skills stay in
+`$CODEX_HOME/skills/.system` rather than turning the source checkout into an
+application-data directory. A legacy whole-directory `~/.codex/skills` link is
+migrated automatically on the next install, with existing `.system` skills
+preserved.
+
+The installer does not copy `$CODEX_HOME/config.toml`, authentication, MCP
+registrations, project trust, databases, or other host-local state. Those files
+contain machine-specific paths and permissions and should not be shared
+between macOS and an HPC login node.
+
+`AGENTS.override.md` is different from the portable base: it may contain
+cluster-specific storage and scheduler facts. Existing overrides are preserved.
+For a reviewed override that has already been generated or audited, install it
+explicitly:
+
+```bash
+$HOME/dot/bin/install_codex.sh \
+  --override-from /path/to/AGENTS.override.md
+```
+
+On a new Slurm cluster, invoke the installed `init-slurm-environment` skill for
+the explicit topology audit before creating an override. The installer does
+not guess partitions, node capabilities, or `/home`/scratch paths. This keeps a
+fresh bare-Linux install useful without embedding facts from one cluster into
+another.
 
 ## Repository Setup
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<owner>/dot.git $HOME/dot
+git clone https://github.com/mseok/dot.git $HOME/dot
 ```
 
 ### 2. Shell Configuration
@@ -216,8 +325,12 @@ ln -s $HOME/dot/config/git/.gitconfig $HOME/.gitconfig
 # Starship prompt
 ln -s $HOME/dot/config/starship/starship.toml $HOME/.config/starship.toml
 
-# Yazi file manager
-ln -s $HOME/dot/config/yazi $HOME/.config/yazi
+# Yazi file manager configuration files
+mkdir -p ~/.config/yazi
+ln -s $HOME/dot/config/yazi/yazi.toml ~/.config/yazi/yazi.toml
+ln -s $HOME/dot/config/yazi/keymap.toml ~/.config/yazi/keymap.toml
+ln -s $HOME/dot/config/yazi/package.toml ~/.config/yazi/package.toml
+# Keep mutable plugin checkouts in ~/.config/yazi/plugins, outside Git.
 
 # WezTerm terminal
 ln -s $HOME/dot/config/wezterm $HOME/.config/wezterm
@@ -280,6 +393,9 @@ Most modern CLI tools automatically check `~/.config/<tool-name>/` for configura
 
 ```
 dot/
+├── Brewfile              # macOS desired package state
+├── bootstrap.sh          # clone-then-install entrypoint
+├── install.sh            # platform dispatcher
 ├── config/              # All tool configurations
 │   ├── nvim/           # Neovim (XDG)
 │   ├── tmux/           # Tmux
@@ -291,9 +407,13 @@ dot/
 │   ├── yazi/           # Yazi file manager (XDG)
 │   ├── aerospace/      # Aerospace WM (macOS)
 │   ├── sketchybar/     # SketchyBar (macOS)
-│   └── vscode/         # VS Code settings
+│   ├── vscode/         # VS Code settings
+│   └── tools/          # Linux/Pixi package manifest
 └── bin/                # Utility scripts
-    ├── initialize_ubuntu.sh     # Ubuntu bootstrap
+    ├── initialize_ubuntu.sh     # Linux/HPC bootstrap
+    ├── setup_macos.sh            # macOS bootstrap
+    ├── install_codex.sh          # Codex base/rules/skills installer
+    ├── update_environment.sh     # safe update/check entrypoint
     ├── tmux-*.sh               # Tmux utilities
     └── utilities.sh            # Cross-platform helpers
 ```
@@ -332,6 +452,12 @@ exec $SHELL -l
 
 # Or manually source
 source ~/.zshrc  # or ~/.bashrc
+```
+
+Then inspect the managed environment:
+
+```bash
+$HOME/dot/bin/update_environment.sh --check
 ```
 
 #### Neovim plugins not loading

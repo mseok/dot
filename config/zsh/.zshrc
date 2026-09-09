@@ -1,3 +1,5 @@
+export DOTFILES_HOME="${DOTFILES_HOME:-$HOME/dot}"
+
 if [[ -x /opt/homebrew/bin/brew ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [[ -x /usr/local/bin/brew ]]; then
@@ -72,8 +74,8 @@ alias glog="git log --graph --abbrev-commit --pretty=oneline"
 
 alias grep="grep --color=auto"
 
-zstyle ':completion:*:*:git:*' script $HOME/dot/completion/git-completion.bash
-source $HOME/dot/completion/git-prompt.sh
+zstyle ':completion:*:*:git:*' script "$DOTFILES_HOME/completion/git-completion.bash"
+source "$DOTFILES_HOME/completion/git-prompt.sh"
 fpath=(~/.zsh $fpath)
 export GIT_PS1_SHOWDIRTYSTATE=1
 
@@ -81,17 +83,17 @@ export GIT_PS1_SHOWDIRTYSTATE=1
 if command -v tmux &> /dev/null
 then
     tmux set-environment -g _HOME $_HOME &> /dev/null
-    tmux source $_HOME/dot/config/tmux/.tmux.conf &> /dev/null
+    tmux source "$DOTFILES_HOME/config/tmux/.tmux.conf" &> /dev/null
 fi
 
 bindkey "^[[H" beginning-of-line
 bindkey "^[[F" end-of-line
 
 # slurm alias
-source $HOME/dot/bin/slurm-commands.sh
-source $HOME/dot/bin/utilities.sh
+source "$DOTFILES_HOME/bin/slurm-commands.sh"
+source "$DOTFILES_HOME/bin/utilities.sh"
 
-export PATH=$HOME/dot/bin:$PATH
+export PATH="$DOTFILES_HOME/bin:$PATH"
 
 if [[ -o interactive ]] && [[ -t 0 ]] && command -v codex >/dev/null 2>&1; then
     eval "$(codex completion zsh)"
@@ -173,7 +175,7 @@ if [[ -o interactive && -t 1 ]]; then
     fi
 fi
 
-if [[ -o interactive && -t 0 && -n "${TMUX:-}" && -x "$HOME/dot/bin/tmux-time-theme.sh" ]]; then
-    "$HOME/dot/bin/tmux-time-theme.sh" >/dev/null 2>&1
-    tmux run-shell -b "$HOME/dot/bin/tmux-time-theme.sh --watch" >/dev/null 2>&1
+if [[ -o interactive && -t 0 && -n "${TMUX:-}" && -x "$DOTFILES_HOME/bin/tmux-time-theme.sh" ]]; then
+    "$DOTFILES_HOME/bin/tmux-time-theme.sh" >/dev/null 2>&1
+    tmux run-shell -b "$DOTFILES_HOME/bin/tmux-time-theme.sh --watch" >/dev/null 2>&1
 fi

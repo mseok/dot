@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 
-export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+if command -v brew >/dev/null 2>&1; then
+  HOMEBREW_PREFIX="$(brew --prefix 2>/dev/null || printf '%s' /opt/homebrew)"
+else
+  HOMEBREW_PREFIX="/opt/homebrew"
+fi
+export PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 HELPER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${CONFIG_DIR:-${HELPER_DIR%/plugins}}"
 PLUGIN_DIR="${PLUGIN_DIR:-$HELPER_DIR}"
-SKETCHYBAR_BIN="${SKETCHYBAR_BIN:-/opt/homebrew/bin/sketchybar}"
+SKETCHYBAR_BIN="${SKETCHYBAR_BIN:-$HOMEBREW_PREFIX/bin/sketchybar}"
 
-if [ -x /opt/homebrew/bin/aerospace ]; then
-  AEROSPACE_BIN="${AEROSPACE_BIN:-/opt/homebrew/bin/aerospace}"
+if [ -x "$HOMEBREW_PREFIX/bin/aerospace" ]; then
+  AEROSPACE_BIN="${AEROSPACE_BIN:-$HOMEBREW_PREFIX/bin/aerospace}"
 elif [ -x /Applications/AeroSpace.app/Contents/MacOS/AeroSpace ]; then
   AEROSPACE_BIN="${AEROSPACE_BIN:-/Applications/AeroSpace.app/Contents/MacOS/AeroSpace}"
 else

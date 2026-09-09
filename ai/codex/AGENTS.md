@@ -35,6 +35,12 @@
 - For durable or comparable experiments—not short checks or disposable debugging—run from committed source and use the `experiment-ledger` skill to record the hypothesis, core pseudocode, execution, artifacts, and result.
 - Use the current checkout by default. Before a durable experiment records `HEAD` as its source commit, require a clean index and tracked working tree and no execution-affecting untracked repository file. Preserve unrelated files; never alter them or create a worktree solely to satisfy cleanliness, and ask the user if unrelated tracked changes block the launch.
 
+## Codex host boundary
+
+- This file is the portable base policy. `$CODEX_HOME/config.toml`, authentication, MCP registrations, project trust, databases, and other host state are machine-local; do not copy or overwrite them as part of dotfile installation.
+- Keep cluster-specific facts in `$CODEX_HOME/AGENTS.override.md`. Preserve an existing override. Do not invent a new override from generic assumptions; create one only after the explicit Slurm topology audit described by the `init-slurm-environment` skill.
+- Install repository skills individually below `$CODEX_HOME/skills/` so Codex-managed system skills remain host-local and are not written into the source checkout.
+
 ## Obsidian main
 
 - The iCloud Obsidian vault is human-owned. Agents never edit Vault files or a remote mirror directly; use the host-local `obsidian_main` MCP bridge.

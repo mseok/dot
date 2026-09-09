@@ -1,5 +1,7 @@
 # Preserve the terminal-provided TERM. Only repair an absent/dumb TERM in an
 # interactive shell; Yazi uses TERM/TERM_PROGRAM to select image protocols.
+export DOTFILES_HOME="${DOTFILES_HOME:-$HOME/dot}"
+
 if [ -z "${TERM:-}" ] || [ "$TERM" = "dumb" ]; then
     if [ -n "${TMUX:-}" ]; then
         export TERM=tmux-256color
@@ -51,14 +53,14 @@ alias grep="grep --color=auto"
 alias Grep="grep"
 alias sshx="command ssh -X -Y"
 
-source $HOME/dot/completion/git-completion.bash
-source $HOME/dot/completion/git-prompt.sh
+source "$DOTFILES_HOME/completion/git-completion.bash"
+source "$DOTFILES_HOME/completion/git-prompt.sh"
 export GIT_PS1_SHOWDIRTYSTATE=1
 
 # slurm alias
-source $HOME/dot/bin/slurm-commands.sh
+source "$DOTFILES_HOME/bin/slurm-commands.sh"
 
-export PATH=$HOME/dot/bin:$PATH
+export PATH="$DOTFILES_HOME/bin:$PATH"
 
 set -o vi
 

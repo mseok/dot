@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Purpose: Bootstrap an Ubuntu user environment without sudo.
-# Safety: Idempotent, non-interactive, and installs only into user-owned paths.
+# Purpose: Bootstrap a Linux user environment without sudo.
+# Safety: Idempotent, user-owned paths, and safe to rerun for updates.
 
 set -euo pipefail
 
@@ -11,16 +11,25 @@ exists(){ command -v "$1" >/dev/null 2>&1; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+export DOTFILES_HOME="${DOTFILES_HOME:-$REPO_ROOT}"
 
 LOCAL_BIN="${LOCAL_BIN:-$HOME/.local/bin}"
 LOCAL_OPT="${LOCAL_OPT:-$HOME/.local/opt}"
 LOCAL_SHARE="${LOCAL_SHARE:-$HOME/.local/share}"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dot-bootstrap"
 NVM_DIR="${NVM_DIR:-$LOCAL_SHARE/nvm}"
-PIXI_HOME="${PIXI_HOME:-$LOCAL_OPT/pixi}"
+PIXI_HOME="${PIXI_HOME:-$HOME/.pixi}"
 PIXI_ENVIRONMENT="${PIXI_ENVIRONMENT:-dot-terminal}"
+PIXI_MANIFEST="$REPO_ROOT/config/tools/pixi-terminal-packages.txt"
+DOT_BOOTSTRAP_UPDATE="${DOT_BOOTSTRAP_UPDATE:-0}"
 
 mkdir -p "$LOCAL_BIN" "$LOCAL_OPT" "$LOCAL_SHARE" "$CACHE_DIR" "$NVM_DIR"
+
+if command -v git >/dev/null 2>&1; then
+  HAVE_SYSTEM_GIT=1
+else
+  HAVE_SYSTEM_GIT=0
+fi
 
 NVM_VERSION="${NVM_VERSION:-v0.40.1}"
 FZF_VERSION="${FZF_VERSION:-0.74.1}"
@@ -37,7 +46,7 @@ mkdir -p "$LOCAL_BIN" "$LOCAL_OPT" "$LOCAL_SHARE" "$CACHE_DIR" "$HOME/.config"
 require_tools() {
   local missing=()
   local tool
-  for tool in bash tar uname chmod mktemp find awk readlink cp mv rm; do
+  for tool in bash tar uname chmod mktemp find awk sed readlink cp mv rm; do
     exists "$tool" || missing+=("$tool")
   done
 
@@ -52,15 +61,68 @@ require_tools() {
   fi
 }
 
+latest_github_version() {
+  local repository="$1"
+  local payload tag
+
+  if exists curl; then
+    payload="$(curl -fsSL -H 'Accept: application/vnd.github+json' \
+      "https://api.github.com/repos/$repository/releases/latest")" || return 0
+  elif exists wget; then
+    payload="$(wget -qO- --header='Accept: application/vnd.github+json' \
+      "https://api.github.com/repos/$repository/releases/latest")" || return 0
+  else
+    return 0
+  fi
+
+  tag="$(printf '%s\n' "$payload" |
+    awk -F '"' '/"tag_name"[[:space:]]*:/ { print $4; exit }')"
+  tag="$(printf '%s' "$tag" | sed 's/^v//')"
+  [[ -n "$tag" ]] && printf '%s\n' "$tag"
+}
+
+refresh_fallback_versions() {
+  if [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
+    return 0
+  fi
+
+  local latest refreshed=0
+  latest="$(latest_github_version BurntSushi/ripgrep)"
+  if [[ -n "$latest" ]]; then RIPGREP_VERSION="$latest"; refreshed=1; fi
+  latest="$(latest_github_version sharkdp/fd)"
+  if [[ -n "$latest" ]]; then FD_VERSION="$latest"; refreshed=1; fi
+  latest="$(latest_github_version junegunn/fzf)"
+  if [[ -n "$latest" ]]; then FZF_VERSION="$latest"; refreshed=1; fi
+  latest="$(latest_github_version tmux/tmux-builds)"
+  if [[ -n "$latest" ]]; then TMUX_VERSION="$latest"; refreshed=1; fi
+  latest="$(latest_github_version cli/cli)"
+  if [[ -n "$latest" ]]; then GH_VERSION="$latest"; refreshed=1; fi
+
+  if [[ "$refreshed" -eq 1 ]]; then
+    log "Refreshed fallback release versions from GitHub."
+  else
+    warn "Could not refresh fallback release versions; using configured defaults."
+  fi
+}
+
 download_to() {
   local url="$1" dest="$2"
+  local tmp="${dest}.tmp.$$"
   mkdir -p "$(dirname "$dest")"
 
   if exists curl; then
-    curl -fsSL "$url" -o "$dest"
+    if ! curl -fsSL "$url" -o "$tmp"; then
+      rm -f "$tmp"
+      return 1
+    fi
   else
-    wget -qO "$dest" "$url"
+    if ! wget -qO "$tmp" "$url"; then
+      rm -f "$tmp"
+      return 1
+    fi
   fi
+
+  mv -f "$tmp" "$dest"
 }
 
 backup_path() {
@@ -136,6 +198,7 @@ case ":\$PATH:" in
   *) export PATH="${LOCAL_BIN}:\$PATH" ;;
 esac
 
+export DOTFILES_HOME="$REPO_ROOT"
 export NVM_DIR="$NVM_DIR"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 [ -f "${LOCAL_OPT}/fzf/shell/completion.bash" ] && source "${LOCAL_OPT}/fzf/shell/completion.bash"
@@ -150,6 +213,7 @@ case ":\$PATH:" in
   *) export PATH="${LOCAL_BIN}:\$PATH" ;;
 esac
 
+export DOTFILES_HOME="$REPO_ROOT"
 export NVM_DIR="$NVM_DIR"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 [ -f "${LOCAL_OPT}/fzf/shell/completion.zsh" ] && source "${LOCAL_OPT}/fzf/shell/completion.zsh"
@@ -173,7 +237,7 @@ configure_shell_rcs() {
 warn_if_repo_not_in_home_dot() {
   if [[ "$REPO_ROOT" != "$HOME/dot" ]]; then
     warn "This dotfiles repo is currently at $REPO_ROOT"
-    warn "Some sourced configs still assume the canonical location is $HOME/dot"
+    warn "DOTFILES_HOME will be exported so shell integrations use this path"
   fi
 }
 
@@ -187,7 +251,12 @@ load_nvm() {
 
 install_uv() {
   if exists uv; then
-    log "uv already available: $(uv --version)"
+    if [[ "$DOT_BOOTSTRAP_UPDATE" == "1" ]]; then
+      log "Updating uv..."
+      uv self update || warn "uv self-update failed; keeping the current uv."
+    else
+      log "uv already available: $(uv --version)"
+    fi
     return 0
   fi
 
@@ -214,13 +283,24 @@ install_nvm_and_node() {
     log "nvm already installed."
   fi
 
-  if [[ $has_node -eq 1 ]]; then
+  if [[ $has_node -eq 1 && "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "Node.js already available: $(node -v)"
     return 0
   fi
 
   load_nvm
+  if [[ "$DOT_BOOTSTRAP_UPDATE" == "1" && $has_nvm -eq 1 ]] && type nvm >/dev/null 2>&1; then
+    log "Updating Node.js LTS via nvm..."
+    nvm install --lts
+    nvm alias default 'lts/*'
+    return 0
+  fi
+
   if [[ $has_nvm -eq 0 ]] || ! type nvm >/dev/null 2>&1; then
+    if [[ $has_node -eq 1 ]]; then
+      log "System Node.js is present; leaving it unchanged because nvm is unavailable."
+      return 0
+    fi
     error "nvm is unavailable, so Node.js LTS cannot be installed automatically."
     exit 1
   fi
@@ -230,10 +310,51 @@ install_nvm_and_node() {
   nvm alias default 'lts/*'
 }
 
+install_pixi() {
+  if [[ "${DOT_BOOTSTRAP_SKIP_PIXI:-0}" == "1" ]]; then
+    log "Skipping Pixi installation (DOT_BOOTSTRAP_SKIP_PIXI=1)."
+    return 0
+  fi
+
+  local pixi_bin="$PIXI_HOME/bin/pixi"
+  if [[ -x "$pixi_bin" ]]; then
+    ln -sfn "$pixi_bin" "$LOCAL_BIN/pixi"
+    # Keep LOCAL_BIN as the stable public PATH surface. Individual tools are
+    # mirrored below, so Pixi's private bin directory need not override a
+    # cluster-provided Git or other system command.
+    export PATH="$LOCAL_BIN:$PATH"
+    if [[ "$DOT_BOOTSTRAP_UPDATE" == "1" ]]; then
+      log "Updating Pixi..."
+      "$pixi_bin" self-update || warn "Pixi self-update failed; keeping the current Pixi."
+    else
+      log "Pixi already available: $("$pixi_bin" --version)"
+    fi
+    return 0
+  fi
+
+  if exists pixi; then
+    log "Using existing Pixi: $(command -v pixi)"
+    return 0
+  fi
+
+  local installer="$CACHE_DIR/pixi-install.sh"
+  log "Installing Pixi into $PIXI_HOME..."
+  download_to "https://pixi.sh/install.sh" "$installer"
+  PIXI_HOME="$PIXI_HOME" PIXI_NO_PATH_UPDATE=1 sh "$installer"
+
+  if [[ ! -x "$pixi_bin" ]]; then
+    warn "Pixi installer did not create $pixi_bin; optional image tools will be skipped."
+    return 0
+  fi
+
+  ln -sfn "$pixi_bin" "$LOCAL_BIN/pixi"
+  export PATH="$LOCAL_BIN:$PATH"
+}
+
 install_fzf() {
   local dest="$LOCAL_OPT/fzf"
 
-  if exists fzf; then
+  if exists fzf && [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "fzf already available: $(fzf --version | head -n1)"
     return 0
   fi
@@ -294,7 +415,7 @@ install_fzf() {
 install_binary_from_tarball() {
   local name="$1" url="$2" binary_name="$3"
   local archive="$CACHE_DIR/${name}.tar.gz"
-  local tmpdir binary_path
+  local tmpdir binary_path staged_binary
 
   tmpdir="$(mktemp -d)"
   download_to "$url" "$archive"
@@ -307,14 +428,18 @@ install_binary_from_tarball() {
     exit 1
   fi
 
-  cp "$binary_path" "$LOCAL_BIN/$binary_name"
-  chmod +x "$LOCAL_BIN/$binary_name"
+  # Replace the destination itself, rather than following a pre-existing
+  # symlink to some unrelated user file.
+  staged_binary="$LOCAL_BIN/.${binary_name}.tmp.$$"
+  cp "$binary_path" "$staged_binary"
+  chmod +x "$staged_binary"
+  mv -f "$staged_binary" "$LOCAL_BIN/$binary_name"
   rm -rf "$tmpdir"
   log "Installed $binary_name -> $LOCAL_BIN/$binary_name"
 }
 
 install_ripgrep() {
-  if exists rg; then
+  if exists rg && [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "ripgrep already available: $(rg --version | head -n1)"
     return 0
   fi
@@ -339,7 +464,7 @@ install_ripgrep() {
 }
 
 install_fd() {
-  if exists fd; then
+  if exists fd && [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "fd already available: $(fd --version | head -n1)"
     return 0
   fi
@@ -365,7 +490,7 @@ install_fd() {
 }
 
 install_starship() {
-  if exists starship; then
+  if exists starship && [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "starship already available: $(starship --version)"
     return 0
   fi
@@ -377,13 +502,13 @@ install_starship() {
 }
 
 install_tmux() {
-  if [[ -x "$LOCAL_BIN/tmux" ]]; then
+  if [[ -x "$LOCAL_BIN/tmux" && "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "User-local tmux already available: $($LOCAL_BIN/tmux -V)"
     return 0
   fi
 
   if exists tmux; then
-    if [[ "${DOT_BOOTSTRAP_FORCE_USER_TMUX:-0}" != "1" ]]; then
+    if [[ "${DOT_BOOTSTRAP_FORCE_USER_TMUX:-0}" != "1" && "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
       log "tmux already available: $(tmux -V)"
       return 0
     fi
@@ -410,7 +535,7 @@ install_tmux() {
 }
 
 install_gh() {
-  if exists gh; then
+  if exists gh && [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "gh already available: $(gh --version | head -n1)"
     return 0
   fi
@@ -435,7 +560,7 @@ install_gh() {
 }
 
 install_neovim() {
-  if exists nvim; then
+  if exists nvim && [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "Neovim already available: $(nvim --version | head -n1)"
     return 0
   fi
@@ -495,9 +620,20 @@ install_pixi_terminal_tools() {
     return 0
   fi
 
-  if ! exists pixi; then
+  if ! exists pixi && [[ ! -x "$PIXI_HOME/bin/pixi" ]]; then
     warn "pixi is unavailable; skipping optional Yazi/image tools."
     warn "Install pixi or set DOT_BOOTSTRAP_SKIP_PIXI=1, then rerun this script."
+    return 0
+  fi
+
+  local package_args
+  if [[ ! -f "$PIXI_MANIFEST" ]]; then
+    warn "Pixi package manifest is missing: $PIXI_MANIFEST"
+    return 0
+  fi
+  package_args="$(awk '!/^[[:space:]]*#/ && NF { printf "%s ", $1 }' "$PIXI_MANIFEST")"
+  if [[ -z "$package_args" ]]; then
+    warn "Pixi package manifest is empty: $PIXI_MANIFEST"
     return 0
   fi
 
@@ -505,15 +641,24 @@ install_pixi_terminal_tools() {
   if ! PIXI_HOME="$PIXI_HOME" pixi global install \
       --environment "$PIXI_ENVIRONMENT" \
       --no-progress \
-      yazi chafa imagemagick ffmpeg poppler resvg 7zip jq zoxide eza bat lazygit fzf; then
+      $package_args; then
     warn "Pixi terminal/image tools failed to install; core bootstrap will continue."
     return 0
+  fi
+
+  if [[ "$DOT_BOOTSTRAP_UPDATE" == "1" ]]; then
+    log "Updating the Pixi terminal environment..."
+    PIXI_HOME="$PIXI_HOME" pixi global update "$PIXI_ENVIRONMENT" \
+      || warn "Pixi global environment update failed; keeping installed packages."
   fi
 
   # Pixi exposes global applications from PIXI_HOME/bin. Mirror only the
   # user-facing executables into LOCAL_BIN so LOCAL_BIN remains the sole
   # PATH entry required by the shell bootstrap block.
-  for tool in yazi ya chafa magick convert ffmpeg pdftoppm pdftocairo resvg 7zz jq zoxide eza bat lazygit fzf; do
+  for tool in git yazi ya chafa magick convert ffmpeg pdftoppm pdftocairo resvg 7zz jq zoxide eza bat lazygit fzf; do
+    if [[ "$tool" == "git" && "$HAVE_SYSTEM_GIT" -eq 1 ]]; then
+      continue
+    fi
     if [[ -x "$PIXI_HOME/bin/$tool" ]]; then
       ln -sfn "$PIXI_HOME/bin/$tool" "$LOCAL_BIN/$tool"
     fi
@@ -522,7 +667,13 @@ install_pixi_terminal_tools() {
 
 install_optional_tmux_plugins() {
   if [[ -d "$HOME/.tmux/plugins/tpm/.git" ]]; then
-    log "TPM already installed."
+    if [[ "$DOT_BOOTSTRAP_UPDATE" == "1" ]]; then
+      log "Updating TPM..."
+      git -C "$HOME/.tmux/plugins/tpm" pull --ff-only \
+        || warn "Failed to update TPM; keeping the existing checkout."
+    else
+      log "TPM already installed."
+    fi
     return 0
   fi
 
@@ -553,12 +704,69 @@ install_color_profile() {
   tic -x -o "$HOME/.terminfo" "$REPO_ROOT/config/terminal/tmux-256color.src"
 }
 
+link_yazi_configs() {
+  local config_dir="$HOME/.config/yazi"
+
+  if [[ -L "$config_dir" ]]; then
+    local current_target staging
+    current_target="$(readlink "$config_dir")"
+    if [[ "$current_target" != "$REPO_ROOT/config/yazi" ]]; then
+      warn "Leaving unrelated Yazi config symlink untouched: $config_dir -> $current_target"
+      return 0
+    fi
+
+    # Older bootstrap versions linked the whole directory, causing `ya pkg`
+    # to write mutable plugin checkouts into the Git repository. Move those
+    # checkouts aside before replacing the directory symlink with file links.
+    staging="$HOME/.config/yazi.plugins.staging"
+    if [[ -e "$staging" ]]; then
+      backup_path "$staging"
+    fi
+    if [[ -d "$REPO_ROOT/config/yazi/plugins" ]]; then
+      mv "$REPO_ROOT/config/yazi/plugins" "$staging"
+    fi
+    rm -f "$config_dir"
+  elif [[ -e "$config_dir" && ! -d "$config_dir" ]]; then
+    backup_path "$config_dir"
+  fi
+
+  mkdir -p "$config_dir"
+  ensure_link "$REPO_ROOT/config/yazi/yazi.toml" "$config_dir/yazi.toml"
+  ensure_link "$REPO_ROOT/config/yazi/keymap.toml" "$config_dir/keymap.toml"
+  ensure_link "$REPO_ROOT/config/yazi/package.toml" "$config_dir/package.toml"
+
+  if [[ -d "$HOME/.config/yazi.plugins.staging" ]]; then
+    mv "$HOME/.config/yazi.plugins.staging" "$config_dir/plugins"
+  fi
+}
+
+install_yazi_plugins() {
+  if [[ "${DOT_BOOTSTRAP_SKIP_PLUGINS:-0}" == "1" ]]; then
+    log "Skipping Yazi plugins (DOT_BOOTSTRAP_SKIP_PLUGINS=1)."
+    return 0
+  fi
+  if ! exists ya; then
+    warn "ya is unavailable; skipping Yazi plugin installation."
+    return 0
+  fi
+  if [[ ! -f "$HOME/.config/yazi/package.toml" ]]; then
+    warn "Yazi package.toml is unavailable; skipping plugin installation."
+    return 0
+  fi
+
+  if [[ "${DOT_BOOTSTRAP_UPDATE_PLUGINS:-0}" == "1" ]]; then
+    log "Updating Yazi plugins..."
+    (cd "$HOME/.config/yazi" && ya pkg upgrade) || warn "Failed to upgrade Yazi plugins"
+  fi
+  (cd "$HOME/.config/yazi" && ya pkg install) || warn "Failed to install Yazi plugins"
+}
+
 link_dot_configs() {
   ensure_link "$REPO_ROOT/config/nvim" "$HOME/.config/nvim"
   ensure_link "$REPO_ROOT/config/tmux/.tmux.conf" "$HOME/.tmux.conf"
   ensure_link "$REPO_ROOT/config/starship/starship.toml" "$HOME/.config/starship.toml"
   ensure_link "$REPO_ROOT/config/git/.gitconfig" "$HOME/.gitconfig"
-  ensure_link "$REPO_ROOT/config/yazi" "$HOME/.config/yazi"
+  link_yazi_configs
 }
 
 install_global_npm_clis() {
@@ -583,12 +791,19 @@ install_global_npm_clis() {
     bin_name="${spec##*:}"
 
     if exists "$bin_name"; then
-      log "npm CLI already available: $bin_name"
-      continue
+      if [[ "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
+        log "npm CLI already available: $bin_name"
+        continue
+      fi
+      if ! npm list -g --depth=0 "$pkg" >/dev/null 2>&1; then
+        log "CLI already available outside npm; leaving it unchanged: $bin_name"
+        continue
+      fi
+      log "Updating npm CLI: $pkg"
+    else
+      log "Installing npm CLI: $pkg"
     fi
-
-    log "Installing npm CLI: $pkg"
-    npm install -g "$pkg" >/dev/null 2>&1 || warn "Failed to install $pkg"
+    npm install -g "${pkg}@latest" >/dev/null 2>&1 || warn "Failed to install/update $pkg"
   done
 }
 
@@ -596,12 +811,12 @@ post_instructions() {
   cat <<'EOF'
 
 ------------------------------------------------------------
-✅ User-local Ubuntu bootstrap complete.
+✅ User-local Linux bootstrap complete.
 
 Installed or configured:
 • Node.js LTS via nvm
-• uv, fzf, starship, ripgrep, fd, tmux, gh, Neovim
-• Optional Pixi terminal tools: Yazi, chafa, ImageMagick, ffmpeg, poppler,
+• uv, fzf, starship, ripgrep, fd, tmux, gh, Neovim, Codex CLI
+• Optional Pixi terminal tools: Git, Yazi, chafa, ImageMagick, ffmpeg, poppler,
   resvg, 7zip, jq, zoxide, eza, bat, lazygit
 • tmux plugin manager (TPM), if git was available
 • Symlinks:
@@ -609,7 +824,7 @@ Installed or configured:
     ~/.config/starship.toml -> <repo>/config/starship/starship.toml
     ~/.tmux.conf            -> <repo>/config/tmux/.tmux.conf
     ~/.gitconfig            -> <repo>/config/git/.gitconfig
-    ~/.config/yazi          -> <repo>/config/yazi
+    ~/.config/yazi/*.toml   -> <repo>/config/yazi/*.toml
 • Shell bootstrap blocks were added to ~/.bashrc and ~/.zshrc
 
 Notes:
@@ -642,11 +857,16 @@ EOF
 }
 
 main() {
-  log "Starting Ubuntu bootstrap without sudo..."
+  log "Starting Linux bootstrap without sudo..."
   log "Using repository: $REPO_ROOT"
 
   require_tools
+  refresh_fallback_versions
   warn_if_repo_not_in_home_dot
+  install_pixi
+  # Install Pixi's user-local tool set early. In particular, this can provide
+  # Git on a truly minimal Linux image before TPM or any later Git operation.
+  install_pixi_terminal_tools
   install_uv
   install_nvm_and_node
   install_fzf
@@ -656,10 +876,10 @@ main() {
   install_tmux
   install_gh
   install_neovim
-  install_pixi_terminal_tools
   install_color_profile
   install_optional_tmux_plugins
   link_dot_configs
+  install_yazi_plugins
   if [[ "${DOT_BOOTSTRAP_SKIP_SHELL_RC:-0}" == "1" ]]; then
     log "Skipping shell rc changes (DOT_BOOTSTRAP_SKIP_SHELL_RC=1)."
   else

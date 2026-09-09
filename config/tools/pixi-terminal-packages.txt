@@ -1,0 +1,17 @@
+# User-local, cross-platform tools used by Yazi and the terminal workflow.
+# Keep one conda-forge package name per line. Versions are intentionally not
+# pinned here; `pixi global update dot-terminal` is the update mechanism.
+git
+yazi
+chafa
+imagemagick
+ffmpeg
+poppler
+resvg
+7zip
+jq
+zoxide
+eza
+bat
+lazygit
+fzf
