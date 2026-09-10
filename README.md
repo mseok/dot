@@ -257,8 +257,9 @@ with an older snapshot. Historical recovery cannot recover never-committed
 files from another machine. Shallow histories may need deepening first.
 
 This creates a **local** Git repository, not a GitHub repository. For another
-machine to receive subsequent changes or formerly untracked skills, clone your
-published agent-skills repository to the destination before running migration.
+machine to receive subsequent changes or formerly untracked skills, clone
+`https://github.com/mseok/agent-skills.git` to `~/agent-skills` before running
+migration.
 No remote URL, credentials, or network push is inferred by the installer.
 
 The installer does not copy `$CODEX_HOME/config.toml`, authentication, MCP
