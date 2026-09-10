@@ -127,75 +127,8 @@ ensure_file_link() {
   log "Linked: $dst -> $src"
 }
 
-migrate_legacy_skill_root() {
-  local skills_dst="$1" skills_src="$2" system_src staging
-
-  # Older versions linked the complete ~/.codex/skills directory into the
-  # checkout. Preserve any app-managed .system skills in CODEX_HOME before
-  # replacing that root link. The source is intentionally left in place so a
-  # failed cross-filesystem copy cannot destroy the existing installation.
-  system_src="$skills_src/.system"
-  staging=""
-  if [[ -d "$system_src" ]]; then
-    staging="$CODEX_HOME/.dotfiles-codex-system.$$"
-    if [[ -e "$staging" || -L "$staging" ]]; then
-      backup_path "$staging"
-    fi
-    cp -R "$system_src" "$staging"
-  fi
-
-  rm -f "$skills_dst"
-  mkdir -p "$skills_dst"
-
-  if [[ -n "$staging" ]]; then
-    mv "$staging" "$skills_dst/.system"
-    log "Preserved Codex-managed system skills under $skills_dst/.system"
-  fi
-}
-
 install_skills() {
-  local skills_src="$CODEX_SOURCE/skills" skills_dst="$CODEX_HOME/skills"
-  local skill_src skill_name skill_dst
-
-  if [[ ! -d "$skills_src" ]]; then
-    warn "Codex skills source directory is missing: $skills_src"
-    return 0
-  fi
-
-  if [[ -L "$skills_dst" ]]; then
-    if same_path "$skills_dst" "$skills_src"; then
-      migrate_legacy_skill_root "$skills_dst" "$skills_src"
-    else
-      warn "Leaving unrelated Codex skills symlink untouched: $skills_dst -> $(readlink "$skills_dst")"
-      return 0
-    fi
-  elif [[ -e "$skills_dst" && ! -d "$skills_dst" ]]; then
-    backup_path "$skills_dst"
-    mkdir -p "$skills_dst"
-  else
-    mkdir -p "$skills_dst"
-  fi
-
-  while IFS= read -r -d '' skill_src; do
-    skill_name="${skill_src##*/}"
-    [[ "$skill_name" == ".system" ]] && continue
-    skill_dst="$skills_dst/$skill_name"
-
-    if [[ -L "$skill_dst" ]]; then
-      if same_path "$skill_dst" "$skill_src"; then
-        continue
-      fi
-      warn "Leaving unrelated Codex skill symlink untouched: $skill_dst -> $(readlink "$skill_dst")"
-      continue
-    fi
-    if [[ -e "$skill_dst" ]]; then
-      warn "Leaving existing Codex skill directory untouched: $skill_dst"
-      continue
-    fi
-
-    ln -s "$skill_src" "$skill_dst"
-    log "Linked Codex skill: $skill_dst -> $skill_src"
-  done < <(find "$skills_src" -mindepth 1 -maxdepth 1 -type d -print0)
+  bash "$DOT_HOME/bin/migrate_agent_skills.sh" --codex-home "$CODEX_HOME"
 }
 
 install_override() {

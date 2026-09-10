@@ -17,3 +17,7 @@ __pycache__/
 *.key
 bin/rsync-poll.sh
 /*.src
+
+# Host-local compatibility links; skill sources live in agent-skills.
+/ai/codex/skills/
+/ai/claude/skills/

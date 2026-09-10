@@ -229,14 +229,37 @@ installs or refreshes:
 
 - `$CODEX_HOME/AGENTS.md` as a link to `ai/codex/AGENTS.md`;
 - `$CODEX_HOME/rules/hpc.rules` as a link to the repository policy; and
-- each repository-owned skill as an individual link below
-  `$CODEX_HOME/skills/`.
+- personal Codex and Claude skills from the separate `~/agent-skills` Git
+  repository, using individual links under their user skill directories.
 
-Individual skill links are intentional. Codex-managed system skills stay in
-`$CODEX_HOME/skills/.system` rather than turning the source checkout into an
-application-data directory. A legacy whole-directory `~/.codex/skills` link is
-migrated automatically on the next install, with existing `.system` skills
-preserved.
+### Migrate skills out of an existing dot checkout
+
+```bash
+~/dot/bin/migrate_agent_skills.sh --dry-run
+~/dot/bin/migrate_agent_skills.sh
+```
+
+This extracts `ai/codex/skills` and `ai/claude/skills` into
+`~/agent-skills/skills/{codex,claude}`, including uncommitted personal skills.
+Set `AGENT_SKILLS_HOME` or pass `--destination PATH` for a different location.
+The normal Codex installer invokes the same idempotent migration.
+
+The migration verifies copied file contents and executable bits, preserves
+originals under `~/.local/state/agent-skills-migration/`, and leaves ignored
+compatibility links in the old dot paths for active sessions. `.system` stays
+host-local, and unrelated installed plugins/skills are preserved. A name/content
+conflict stops migration before replacement; reconcile it explicitly and rerun.
+
+After updating a checkout where the old tracked skill files have disappeared,
+the script can recover the most recent containing tree from local Git history.
+An existing nonempty agent-skills scope is authoritative and is not replaced
+with an older snapshot. Historical recovery cannot recover never-committed
+files from another machine. Shallow histories may need deepening first.
+
+This creates a **local** Git repository, not a GitHub repository. For another
+machine to receive subsequent changes or formerly untracked skills, clone your
+published agent-skills repository to the destination before running migration.
+No remote URL, credentials, or network push is inferred by the installer.
 
 The installer does not copy `$CODEX_HOME/config.toml`, authentication, MCP
 registrations, project trust, databases, or other host-local state. Those files
