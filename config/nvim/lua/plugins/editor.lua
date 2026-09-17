@@ -64,6 +64,14 @@ if has_new_treesitter then
   -- DOT_TS_AUTO_INSTALL=0 on a cluster where parser downloads are disallowed.
   if vim.env.DOT_TS_AUTO_INSTALL ~= "0" then
     vim.schedule(function()
+      if vim.fn.executable("tree-sitter") == 0 then
+        vim.notify(
+          "Tree-sitter CLI is not on PATH; parser compile is skipped. Link pixi's tree-sitter into ~/.local/bin or rerun ./install.sh.",
+          vim.log.levels.WARN
+        )
+        return
+      end
+
       local installed = {}
       for _, language in ipairs(treesitter.get_installed("parsers")) do
         installed[language] = true

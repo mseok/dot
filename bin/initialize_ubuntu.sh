@@ -501,6 +501,14 @@ install_starship() {
   sh "$installer" -y -b "$LOCAL_BIN"
 }
 
+tmux_version_at_least() {
+  local need="$1"
+  local have
+  have="$(tmux -V 2>/dev/null | awk '{ print $2 }' | sed 's/[^0-9.].*$//')"
+  [[ -n "$have" ]] || return 1
+  [[ "$(printf '%s\n' "$need" "$have" | sort -V | head -n1)" == "$need" ]]
+}
+
 install_tmux() {
   if [[ -x "$LOCAL_BIN/tmux" && "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
     log "User-local tmux already available: $($LOCAL_BIN/tmux -V)"
@@ -508,11 +516,16 @@ install_tmux() {
   fi
 
   if exists tmux; then
-    if [[ "${DOT_BOOTSTRAP_FORCE_USER_TMUX:-0}" != "1" && "$DOT_BOOTSTRAP_UPDATE" != "1" ]]; then
+    if [[ "${DOT_BOOTSTRAP_FORCE_USER_TMUX:-0}" != "1" && "$DOT_BOOTSTRAP_UPDATE" != "1" ]] \
+        && tmux_version_at_least 3.3; then
       log "tmux already available: $(tmux -V)"
       return 0
     fi
-    log "Forcing user-local tmux despite the system tmux: ${TMUX_VERSION}"
+    if tmux_version_at_least 3.3; then
+      log "Forcing user-local tmux despite the system tmux: ${TMUX_VERSION}"
+    else
+      log "System tmux $(tmux -V) is older than 3.3; installing user-local tmux ${TMUX_VERSION}"
+    fi
   fi
 
   local asset url
@@ -654,8 +667,9 @@ install_pixi_terminal_tools() {
 
   # Pixi exposes global applications from PIXI_HOME/bin. Mirror only the
   # user-facing executables into LOCAL_BIN so LOCAL_BIN remains the sole
-  # PATH entry required by the shell bootstrap block.
-  for tool in git yazi ya chafa magick convert ffmpeg pdftoppm pdftocairo resvg 7zz jq zoxide eza bat lazygit fzf; do
+  # PATH entry required by the shell bootstrap block. Keep this list in
+  # sync with config/tools/pixi-terminal-packages.txt.
+  for tool in git yazi ya chafa magick convert ffmpeg pdftoppm pdftocairo resvg 7zz jq zoxide eza bat lazygit fzf tree-sitter; do
     if [[ "$tool" == "git" && "$HAVE_SYSTEM_GIT" -eq 1 ]]; then
       continue
     fi
