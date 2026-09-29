@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Read or replace a compact task handoff without copying conversation history."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+
+FIELDS = {
+    'goal', 'scope', 'decisions', 'sources', 'active_operations',
+    'completed_checks', 'pending_questions', 'next_action', 'status',
+}
+
+def sha(value):
+    return hashlib.sha256(value).hexdigest()
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['read', 'write'])
+    parser.add_argument('path', type=Path)
+    parser.add_argument('--expected-sha', help='Required when replacing an existing handoff')
+    args = parser.parse_args()
+    target = args.path.expanduser()
+    before = target.read_bytes() if target.exists() else None
+    if args.action == 'read':
+        if before is None: parser.error('No handoff at that path')
+        print(json.dumps({'path':str(target.resolve()), 'sha256':sha(before), 'state':json.loads(before)}, ensure_ascii=False, indent=2))
+        return
+    if before is not None and args.expected_sha != sha(before):
+        parser.error('Handoff changed or expected SHA is missing; read the current handoff first')
+    if before is None and args.expected_sha:
+        parser.error('Expected handoff is missing; review the destination')
+    content = json.load(sys.stdin)
+    if not isinstance(content, dict) or set(content)-FIELDS:
+        parser.error('Use only the documented current-state fields; keep logs and history at their sources')
+    if not content.get('goal') or not content.get('next_action'):
+        parser.error('A handoff needs goal and next_action')
+    content = {'version':1, 'updated_at':datetime.now(timezone.utc).isoformat(), **content}
+    encoded = (json.dumps(content, ensure_ascii=False, indent=2)+'\n').encode()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix='.'+target.name+'-', dir=target.parent)
+    try:
+        with os.fdopen(fd, 'wb') as stream: stream.write(encoded)
+        current = target.read_bytes() if target.exists() else None
+        if current != before: parser.error('Concurrent edit detected; reread before updating')
+        os.replace(temporary, target)
+    finally:
+        if os.path.exists(temporary): os.unlink(temporary)
+    print(json.dumps({'path':str(target.resolve()), 'sha256':sha(encoded)}))
+
+if __name__ == '__main__':
+    main()

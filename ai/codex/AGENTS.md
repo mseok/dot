@@ -1,50 +1,83 @@
-# Working principles
+<!-- BEGIN obsidian-research (managed by obsidian-main/scripts/deploy-research.py) -->
+## Research continuity
 
-- Store analysis work, experiment outputs, reports, visualizations, logs, checkpoints, and other generated artifacts outside the source checkout in a repository-specific artifact root. Keep only production code and lightweight, version-controlled reproducibility metadata in the source repository.
-- Before writing to a repository-specific artifact root, add that exact path to `$CODEX_HOME/config.toml` under `sandbox_workspace_write.writable_roots`. On the shared-storage Slurm profile, use the sibling `artifacts/<repository-name>` directory next to `$CODEX_HOME` unless the project defines a different artifact root.
-- Do not create analysis-result directories, generated reports, experiment logs, or transient worktrees inside a source checkout. Existing active jobs may retain a compatibility symlink into the external artifact root until they complete.
-- Keep execution and debugging minimal. Do not run smoke tests or validation without a concrete reason.
-- In an existing codebase, follow its error-handling and validation style. Do not add speculative `try`/`except`, assertions, or defensive checks.
+For research work, use `research-workflow` at meaningful hypotheses, changes,
+results or decisions; use `experiment-ledger` for comparable terminal results.
+Read the relevant skill and its shared recording policy once, then reuse it.
+Keep one question report across hosts, preserve user corrections and distinguish
+proposals from adopted decisions. Existing authorization covers ordinary
+milestone recording. Routine checks do not earn notes. Vault access uses only
+host-local `obsidian_main`; never direct files or vault Git. Perform the end-turn
+omission check only with active hook-provided session/turn IDs.
+<!-- END obsidian-research -->
 
-## Python and CUDA environments
+# Shared working agreement
 
-- CUDA 12.8 (`cu128`) is the workspace invariant. Never install, resolve, or recreate an environment with CUDA 13 (`cu13`) artifacts. When a dependency provides CUDA build variants, select `cu128`; if that is unavailable, stop and ask rather than falling back to `cu13`.
-- Do not delete or recreate a repository `.venv`, lockfile, or shared package cache as the first response to a Python or `uv` environment issue. First inspect the expected Python and `uv` versions, `pyproject.toml`, lockfile state, and the active interpreter.
-- Recreating a `.venv`, changing a lockfile, or deleting a shared package cache requires a diagnosed cause, exact targets, and explicit user approval.
-- For Ruff formatting and linting on the shared-storage Slurm profile, use the `appl/bin/ruff` executable next to `$CODEX_HOME` only. Do not use `uv run ruff` or a project-local Ruff executable. For routine tests, prefer an existing project venv executable such as `.venv/bin/python -m pytest` over `uv run`.
-- Treat a shared UV cache read-only or lock error as an environmental block, not a reason to request privileged execution. Use the shared Ruff binary for formatter/linter work and make at most one direct-project-venv fallback for a test; if it is unavailable, report the validation as unexecuted due to the cache lock and stop. Do not narrate or repeat cache-retry attempts.
-- Use a node-local `UV_CACHE_DIR` only for an explicitly approved environment repair, install, or sync; never create one merely to run routine formatting, linting, or a short test.
-- If an explicitly run validation command fails, do not present that validation as passed or omit the failure from the final report. State whether it is an environment issue, a pre-existing failure, or an unresolved regression.
+- The maintained source is `~/dot/ai/codex/AGENTS.md`. Keep each host's global `AGENTS.md` linked to its local checkout of this source. Configuration, credentials, MCP registrations and model choices remain host-local.
+- Preserve the latest agreed goal, permitted changes, existing structure and completion criterion across turns. Analysis and review permit reading and review artifacts; they do not by themselves authorize changing the target, launching experiments or publishing. Existing explicit authorization remains valid.
+- Ask whenever an unresolved ambiguity could change the intended result, scientific meaning, scope, cost or execution conditions. First use the available context to resolve factual gaps. Do not substitute your preference or interpret silence as agreement. Continue independent work while waiting.
+- A repeated failure is a reason to reassess the cause, not permission to switch methods. Do not impose a fixed retry count or blindly repeat an unchanged attempt. An equivalent low-impact diagnostic within the agreed scope is allowed; ask before changing the method's meaning, environment, resources, evaluation conditions or external effects. Honor a workflow's existing bounded retry contract.
+- Use the current handoff, manifest or index before searching raw history. Narrow to named paths and relevant sections, summarize long tool outputs and retain recovery locators. Avoid repeated full-history reads, broad filesystem scans and encoded media in text output.
+- Keep execution and debugging minimal. Run a check only to resolve a concrete uncertainty or satisfy a relevant existing requirement; stop after it passes unless new evidence warrants more. Do not add routine smoke runs, speculative defensive code or unrelated cleanup. Follow the codebase's existing style.
+- Retain active process and job identifiers; a tool timeout does not authorize a duplicate launch. Check the exact destination and user-visible result before reporting completion. Distinguish planned, submitted, running, evaluated and published states, and report checks that could not run.
+- Use the project's existing artifact location and permission scope. Do not automatically rewrite global sandbox settings for an ordinary output. Preserve unrelated files, environment state and running jobs.
+- Keep each project's runtime dependencies in its own environment; follow that project's Python, CUDA and framework versions. Reuse the existing environment, and create a separate one when an authorized new project needs it. Use host-shared installations for general development tools such as Ruff, while respecting project configuration. Do not resolve project dependencies or recreate its environment merely to format or lint; ask if the shared tool cannot satisfy a required version.
+- For recurring or long-running work, reuse an existing current handoff or manifest. If none is suitable, keep a compact current-state file in the task's artifact location with `~/dot/bin/codex-task-state`: goal, agreed boundaries, decisions, exact sources, active process/job IDs, completed checks, pending questions and next action. Update at material transitions, not every tool call. Store bulk logs and research evidence elsewhere. Automate stable repeated checks and call a model only for new judgments or exceptions.
 
-## Slurm escalation and monitoring
+## Scientific comparisons
 
-- Do not choose Slurm merely because it is available. For debugging, short tests, metadata inspection, and proxy measurements, use the current safe allocation or direct command when adequate; do not escalate them into full inference, a sweep, or a queued job without a concrete reason.
-- Before launching, cancelling, or replacing a Slurm job, restate the exact requested shape: nodes, GPUs per node, total GPUs, CPUs per task, partition, time limit, and array/chunk layout. Do not reinterpret “N GPU nodes” as “N GPUs”.
-- For an ordinary one-process-per-GPU workload, request GPU-first minimal resources: one task and four CPUs per GPU by default, with no node-wide memory reservation. Do not request `--exclusive`, 24 CPUs/GPU, 192 CPUs/node, or large `--mem` values unless the workload has an evidenced CPU, dataloader, preprocessing, or RAM requirement.
-- Make scheduler availability claims only from fresh, scoped scheduler evidence. Do not cancel or replace an existing job without the user's explicit authorization for the exact job ID.
-- During debugging or short tests, use waits or sleeps of 10 seconds or less. Use a longer bounded monitoring interval only when the user explicitly asks to monitor, wait, or babysit; prefer scheduler-aware polling over blind sleep.
-- Disable runtime compilation (for example, `torch.compile`) for debugging and short tests. Enable it for result-producing or benchmark runs when supported, and record the compilation mode; do not silently change it between compared runs.
+- Define the intended comparison factor first and match all other relevant conditions: cohort and splits, input/reference preparation, compute or sampling budget, seeds and candidate counts, selection rule, evaluator/version, metric, denominator and missingness policy. Derive membership from the current agreed manifest; do not hardcode a historical population.
+- Present a performance or causal comparison only on that matched basis. If conditions cannot be matched, explicitly separate the results as non-comparable descriptive evidence and ask how to harmonize them before making the comparison. Do not silently change protocols or launch additional computation to manufacture comparability.
+- Preserve source, checkpoint/run, metric direction, numerator/denominator and dependency unit. Separate observations, assumptions, proposals and adopted decisions. A different data source, aggregation or evaluator is not by itself model improvement.
+- For durable or comparable experiments, use committed source and `experiment-ledger`. Before recording HEAD as the source, require a clean index and tracked tree and no execution-affecting untracked repository file. Preserve unrelated work; ask if it blocks launch rather than altering it or creating a worktree solely for cleanliness.
 
-## Research and experiment work
+## Conditional procedures
 
-- Treat a request framed as analysis, comparison, diagnosis, or research as read-only unless the user also explicitly asks to implement, launch, or create an artifact.
-- Before claiming two runs are comparable, verify the checkpoint, commit, config, data split, batch size, world size, seed, and evaluation protocol. Label every mismatch before interpreting results.
-- In experimental reports, distinguish observed results from plans. State the numerator, denominator, coverage, remaining failures, and the exact evidence source.
-- For a proposed experiment, lead with the hypothesis, the smallest discriminating test, the matched baseline, the expected decision criterion, and the next escalation only if the result warrants it.
+- For research recording, follow the managed section above and the relevant research skill. Call `research_disposition` only when hook context supplies an active research session and turn; do not invent IDs or repeat a no-active-turn failure for administrative work.
 
-- For durable or comparable experiments—not short checks or disposable debugging—run from committed source and use the `experiment-ledger` skill to record the hypothesis, core pseudocode, execution, artifacts, and result.
-- Use the current checkout by default. Before a durable experiment records `HEAD` as its source commit, require a clean index and tracked working tree and no execution-affecting untracked repository file. Preserve unrelated files; never alter them or create a worktree solely to satisfy cleanliness, and ask the user if unrelated tracked changes block the launch.
+## Server work
 
-## Codex host boundary
+These rules apply to server execution, including SSH work started on a Mac.
+They are included here so loading AGENTS.md also loads the complete server policy.
+Read the target host's `~/.codex/host-context.md` when present for established
+topology and environment facts. Missing facts require a bounded check or
+clarification, not a full cluster audit.
 
-- This file is the portable base policy. `$CODEX_HOME/config.toml`, authentication, MCP registrations, project trust, databases, and other host state are machine-local; do not copy or overwrite them as part of dotfile installation.
-- Keep cluster-specific facts in `$CODEX_HOME/AGENTS.override.md`. Preserve an existing override. Do not invent a new override from generic assumptions; create one only after the explicit Slurm topology audit described by the `init-slurm-environment` skill.
-- Install repository skills individually below `$CODEX_HOME/skills/` so Codex-managed system skills remain host-local and are not written into the source checkout.
-
-## Obsidian main
-
-- The iCloud Obsidian vault is human-owned. Agents never edit Vault files or a remote mirror directly; use the host-local `obsidian_main` MCP bridge.
-- Search/read covers `Notes/` and `Inbox/Agents/`. New permanent agent records go only to `Inbox/Agents/<authenticated-host>/`; `Notes/` remains human-owned.
-- Upload approved files with `attachment_upload`, which streams raw HTTPS bytes. Never pass original attachment bytes or base64 through MCP JSON.
-- Use `record_create` only for a verified reusable outcome and `record_append` only for the same host's gateway-owned record. Remote records require the canonical project. There is no promotion, overwrite, delete, rename, move, or automatic merge tool.
-- Git is Mac mini backup-only. Do not use `un note`, `un push`, `codex_note_commit`, `obsidian_branch_publish.py`, or Git synchronization as a note-writing fallback.
+- Minimize CPU, GPU, memory and shared-storage load. On controller/login hosts,
+  use only short, bounded metadata reads. Put compute- or staging-heavy work in
+  the appropriate allocation. Direct compute-node work requires user/site
+  authorization and current allocation evidence.
+- Before launching, establish the purpose, relevant input subset, requested
+  nodes, GPUs per node, total GPUs, CPU/memory budget, concurrency, time limit,
+  output location and stop condition. Preserve the user's resource semantics;
+  do not turn a diagnosis into a sweep or invent a larger budget.
+- Request resources supported by the workload; do not reserve whole nodes,
+  excessive CPUs/RAM or exclusive access by habit. Bound process workers and
+  nested library threads to the allocation. Do not benchmark resource sizes
+  merely to choose a default unless that uncertainty matters to the task.
+- Use existing manifests and explicit paths. Do not recursively list, hash,
+  decompress or scan shared roots or archives to find one result. Expand a
+  scoped search only when the narrower lookup does not answer the question.
+- Reuse the established interpreter and tools. Do not repair a routine check
+  by recreating environments, changing lockfiles or clearing shared caches.
+  Diagnose the cause and ask before such changes. A known equivalent tool in
+  the existing environment may be used without changing the task's meaning.
+- Keep short debugging runs free of runtime compilation unless compilation is
+  the subject of the check. Preserve and record compilation mode in comparable
+  result-producing runs.
+- Use allocation-local staging when the workload benefits from it; first check
+  the actual mount and capacity. Cover repeated input/model reads, caches,
+  temporary files and final publication. Do not copy environments per node or
+  silently fall back to shared storage without a concrete reason.
+- For durable shared artifacts, follow the producing application's checked
+  close and atomic-publication contract, with one writer per artifact. Shared
+  visibility alone does not prove durable or coherent writes. Preserve the
+  host's recorded NFS constraints and existing failure/restart behavior.
+- Poll owned job IDs or retained process handles at a cadence appropriate to
+  expected duration and the user's request. Back off while unchanged; no fixed
+  short sleep loop by default. Submission is not completion: inspect terminal
+  state and the relevant result/evaluation receipt. Cancellation or replacement
+  must remain within the user's explicit authorization.
+- Keep generated results in the established artifact root. A source edit does
+  not update already-submitted jobs or frozen archives; report what was changed,
+  checked and actually deployed.

@@ -227,7 +227,8 @@ $HOME/dot/install.sh
 The installer also configures the portable part of Codex. On Linux/HPC it
 installs or refreshes:
 
-- `$CODEX_HOME/AGENTS.md` as a link to `ai/codex/AGENTS.md`;
+- `$CODEX_HOME/AGENTS.md` as a link to the common `ai/codex/AGENTS.md`, including
+  the complete policy for server execution;
 - `$CODEX_HOME/rules/hpc.rules` as a link to the repository policy; and
 - personal Codex and Claude skills from the separate `~/agent-skills` Git
   repository, using individual links under their user skill directories.
@@ -267,21 +268,23 @@ registrations, project trust, databases, or other host-local state. Those files
 contain machine-specific paths and permissions and should not be shared
 between macOS and an HPC login node.
 
-`AGENTS.override.md` is different from the portable base: it may contain
-cluster-specific storage and scheduler facts. Existing overrides are preserved.
-For a reviewed override that has already been generated or audited, install it
-explicitly:
+Use `~/dot/bin/install_codex.sh --guidance-only` to refresh guidance without
+changing rules or migrating skills. Server work additionally reads the target
+host's `~/.codex/host-context.md` for audited topology and environment facts.
+The server policy itself is included in `AGENTS.md`; no separate `SERVER.md`
+read is required. The installer removes only its obsolete managed server link.
 
-```bash
-$HOME/dot/bin/install_codex.sh \
-  --override-from /path/to/AGENTS.override.md
-```
+`AGENTS.override.md` replaces the common policy, so it is not used for additive
+host facts. After reviewing a legacy generated Slurm override, migrate it with
+`~/dot/bin/install_codex.sh --guidance-only --migrate-slurm-override`. The exact
+audited topology block is retained in `host-context.md` and the entire override
+is backed up. Unknown custom overrides and conflicting host facts require
+review; the installer does not silently discard them.
 
-On a new Slurm cluster, invoke the installed `init-slurm-environment` skill for
-the explicit topology audit before creating an override. The installer does
-not guess partitions, node capabilities, or `/home`/scratch paths. This keeps a
-fresh bare-Linux install useful without embedding facts from one cluster into
-another.
+On a new Slurm cluster, the `init-slurm-environment` skill's explicit full audit
+can populate `host-context.md`. It never copies the common policy into an
+override. Installation and guidance migration do not audit the live cluster.
+See [the Codex guidance guide](ai/codex/README.md) for source ownership and scope.
 
 ## Repository Setup
 
