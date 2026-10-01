@@ -6,7 +6,9 @@ results or decisions; use `experiment-ledger` for comparable terminal results.
 Read the relevant skill and its shared recording policy once, then reuse it.
 Keep one question report across hosts, preserve user corrections and distinguish
 proposals from adopted decisions. Existing authorization covers ordinary
-milestone recording. Routine checks do not earn notes. Vault access uses only
+milestone recording. Routine checks do not earn notes. Write records and judgment
+summaries in Korean or English only, in complete sentences with normal spacing;
+never use Japanese or Chinese characters to shorten text. Vault access uses only
 host-local `obsidian_main`; never direct files or vault Git. Perform the end-turn
 omission check only with active hook-provided session/turn IDs.
 <!-- END obsidian-research -->
