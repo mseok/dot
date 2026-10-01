@@ -13,7 +13,7 @@ omission check only with active hook-provided session/turn IDs.
 
 # Shared working agreement
 
-- The maintained source is `~/dot/ai/codex/AGENTS.md`. Keep each host's global `AGENTS.md` linked to its local checkout of this source. Configuration, credentials, MCP registrations and model choices remain host-local.
+- The maintained source is `~/dot/ai/codex/AGENTS.md`. Keep each host's global `AGENTS.md`, and Claude Code's global `CLAUDE.md`, linked to its local checkout of this source. Configuration, credentials, MCP registrations and model choices remain host-local.
 - Preserve the latest agreed goal, permitted changes, existing structure and completion criterion across turns. Analysis and review permit reading and review artifacts; they do not by themselves authorize changing the target, launching experiments or publishing. Existing explicit authorization remains valid.
 - Ask whenever an unresolved ambiguity could change the intended result, scientific meaning, scope, cost or execution conditions. First use the available context to resolve factual gaps. Do not substitute your preference or interpret silence as agreement. Continue independent work while waiting.
 - A repeated failure is a reason to reassess the cause, not permission to switch methods. Do not impose a fixed retry count or blindly repeat an unchanged attempt. An equivalent low-impact diagnostic within the agreed scope is allowed; ask before changing the method's meaning, environment, resources, evaluation conditions or external effects. Honor a workflow's existing bounded retry contract.

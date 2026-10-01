@@ -106,3 +106,10 @@ else
   fi
   bash "$DOT_HOME/bin/install_codex.sh" "${codex_args[@]}"
 fi
+
+# Claude mirrors the Codex guidance and skills, so it runs after Codex.
+if [[ "${DOT_SKIP_CLAUDE:-0}" == "1" ]]; then
+  printf '\033[1;33m[WARN]\033[0m Skipping repository-managed Claude files.\n'
+else
+  bash "$DOT_HOME/bin/install_claude.sh"
+fi

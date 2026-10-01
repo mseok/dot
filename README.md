@@ -286,6 +286,15 @@ can populate `host-context.md`. It never copies the common policy into an
 override. Installation and guidance migration do not audit the live cluster.
 See [the Codex guidance guide](ai/codex/README.md) for source ownership and scope.
 
+### Claude Code
+
+Claude Code shares the Codex guidance and skills. `~/dot/bin/install_claude.sh`
+links `~/.claude/CLAUDE.md` to the common `ai/codex/AGENTS.md` and mirrors the
+user skills installed below `~/.codex/skills` as individual links below
+`~/.claude/skills`. It runs after the Codex installer; set `DOT_SKIP_CLAUDE=1`
+to skip it. `settings.json`, credentials, MCP registrations and hooks stay
+host-local. See [the Claude guidance guide](ai/claude/README.md).
+
 ## Repository Setup
 
 ### 1. Clone the Repository
@@ -448,6 +457,7 @@ dot/
     ├── initialize_ubuntu.sh     # Linux/HPC bootstrap
     ├── setup_macos.sh            # macOS bootstrap
     ├── install_codex.sh          # Codex base/rules/skills installer
+    ├── install_claude.sh         # Claude guidance/skills aligned with Codex
     ├── update_environment.sh     # safe update/check entrypoint
     ├── tmux-*.sh               # Tmux utilities
     └── utilities.sh            # Cross-platform helpers
