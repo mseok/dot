@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Fail when changed Python lines break the anti-slop Ruff rules."""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+
+# A Python counterpart of dmmulroy/anti-slop: each rule rejects a judgment call
+# an agent tends to make badly. The set is taste, not a standard; edit it.
+RULES = [
+    # Swallowed or pointless error handling.
+    'BLE001', 'E722', 'S110', 'S112', 'TRY201', 'TRY203',
+    # Leftovers: dead code, placeholders, debugging.
+    'F401', 'F811', 'F841', 'ERA001', 'ARG001', 'B018', 'PIE790', 'PLR1711',
+    'FIX001', 'FIX002', 'FIX003', 'FIX004', 'T100',
+    # Discarded type evidence and blanket suppressions.
+    'ANN401', 'PGH003', 'PGH004',
+    # Dynamic access, hidden state and tangled structure.
+    'B006', 'B009', 'B010', 'PLC0415', 'PLW0603', 'C901',
+    # More code than the statement needs.
+    'RET504', 'RET505', 'RET506', 'RET507', 'RET508', 'SIM101', 'SIM102',
+    'SIM103', 'SIM110', 'SIM118', 'SIM401', 'PLR5501',
+    # Wasteful collection building.
+    'C4', 'PERF401', 'PERF402', 'PERF403', 'RUF005', 'RUF015',
+]
+EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+HUNK = re.compile(r'^@@ -\S+ \+(\d+)(?:,(\d+))? @@', re.MULTILINE)
+
+def git(root, *args):
+    return subprocess.run(['git', *args], cwd=root, check=True, capture_output=True, text=True).stdout
+
+def changed_lines(root, base, path):
+    """Return the changed line numbers of one file, or None when every line is new."""
+    if not git(root, 'ls-files', '--', path):
+        return None
+    diff = git(root, 'diff', '-U0', '--no-ext-diff', base, '--', path)
+    lines = set()
+    for start, count in HUNK.findall(diff):
+        lines.update(range(int(start), int(start) + int(count or 1)))
+    return lines
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('paths', nargs='*', help='Limit the check to these files or directories')
+    parser.add_argument('--base', default='HEAD', help='Compare the working tree with this commit (default: HEAD)')
+    args = parser.parse_args()
+    ruff = shutil.which('ruff') or str(Path.home() / '.local/bin/ruff')
+    top = subprocess.run(['git', 'rev-parse', '--show-toplevel'], capture_output=True, text=True)
+    if top.returncode: parser.error('Run inside a Git repository')
+    root = os.path.realpath(top.stdout.strip())
+    base = args.base
+    if subprocess.run(['git', 'rev-parse', '--verify', '--quiet', base + '^{commit}'], cwd=root, capture_output=True).returncode:
+        if base != 'HEAD': parser.error(f'Unknown base commit: {base}')
+        base = EMPTY_TREE
+    scope = [os.path.relpath(os.path.realpath(p), root) for p in args.paths] or ['.']
+    names = git(root, 'diff', '--name-only', '--diff-filter=ACMR', '-z', base, '--', *scope)
+    names += git(root, 'ls-files', '--others', '--exclude-standard', '-z', '--', *scope)
+    files = sorted({n for n in names.split('\0') if n.endswith('.py')})
+    if not files:
+        print('anti-slop-py: no changed Python files')
+        return 0
+    result = subprocess.run(
+        [ruff, 'check', '--select', ','.join(RULES), '--output-format', 'json',
+         '--no-fix', '--exit-zero', '--force-exclude', '--', *files],
+        cwd=root, capture_output=True, text=True,
+    )
+    if result.returncode:
+        sys.stderr.write(result.stderr)
+        return 2
+    changed = {os.path.realpath(os.path.join(root, f)): changed_lines(root, base, f) for f in files}
+    findings = []
+    for item in json.loads(result.stdout):
+        lines = changed.get(os.path.realpath(item['filename']))
+        row = item['location']['row']
+        if lines is None or row in lines:
+            path = os.path.relpath(os.path.realpath(item['filename']), root)
+            findings.append(f"{path}:{row}:{item['location']['column']}: {item['code'] or 'syntax'} {item['message']}")
+    for finding in findings: print(finding)
+    print(f'anti-slop-py: {len(findings)} finding(s) on changed lines in {len(files)} file(s)')
+    return 1 if findings else 0
+
+if __name__ == '__main__':
+    sys.exit(main())

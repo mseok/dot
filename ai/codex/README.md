@@ -65,6 +65,22 @@ Optional fields are `scope`, `decisions`, `sources`, `active_operations`,
 `completed_checks`, `pending_questions` and `status`. Keep it in the task's
 existing artifact location and update only at meaningful transitions.
 
+`AGENTS.md` ends with two upstream blocks, each fenced by markers and pinned
+to the commit it was copied from: the coding guidelines (`karpathy-guidelines`,
+from multica-ai/andrej-karpathy-skills, MIT) and the response style
+(`attention-span`, the Attention-kind body from alexgreensh/attention-span,
+AGPL-3.0). To update one, replace the text between its markers with the new
+upstream body and record the new commit in the marker comment. Keep the bodies
+unchanged so they can be compared with upstream.
+
+`bin/anti-slop-py` is a Python counterpart of dmmulroy/anti-slop. It runs the
+host Ruff with a fixed rule selection on the Python files changed against
+`HEAD` (or `--base REF`) and reports only findings on changed lines, so
+existing code is not gated. The project's other Ruff settings still apply. The
+rule list at the top of the script is a matter of taste; edit it there. The
+`verification-before-completion` skill comes from obra/superpowers through
+`~/agent-skills`.
+
 Research guidance is maintained by `obsidian-main/scripts/deploy-research.py`.
 The global file carries a short router; detailed recording policy is loaded
 once through the relevant research skill. Project files retain their own

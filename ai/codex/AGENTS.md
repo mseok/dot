@@ -38,6 +38,8 @@ omission check only with active hook-provided session/turn IDs.
 ## Conditional procedures
 
 - For research recording, follow the managed section above and the relevant research skill. Call `research_disposition` only when hook context supplies an active research session and turn; do not invent IDs or repeat a no-active-turn failure for administrative work.
+- Before stating that work is complete, fixed or passing, follow the `verification-before-completion` skill: run the command that proves the claim in the same turn and report its result, or state what was not checked.
+- After changing Python files in a Git repository, run `~/dot/bin/anti-slop-py` there and fix its findings until it exits 0. It applies a fixed Ruff rule set to changed lines only and keeps the project's other Ruff settings. Fix the code rather than suppressing a finding; when a suppression is justified, use a rule-specific `# noqa` and report the reason.
 
 ## Server work
 
