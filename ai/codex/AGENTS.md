@@ -25,6 +25,7 @@ omission check only with active hook-provided session/turn IDs.
 - Use the project's existing artifact location and permission scope. Do not automatically rewrite global sandbox settings for an ordinary output. Preserve unrelated files, environment state and running jobs.
 - Keep each project's runtime dependencies in its own environment; follow that project's Python, CUDA and framework versions. Reuse the existing environment, and create a separate one when an authorized new project needs it. Use host-shared installations for general development tools such as Ruff, while respecting project configuration. Do not resolve project dependencies or recreate its environment merely to format or lint; ask if the shared tool cannot satisfy a required version.
 - For recurring or long-running work, reuse an existing current handoff or manifest. If none is suitable, keep a compact current-state file in the task's artifact location with `~/dot/bin/codex-task-state`: goal, agreed boundaries, decisions, exact sources, active process/job IDs, completed checks, pending questions and next action. Update at material transitions, not every tool call. Store bulk logs and research evidence elsewhere. Automate stable repeated checks and call a model only for new judgments or exceptions.
+- When a task needs a YouTube video, open it in the host's built-in (in-app) browser with the audio muted.
 
 ## Scientific comparisons
 
