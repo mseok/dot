@@ -28,6 +28,10 @@ omission check only with active hook-provided session/turn IDs.
 - Never send an email (send, reply or forward through any connector, script or client) without the user's explicit permission for that specific message. Never put the user's email address or other personal identifiers into an external request, URL, API parameter or subagent prompt unless the user asked for it, and state this restriction in every prompt that delegates to a subagent or tool-using agent.
 - When a task needs a YouTube video, open it in the host's built-in (in-app) browser with the audio muted.
 
+## HTML deliverables
+
+- Publish requested HTML and required assets through this host's private preview workflow in `~/.codex/host-context.md`. Preserve originals, exclude unrelated files, verify the result, and return the MacBook HTTPS link first with a separately labeled Mac mini local fallback. Use HTTPS for preview tabs shown on the MacBook.
+
 ## Scientific comparisons
 
 - Define the intended comparison factor first and match all other relevant conditions: cohort and splits, input/reference preparation, compute or sampling budget, seeds and candidate counts, selection rule, evaluator/version, metric, denominator and missingness policy. Derive membership from the current agreed manifest; do not hardcode a historical population.
