@@ -102,16 +102,6 @@ yw() {
     YAZI_FORCE_WEZTERM=1 y "$@"
 }
 
-agy() {
-    local agy_bin=$(find ~/.antigravity-server/bin -name "agy" -path "*/remote-cli/agy" 2>/dev/null | head -n 1)
-    if [ -n "$agy_bin" ]; then
-        VSCODE_IPC_HOOK_CLI=$(ls -tr /run/user/$UID/vscode-ipc-* | tail -n 1) "$agy_bin" "$@"
-    else
-        echo "Error: agy executable not found"
-        return 1
-    fi
-}
-
 uv() {
     if [[ "$1" == "add" || "$1" == "remove" || "$1" == "sync" ]]; then
         export VIRTUAL_ENV=$CONDA_PREFIX
