@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Check new Python changes at Stop without an unbounded agent continuation loop."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import tempfile
+
+EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+MAX_SNAPSHOT_BYTES = 2 * 1024 * 1024
+
+
+def git(root, *args):
+    return subprocess.run(['git', *args], cwd=root, check=True, capture_output=True,
+                          text=True, timeout=5).stdout
+
+
+def snapshot(root):
+    head = subprocess.run(['git', 'rev-parse', '--verify', 'HEAD'], cwd=root,
+                          capture_output=True, text=True, timeout=5)
+    base = head.stdout.strip() if head.returncode == 0 else EMPTY_TREE
+    names = git(root, 'diff', '--name-only', '--diff-filter=ACMR', '-z', base, '--', '*.py')
+    names += git(root, 'ls-files', '--others', '--exclude-standard', '-z', '--', '*.py')
+    paths = sorted(set(names.split('\0')) - {''})
+    if sum(Path(root, name).stat().st_size for name in paths) > MAX_SNAPSHOT_BYTES:
+        raise ValueError('Python baseline exceeds 2 MiB; run the manual check instead.')
+    files = {name: Path(root, name).read_text() for name in paths}
+    return {'root': root, 'head': base, 'files': files, 'blocked': False, 'awaiting_stop': False}
+
+
+def save(path, state):
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
+                                         prefix='.baseline-', delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(state, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+
+
+def run_check(root, baseline, timeout=20):
+    checker = Path(__file__).resolve().with_name('anti-slop-py')
+    command = [sys.executable, str(checker), '--baseline', str(baseline)]
+    with subprocess.Popen(command, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                          text=True, start_new_session=True) as process:
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            # The checker and its children own this process group; leave no orphan linter.
+            os.killpg(process.pid, signal.SIGKILL)
+            process.communicate()
+            raise
+    return process.returncode, (stdout + stderr).strip()[:4000]
+
+
+def stop(root, path, state, payload):
+    code, detail = run_check(root, path)
+    status = 'passed' if code == 0 else 'unresolved' if code == 1 else 'tool_error'
+    if code == 0 and 'no changed Python files' in detail:
+        status = 'no_python_changes'
+    state['result'] = {'status': status, 'detail': detail}
+    state['awaiting_stop'] = False
+    if code == 1 and not state['blocked'] and not payload.get('stop_hook_active', False):
+        state['blocked'] = True
+        state['awaiting_stop'] = True
+        save(path, state)
+        reason = ('Anti-slop found violations in Python lines changed during this work.\n'
+                  + detail + '\nFix only authorized changes and verify them. Preserve unrelated '
+                  'work. Do not weaken rules to pass. An explicit user requirement wins '
+                  'over a finding; keep it and report the finding. This hook permits one corrective '
+                  'continuation; if violations remain, report them without claiming success.')
+        return {'decision': 'block', 'reason': reason}
+    save(path, state)
+    if code != 0:
+        return {'systemMessage': 'Anti-slop ' + status + ': ' + detail
+                + '\nAutomatic continuation stopped. Verification has not passed.'}
+    return None
+
+
+def state_path(client, session, root):
+    key = hashlib.sha256(f'{client}\0{session}\0{root}'.encode()).hexdigest()
+    folder = Path(tempfile.gettempdir()) / f'anti-slop-hooks-{os.getuid()}'
+    folder.mkdir(mode=0o700, exist_ok=True)
+    if folder.is_symlink() or folder.stat().st_uid != os.getuid() or folder.stat().st_mode & 0o077:
+        raise ValueError('Anti-slop state directory is not private')
+    return folder / (key + '.json')
+
+
+def handle(client, payload):
+    event = payload.get('hook_event_name')
+    if event not in {'SessionStart', 'UserPromptSubmit', 'Stop'}:
+        return None
+    result = subprocess.run(['git', 'rev-parse', '--show-toplevel'], cwd=payload['cwd'],
+                            capture_output=True, text=True, timeout=5)
+    if result.returncode:
+        return None
+    root = os.path.realpath(result.stdout.strip())
+    path = state_path(client, payload['session_id'], root)
+    state = json.loads(path.read_text()) if path.exists() else None
+    if event == 'Stop':
+        if state is None:
+            return {'systemMessage': 'Anti-slop has no start baseline. Run the manual check; '
+                    'automatic verification was not performed.'}
+        return stop(root, path, state, payload)
+    if state is not None and (event == 'SessionStart' or state['awaiting_stop']):
+        return None
+    save(path, snapshot(root))
+    return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('client', choices=['claude', 'codex'])
+    args = parser.parse_args()
+    try:
+        output = handle(args.client, json.load(sys.stdin))
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+        output = {'systemMessage': 'Anti-slop tool_error: ' + str(error)[:1000]
+                  + '. Run the manual check; automatic verification was not completed.'}
+    if output is not None:
+        print(json.dumps(output))
+
+
+if __name__ == '__main__':
+    main()

@@ -70,8 +70,11 @@ to the commit it was copied from: the coding guidelines (`karpathy-guidelines`,
 from multica-ai/andrej-karpathy-skills, MIT) and the response style
 (`attention-span`, the Attention-kind body from alexgreensh/attention-span,
 AGPL-3.0). To update one, replace the text between its markers with the new
-upstream body and record the new commit in the marker comment. Keep the bodies
-unchanged so they can be compared with upstream.
+upstream body and record the new commit in the marker comment. The response
+style body is unchanged from upstream. Sections 2 and 3 of the coding
+guidelines were rewritten to name the patterns that cost cleanup time; see
+[the evaluation](anti-slop.md#coding-guidelines). Reapply that rewrite when
+updating the block.
 
 `bin/anti-slop-py` is a Python counterpart of dmmulroy/anti-slop. It runs the
 host Ruff with a fixed rule selection on the Python files changed against
@@ -80,6 +83,8 @@ existing code is not gated. The project's other Ruff settings still apply. The
 rule list at the top of the script is a matter of taste; edit it there. The
 `verification-before-completion` skill comes from obra/superpowers through
 `~/agent-skills`.
+
+For automatic checks in Claude Code and Codex, run `python3 ~/dot/bin/install_anti_slop_hooks.py` on the intended host. It preserves existing host-local hooks and adds a bounded Stop check. See [anti-slop hook behavior and verification](anti-slop.md) for scope, timeouts, trust and limitations.
 
 Research guidance is maintained by `obsidian-main/scripts/deploy-research.py`.
 The global file carries a short router; detailed recording policy is loaded

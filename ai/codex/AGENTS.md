@@ -39,7 +39,6 @@ omission check only with active hook-provided session/turn IDs.
 
 - For research recording, follow the managed section above and the relevant research skill. Call `research_disposition` only when hook context supplies an active research session and turn; do not invent IDs or repeat a no-active-turn failure for administrative work.
 - Before stating that work is complete, fixed or passing, follow the `verification-before-completion` skill: run the command that proves the claim in the same turn and report its result, or state what was not checked.
-- After changing Python files in a Git repository, run `~/dot/bin/anti-slop-py` there and fix its findings until it exits 0. It applies a fixed Ruff rule set to changed lines only and keeps the project's other Ruff settings. Fix the code rather than suppressing a finding; when a suppression is justified, use a rule-specific `# noqa` and report the reason.
 
 ## Server work
 
@@ -90,7 +89,7 @@ clarification, not a full cluster audit.
 
 # Coding guidelines
 
-<!-- karpathy-guidelines:start (multica-ai/andrej-karpathy-skills, formerly forrestchang; CLAUDE.md @ 2c60614; MIT; body unchanged) -->
+<!-- karpathy-guidelines:start (multica-ai/andrej-karpathy-skills, formerly forrestchang; CLAUDE.md @ 2c60614; MIT; sections 2-3 rewritten from local evaluation 2026-10-15) -->
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
@@ -107,31 +106,20 @@ Before implementing:
 
 ## 2. Simplicity First
 
-**Minimum code that solves the problem. Nothing speculative.**
+**Minimum code that solves the problem. Nothing speculative.** Avoid these, which cost cleanup time later:
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+- Features, options or configurability nobody asked for.
+- Validation, fallbacks or error handling for cases that cannot happen. Validate only at real boundaries such as user input, files and external APIs.
+- An `except` that hides an error: catching broadly, returning a default, or dropping the message.
+- A wrapper, class or layer for a single use, or a copy of an existing function instead of importing it.
+- A test that would pass without your change, other than a guard for behavior the task says must not change, or a test that only checks a mock. Extend an existing test when it covers the case.
 
 ## 3. Surgical Changes
 
-**Touch only what you must. Clean up only your own mess.**
+**Touch only what you must.** Every changed line should trace directly to the user's request.
 
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
+- Don't edit unrelated code, comments or formatting, and match the existing style. Mention unrelated dead code instead of deleting it.
+- Delete what your change made unused, including old functions kept "for compatibility". Don't leave aliases or shims.
 
 ## 4. Goal-Driven Execution
 

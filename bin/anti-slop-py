@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Fail when changed Python lines break the anti-slop Ruff rules."""
 import argparse
+import ast
+from collections import Counter
+import copy
+import difflib
 import json
 import os
 from pathlib import Path
@@ -19,22 +23,50 @@ RULES = [
     'FIX001', 'FIX002', 'FIX003', 'FIX004', 'T100',
     # Discarded type evidence and blanket suppressions.
     'ANN401', 'PGH003', 'PGH004',
-    # Dynamic access, hidden state and tangled structure.
-    'B006', 'B009', 'B010', 'PLC0415', 'PLW0603', 'C901',
-    # More code than the statement needs.
-    'RET504', 'RET505', 'RET506', 'RET507', 'RET508', 'SIM101', 'SIM102',
-    'SIM103', 'SIM110', 'SIM118', 'SIM401', 'PLR5501',
-    # Wasteful collection building.
-    'C4', 'PERF401', 'PERF402', 'PERF403', 'RUF005', 'RUF015',
+    # Hidden state and dynamic access with a constant name.
+    'B006', 'B009', 'B010', 'PLW0603',
 ]
+# Left out after a 2026-10-15 blind comparison: C901, which agents fix by splitting
+# code into single-use helpers, and style rules (C4, SIM, RET, PERF, RUF005,
+# PLC0415), whose fixes cost a turn without improving the code.
+# Ruff reports these on the signature, which an edit to the body leaves unchanged.
+# Judge them by whether the edit created the finding instead.
+SIGNATURE_RULES = ['ARG001']
 EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
 HUNK = re.compile(r'^@@ -\S+ \+(\d+)(?:,(\d+))? @@', re.MULTILINE)
+WORD = re.compile(r'\b[A-Za-z_]\w*\b')
+# Bodies smaller than this many AST nodes match by coincidence too often.
+MIN_COPY_NODES = 60
 
 def git(root, *args):
     return subprocess.run(['git', *args], cwd=root, check=True, capture_output=True, text=True).stdout
 
-def changed_lines(root, base, path):
+def before_text(root, base, path, baseline):
+    """Return the file as it was at the comparison point, or None when it did not exist."""
+    if baseline is not None and path in baseline['files']:
+        return baseline['files'][path]
+    original = subprocess.run(['git', 'show', f'{base}:{path}'], cwd=root, capture_output=True, text=True)
+    return None if original.returncode else original.stdout
+
+def signature_findings(ruff, root, path, before):
+    """Count the signature-rule findings that already existed before the edit."""
+    result = subprocess.run(
+        [ruff, 'check', '--no-cache', '--select', ','.join(SIGNATURE_RULES), '--output-format', 'json',
+         '--no-fix', '--exit-zero', '--force-exclude', '--stdin-filename', path, '-'],
+        cwd=root, input=before or '', capture_output=True, text=True, check=True,
+    )
+    return Counter((item['code'], item['message']) for item in json.loads(result.stdout))
+
+def changed_lines(root, base, path, baseline=None):
     """Return the changed line numbers of one file, or None when every line is new."""
+    if baseline is not None:
+        before = before_text(root, base, path, baseline)
+        if before is None:
+            return None
+        after = Path(root, path).read_text()
+        matcher = difflib.SequenceMatcher(None, before.splitlines(), after.splitlines(), autojunk=False)
+        return {row for tag, _, _, start, end in matcher.get_opcodes() if tag != 'equal'
+                for row in range(start + 1, end + 1)}
     if not git(root, 'ls-files', '--', path):
         return None
     diff = git(root, 'diff', '-U0', '--no-ext-diff', base, '--', path)
@@ -43,42 +75,131 @@ def changed_lines(root, base, path):
         lines.update(range(int(start), int(start) + int(count or 1)))
     return lines
 
+def is_test(path):
+    parts = Path(path).parts
+    return 'tests' in parts or parts[-1].startswith('test_') or parts[-1].endswith('_test.py')
+
+def parse(text):
+    try:
+        return ast.parse(text)
+    except SyntaxError:
+        return None
+
+def plain_functions(tree):
+    """Module-level functions that nothing registers by decorator, export list or name convention."""
+    exported = set()
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(getattr(t, 'id', None) == '__all__' for t in node.targets):
+            exported |= {e.value for e in getattr(node.value, 'elts', []) if isinstance(e, ast.Constant)}
+    return {node.name: node for node in tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.decorator_list
+            and not node.name.startswith('__') and node.name != 'main' and node.name not in exported}
+
+def shape(func):
+    """The body with names and docstring erased, so a renamed copy still matches."""
+    body = func.body[1:] if ast.get_docstring(func) is not None else func.body
+    module = ast.Module(body=copy.deepcopy(body), type_ignores=[])
+    for node in ast.walk(module):
+        if isinstance(node, ast.Name):
+            node.id = '_'
+        elif isinstance(node, ast.arg):
+            node.arg = '_'
+    return ast.dump(module) if sum(1 for _ in ast.walk(module)) >= MIN_COPY_NODES else None
+
+def structure_findings(root, base, baseline, files, changed):
+    """Uncalled functions, copies of existing functions and definitions after the __main__ guard."""
+    tracked = [n for n in git(root, 'ls-files', '-co', '--exclude-standard', '-z', '--', '*.py').split('\0') if n]
+    after = {n: Path(root, n).read_text(errors='replace') for n in tracked if Path(root, n).is_file()}
+    before = {**after, **{n: before_text(root, base, n, baseline) or '' for n in files}}
+    config = ''.join(Path(root, n).read_text(errors='replace') for n in ['pyproject.toml', 'setup.cfg']
+                     if Path(root, n).is_file())
+    # Calls from tests do not count, or a test written for dead code would hide it.
+    uses = lambda texts: Counter(WORD.findall('\n'.join(t for n, t in texts.items() if not is_test(n)) + config))
+    now, then = uses(after), uses(before)
+    copies = {}
+    for name, text in after.items():
+        tree = None if is_test(name) else parse(text)
+        for node in ast.walk(tree) if tree else []:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (key := shape(node)):
+                copies.setdefault(key, []).append((name, node.lineno, node.name))
+    findings = []
+    for name in files:
+        tree, old = parse(after.get(name, '')), parse(before[name])
+        if tree is None:
+            continue
+        lines = changed[os.path.realpath(os.path.join(root, name))]
+        touched = lambda row: lines is None or row in lines
+        report = lambda node, text: findings.append(f'{name}:{node.lineno}:{node.col_offset + 1}: {text}')
+        guard = next((n for n in tree.body if isinstance(n, ast.If) and '__main__' in ast.unparse(n.test)), None)
+        for node in tree.body[tree.body.index(guard) + 1:] if guard else []:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and (touched(node.lineno) or touched(guard.lineno)):
+                report(node, f'AS102 `{node.name}` comes after the `__main__` guard, so it is missing when the file runs as a script')
+        if is_test(name):
+            continue
+        known = {n.name for n in ast.walk(old) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))} if old else set()
+        previous = plain_functions(old) if old else {}
+        for function, node in plain_functions(tree).items():
+            if now[function] <= 1 and (function not in previous or then[function] > 1):
+                report(node, f'AS100 `{function}` is never called outside tests; delete it or call it')
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name not in known and touched(node.lineno):
+                other = [c for c in copies.get(shape(node), []) if (c[0], c[1]) != (name, node.lineno)]
+                if other:
+                    report(node, f'AS101 `{node.name}` repeats `{other[0][2]}` at {other[0][0]}:{other[0][1]}; reuse it instead of copying')
+    return findings
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('paths', nargs='*', help='Limit the check to these files or directories')
     parser.add_argument('--base', default='HEAD', help='Compare the working tree with this commit (default: HEAD)')
+    parser.add_argument('--baseline', type=Path, help='Compare with a prompt-start snapshot produced by anti-slop-hook')
     args = parser.parse_args()
     ruff = shutil.which('ruff') or str(Path.home() / '.local/bin/ruff')
     top = subprocess.run(['git', 'rev-parse', '--show-toplevel'], capture_output=True, text=True)
     if top.returncode: parser.error('Run inside a Git repository')
     root = os.path.realpath(top.stdout.strip())
-    base = args.base
+    baseline = json.loads(args.baseline.read_text()) if args.baseline else None
+    if baseline is not None and baseline['root'] != root:
+        parser.error('Baseline belongs to another repository')
+    base = baseline['head'] if baseline is not None else args.base
     if subprocess.run(['git', 'rev-parse', '--verify', '--quiet', base + '^{commit}'], cwd=root, capture_output=True).returncode:
-        if base != 'HEAD': parser.error(f'Unknown base commit: {base}')
+        if base not in {'HEAD', EMPTY_TREE}: parser.error(f'Unknown base commit: {base}')
         base = EMPTY_TREE
     scope = [os.path.relpath(os.path.realpath(p), root) for p in args.paths] or ['.']
     names = git(root, 'diff', '--name-only', '--diff-filter=ACMR', '-z', base, '--', *scope)
     names += git(root, 'ls-files', '--others', '--exclude-standard', '-z', '--', *scope)
     files = sorted({n for n in names.split('\0') if n.endswith('.py')})
+    changed = {os.path.realpath(os.path.join(root, f)): changed_lines(root, base, f, baseline) for f in files}
+    if baseline is not None:
+        files = [f for f in files if changed[os.path.realpath(os.path.join(root, f))] != set()]
     if not files:
         print('anti-slop-py: no changed Python files')
         return 0
     result = subprocess.run(
-        [ruff, 'check', '--select', ','.join(RULES), '--output-format', 'json',
+        [ruff, 'check', '--no-cache', '--select', ','.join(RULES), '--output-format', 'json',
          '--no-fix', '--exit-zero', '--force-exclude', '--', *files],
         cwd=root, capture_output=True, text=True,
     )
     if result.returncode:
         sys.stderr.write(result.stderr)
         return 2
-    changed = {os.path.realpath(os.path.join(root, f)): changed_lines(root, base, f) for f in files}
     findings = []
+    earlier = {}
     for item in json.loads(result.stdout):
         lines = changed.get(os.path.realpath(item['filename']))
         row = item['location']['row']
-        if lines is None or row in lines:
-            path = os.path.relpath(os.path.realpath(item['filename']), root)
-            findings.append(f"{path}:{row}:{item['location']['column']}: {item['code'] or 'syntax'} {item['message']}")
+        path = os.path.relpath(os.path.realpath(item['filename']), root)
+        if lines is not None and row not in lines:
+            if item['code'] not in SIGNATURE_RULES:
+                continue
+            if path not in earlier:
+                earlier[path] = signature_findings(ruff, root, path, before_text(root, base, path, baseline))
+            key = (item['code'], item['message'])
+            if earlier[path][key]:
+                earlier[path][key] -= 1
+                continue
+        findings.append(f"{path}:{row}:{item['location']['column']}: {item['code'] or 'syntax'} {item['message']}")
+    findings += structure_findings(root, base, baseline, files, changed)
     for finding in findings: print(finding)
     print(f'anti-slop-py: {len(findings)} finding(s) on changed lines in {len(files)} file(s)')
     return 1 if findings else 0
