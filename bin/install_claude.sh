@@ -17,7 +17,6 @@ DOT_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
 GUIDANCE_SOURCE="$DOT_HOME/ai/codex/AGENTS.md"
 CLAUDE_TARGET_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CODEX_TARGET_HOME="${CODEX_HOME:-$HOME/.codex}"
-AGENT_SKILLS_ROOT="${AGENT_SKILLS_HOME:-$HOME/agent-skills}"
 GUIDANCE_ONLY=0
 
 log()   { printf '\033[1;32m[INFO]\033[0m %s\n' "$*"; }
@@ -36,7 +35,7 @@ Options:
 
 The installer links the global CLAUDE.md to the common AGENTS.md and mirrors
 the Codex user skills as individual links. It removes only skill links that
-point into the retired agent-skills Claude scope or that are broken. It never
+are broken. Both agent-skills source scopes remain active. It never
 copies settings.json, credentials, MCP state, or hooks, and it preserves
 host-local skill directories.
 EOF
@@ -110,15 +109,12 @@ link_guidance() {
 # Drop links that no longer belong to the shared skill set. Directories and
 # links owned by the host, a plugin or the research deployer are preserved.
 prune_skill_links() {
-  local skills_root="$1" retired="$AGENT_SKILLS_ROOT/skills/claude" entry target
+  local skills_root="$1" entry target
 
   for entry in "$skills_root"/*; do
     [[ -L "$entry" ]] || continue
     target="$(readlink "$entry")"
-    if [[ "$target" == "$retired"/* ]]; then
-      rm "$entry"
-      log "Removed retired Claude-scope skill link: $entry"
-    elif [[ ! -e "$entry" ]]; then
+    if [[ ! -e "$entry" ]]; then
       rm "$entry"
       log "Removed broken skill link: $entry -> $target"
     fi

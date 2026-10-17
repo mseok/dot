@@ -1,4 +1,5 @@
 """Migration must preserve content, host skills and repeated-run behavior."""
+import os
 import subprocess
 import tempfile
 import unittest
@@ -56,6 +57,44 @@ class MigrationTest(unittest.TestCase):
         second=self.run_migration()
         self.assertEqual(second.returncode,0,second.stderr)
         self.assertEqual((target/'SKILL.md').read_text(),'new independent revision')
+        for home in [self.codex, self.claude]:
+            for scope in ['codex', 'claude']:
+                source = self.dest/'skills'/scope/f'{scope}-example'
+                self.assertEqual((home/'skills'/source.name).resolve(), source)
+
+    def test_cross_client_conflict_preserves_both_sources(self):
+        conflict = self.claude/'skills/codex-example'
+        conflict.mkdir()
+        (conflict/'SKILL.md').write_text('host-owned')
+        result = self.run_migration()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(self.dest.exists())
+        self.assertEqual((conflict/'SKILL.md').read_text(), 'host-owned')
+        self.assertTrue((self.codex/'skills').is_symlink())
+
+    def test_duplicate_names_stop_before_changes(self):
+        duplicate = self.dot/'ai/claude/skills/codex-example'
+        duplicate.mkdir()
+        (duplicate/'SKILL.md').write_text('another source')
+        result = self.run_migration()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Duplicate shared skill name', result.stderr)
+        self.assertFalse(self.dest.exists())
+        self.assertTrue((self.codex/'skills').is_symlink())
+
+    def test_claude_refresh_preserves_shared_claude_source(self):
+        migration = self.run_migration()
+        self.assertEqual(migration.returncode, 0, migration.stderr)
+        link = self.claude/'skills/claude-example'
+        inode = link.lstat().st_ino
+        installer = SCRIPT.with_name('install_claude.sh')
+        result = subprocess.run(['bash', str(installer), '--claude-home', str(self.claude),
+            '--codex-home', str(self.codex)], capture_output=True, text=True,
+            env={**os.environ, 'AGENT_SKILLS_HOME': str(self.dest)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(link.lstat().st_ino, inode)
+        self.assertEqual(link.resolve(), self.dest/'skills/claude/claude-example')
+        self.assertEqual((self.claude/'skills/plugin-owned/SKILL.md').read_text(), 'keep plugin')
 
     def test_conflict_stops_before_source_changes(self):
         subprocess.run(['git','init','-q',str(self.dest)],check=True)

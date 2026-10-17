@@ -18,8 +18,9 @@ symlink is left untouched.
 
 Skills mirror the Codex user skills. Every skill installed below
 `~/.codex/skills` is linked under the same name below `~/.claude/skills`, to the
-same source. The installer removes only links into the retired
-`~/agent-skills/skills/claude` scope and broken links. Host-local directories,
+same source. Both `~/agent-skills/skills/codex` and
+`~/agent-skills/skills/claude` supply shared skills through
+`bin/migrate_agent_skills.sh`. The installer removes only broken links. Host-local directories,
 including the research skills written by `deploy-research.py` and skills
 synced by Claude itself, are preserved. Run it after `install_codex.sh`, which
 `install.sh` does.

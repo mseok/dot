@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Move personal skills out of dot; preserve originals and link per skill."""
+"""Share personal skills across Codex and Claude; preserve host-owned files."""
 import argparse
 import hashlib
 import os
@@ -73,6 +73,7 @@ def main():
     if dest.exists() and not (dest/'.git').exists():
         parser.error('Existing destination is not a Git repository; refusing to adopt unrelated files.')
     plans = []
+    shared = {}
     with tempfile.TemporaryDirectory(prefix='agent-skills-recovery-') as tmp:
         for scope in homes:
             legacy = dot/'ai'/scope/'skills'
@@ -93,18 +94,24 @@ def main():
             if install_root.exists() and not install_root.is_dir():
                 parser.error(f'Not a skill directory: {install_root}')
             for target in [t for _,t in plans if t.parent==target_root]+skills(target_root):
-                installed = install_root/target.name
-                allowed = {target.resolve(), (legacy/target.name).resolve()}
-                if installed.is_symlink() and installed.resolve() not in allowed:
-                    parser.error(f'Unrelated skill link conflicts: {installed}')
-                if installed.exists() and not installed.is_symlink() and not install_root.is_symlink():
-                    parser.error(f'Existing host skill conflicts: {installed}; preserve and reconcile it first.')
+                if target.name in shared and shared[target.name] != target:
+                    parser.error(f'Duplicate shared skill name: {target.name}; reconcile the source scopes first.')
+                shared[target.name] = target
             system = legacy/'.system'
             installed_system = install_root/'.system'
             if system.exists() and installed_system.exists() and system.resolve()!=installed_system.resolve():
                 if inventory(system)!=inventory(installed_system):
                     parser.error('Conflicting host .system skills; originals preserved.')
-        print(f'Destination: {dest}; {len(plans)} source skills to copy/verify')
+        for home in homes.values():
+            install_root = home/'skills'
+            for target in shared.values():
+                installed = install_root/target.name
+                allowed = {target.resolve(), (dot/'ai'/target.parent.name/'skills'/target.name).resolve()}
+                if installed.is_symlink() and installed.resolve() not in allowed:
+                    parser.error(f'Unrelated skill link conflicts: {installed}')
+                if installed.exists() and not installed.is_symlink() and not install_root.is_symlink():
+                    parser.error(f'Existing host skill conflicts: {installed}; preserve and reconcile it first.')
+        print(f'Destination: {dest}; {len(plans)} source skills to copy/verify; {len(shared)} shared skills per client')
         if args.dry_run:
             for src,target in plans:
                 print(f'  {src} -> {target}')
@@ -140,6 +147,7 @@ def main():
                 legacy.mkdir(parents=True,exist_ok=True)
                 if not old.is_symlink():
                     old.symlink_to(target,target_is_directory=True)
+            for target in shared.values():
                 installed = install_root/target.name
                 if installed.is_symlink():
                     installed.unlink()
