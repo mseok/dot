@@ -18,7 +18,9 @@ def sha(value):
     return hashlib.sha256(value).hexdigest()
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    example = 'echo \'{"goal":"...","next_action":"..."}\' | codex-task-state write PATH'
+    epilog = 'Fields: ' + ', '.join(sorted(FIELDS)) + '. Example: ' + example
+    parser = argparse.ArgumentParser(description=__doc__, epilog=epilog)
     parser.add_argument('action', choices=['read', 'write'])
     parser.add_argument('path', type=Path)
     parser.add_argument('--expected-sha', help='Required when replacing an existing handoff')
@@ -34,8 +36,12 @@ def main():
     if before is None and args.expected_sha:
         parser.error('Expected handoff is missing; review the destination')
     content = json.load(sys.stdin)
+    if isinstance(content, dict):
+        # A read-back handoff carries the metadata this tool wrote; drop it before validating.
+        content = {k: v for k, v in content.items() if k not in ('version', 'updated_at')}
     if not isinstance(content, dict) or set(content)-FIELDS:
-        parser.error('Use only the documented current-state fields; keep logs and history at their sources')
+        parser.error('Use only the documented current-state fields (' + ', '.join(sorted(FIELDS))
+                     + '); keep logs and history at their sources')
     if not content.get('goal') or not content.get('next_action'):
         parser.error('A handoff needs goal and next_action')
     content = {'version':1, 'updated_at':datetime.now(timezone.utc).isoformat(), **content}

@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Stop hook (Claude Code) and Stop hook (Codex): warn when the final reply names local paths that do not exist.
+
+Guidance alone cannot guarantee that an agent gives absolute, existing paths, so this hook checks the
+last assistant message mechanically. It never blocks; it appends a systemMessage listing paths that are
+relative, missing or unreadable on this host, so the agent (or the user) sees the mismatch at once.
+Usage in settings.json / hooks.json:
+  {"type": "command", "command": "python3 ~/dot/bin/reply-path-check", "timeout": 10}
+"""
+import json
+import os
+import re
+import sys
+
+PATH_RE = re.compile(r"(?<![\w/])((?:/Volumes|/Users|/home|~)/[^\s`'\")\]>]+)")
+REL_DIRS = "drafts|findings|scripts|inbox|skills|batches|excerpts"
+REL_RE = re.compile(r"(?<![\w/.])((?:" + REL_DIRS + r")/[\w\-./]+\.[A-Za-z0-9]{1,5})")
+
+
+def last_assistant_text(transcript_path):
+    text = []
+    try:
+        with open(transcript_path, encoding="utf-8", errors="replace") as fh:
+            lines = fh.readlines()
+    except OSError:
+        return ""
+    for raw in reversed(lines):
+        try:
+            rec = json.loads(raw)
+        except ValueError:
+            continue
+        if rec.get("type") != "assistant":
+            continue
+        content = (rec.get("message") or {}).get("content") or []
+        if isinstance(content, str):
+            return content
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                text.append(block.get("text", ""))
+        if text:
+            return "\n".join(text)
+    return ""
+
+
+def main():
+    payload = json.load(sys.stdin)
+    if payload.get("stop_hook_active"):
+        return
+    text = last_assistant_text(payload.get("transcript_path", "")) or payload.get("last_assistant_message", "")
+    if not text:
+        return
+    problems = []
+    for match in PATH_RE.findall(text):
+        candidate = os.path.expanduser(match.rstrip(".,;:"))
+        if not os.path.exists(candidate):
+            problems.append(f"missing: {candidate}")
+        elif os.path.isfile(candidate) and not os.access(candidate, os.R_OK):
+            problems.append(f"unreadable: {candidate}")
+    for match in REL_RE.findall(text):
+        problems.append(f"relative (give an absolute path): {match}")
+    if problems:
+        advice = ("Give absolute paths verified to exist on this host, and say on which host; "
+                  "a path that exists here is not yet opened on the user's screen.")
+        message = "Reply path check on this host: " + "; ".join(problems[:8]) + ". " + advice
+        print(json.dumps({"systemMessage": message}))
+
+
+if __name__ == "__main__":
+    main()

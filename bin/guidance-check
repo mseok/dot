@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+"""SessionStart hook: report instruction-source drift once per session.
+
+Checks that ~/.codex/AGENTS.md and ~/.claude/CLAUDE.md are symlinks to the dot checkout's
+AGENTS.md, that no ~/.codex/AGENTS.override.md shadows the common file, and that a
+task-state file exists in the working tree (printing its goal and next action). Prints a
+systemMessage only when something needs attention; never blocks.
+"""
+import json
+import os
+import sys
+
+HOME = os.path.expanduser("~")
+SOURCE = os.path.join(HOME, "dot", "ai", "codex", "AGENTS.md")
+
+
+def main():
+    try:
+        payload = json.load(sys.stdin)
+    except ValueError:
+        payload = {}
+    notes = []
+    for link in (os.path.join(HOME, ".codex", "AGENTS.md"), os.path.join(HOME, ".claude", "CLAUDE.md")):
+        if not os.path.islink(link):
+            notes.append(f"{link} is not a symlink to the dot checkout")
+        elif os.path.realpath(link) != os.path.realpath(SOURCE):
+            notes.append(f"{link} -> {os.readlink(link)} (expected {SOURCE})")
+    override = os.path.join(HOME, ".codex", "AGENTS.override.md")
+    if os.path.exists(override):
+        notes.append(f"{override} exists and shadows the common AGENTS.md for Codex")
+    cwd = payload.get("cwd") or os.getcwd()
+    probe = cwd
+    while probe and probe != "/":
+        candidate = os.path.join(probe, "task-state.json")
+        if os.path.isfile(candidate):
+            try:
+                state = json.load(open(candidate))
+                goal = state.get("goal", "")[:120]
+                nxt = state.get("next_action", "")[:160]
+                notes.append(f"task state {candidate}: goal={goal!r}; next_action={nxt!r}")
+            except (OSError, ValueError):
+                notes.append(f"task state {candidate} could not be parsed")
+            break
+        probe = os.path.dirname(probe)
+    if notes:
+        print(json.dumps({"systemMessage": "Guidance check: " + " | ".join(notes)}))
+
+
+if __name__ == "__main__":
+    main()

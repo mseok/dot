@@ -65,16 +65,33 @@ Optional fields are `scope`, `decisions`, `sources`, `active_operations`,
 `completed_checks`, `pending_questions` and `status`. Keep it in the task's
 existing artifact location and update only at meaningful transitions.
 
-`AGENTS.md` ends with two upstream blocks, each fenced by markers and pinned
-to the commit it was copied from: the coding guidelines (`karpathy-guidelines`,
-from multica-ai/andrej-karpathy-skills, MIT) and the response style
-(`attention-span`, the Attention-kind body from alexgreensh/attention-span,
-AGPL-3.0). To update one, replace the text between its markers with the new
-upstream body and record the new commit in the marker comment. The response
-style body is unchanged from upstream. Sections 2 and 3 of the coding
-guidelines were rewritten to name the patterns that cost cleanup time; see
-[the evaluation](anti-slop.md#coding-guidelines). Reapply that rewrite when
-updating the block.
+`AGENTS.md` keeps one upstream block, fenced by markers and pinned to the commit
+it was copied from: the coding guidelines (`karpathy-guidelines`, from
+multica-ai/andrej-karpathy-skills, MIT; sections 2-3 rewritten locally on
+2026-10-15; on 2026-10-17 its section 1 was folded into the lead-in because it
+contradicted the working agreement's ask rules, section 4 was condensed and
+the rest renumbered). The former Attention-kind response-style block
+(alexgreensh/attention-span, AGPL-3.0) was replaced on 2026-10-17 by the short
+"Chat reply style" section, scoped to chat replies, after the 2026-08..10 audit
+found it bleeding into manuscripts, emails and UI work and measured two of its
+rules as unfollowed; the full body is installed as the opt-in Claude Code output
+style `~/.claude/output-styles/attention-kind.md`, and the original block is
+kept in the audit folder. A trim pass on 2026-10-17 moved procedures that a
+skill already carries (Slurm launch contract, staging and polling; comparison
+labelling; handoff fields) into those skills, host facts into host-context,
+and split the body into one rule per bullet; the audit folder's trim ledger
+lists every removed sentence with its destination. Codex auto-loads only the AGENTS.md chain with no
+imports, and Claude Code loads CLAUDE.md plus its imports, so rules that must
+always apply live in the AGENTS.md body; procedures live in skills and
+`ai/codex/references/` (currently the Codex browser procedure), which are read
+only when the model decides to.
+
+`bin/guidance-check` (SessionStart hook) reports when the global links drift or
+an `AGENTS.override.md` shadows the common file, and prints the goal of a
+`task-state.json` found in the working tree. `bin/reply-path-check` (Stop hook)
+warns when the final reply names relative, missing or unreadable local paths;
+both only emit a system message and never block. Wire them in each host's
+`~/.claude/settings.json` and `~/.codex/hooks.json`.
 
 `bin/anti-slop-py` is a Python counterpart of dmmulroy/anti-slop. It runs the
 host Ruff with a fixed rule selection on the Python files changed against
