@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Share personal skills across Codex and Claude; preserve host-owned files."""
+"""Share personal skills across Codex and Claude; preserve host-owned files.
+
+skills/codex is linked into both clients, skills/claude into Claude only.
+"""
 import argparse
 import hashlib
 import os
@@ -31,6 +34,11 @@ def skills(root):
     if not root.is_dir():
         return []
     return sorted(p for p in root.iterdir() if not p.name.startswith('.') and (p/'SKILL.md').is_file())
+
+
+def stale(link, dest):
+    """A dangling link into this repository's skills, left by an archived or moved skill."""
+    return link.is_symlink() and not link.exists() and os.readlink(link).startswith(f'{dest}/skills/')
 
 
 def recover(dot, scope, scratch):
@@ -107,11 +115,12 @@ def main():
             for target in shared.values():
                 installed = install_root/target.name
                 allowed = {target.resolve(), (dot/'ai'/target.parent.name/'skills'/target.name).resolve()}
-                if installed.is_symlink() and installed.resolve() not in allowed:
+                if installed.is_symlink() and installed.resolve() not in allowed and not stale(installed, dest):
                     parser.error(f'Unrelated skill link conflicts: {installed}')
                 if installed.exists() and not installed.is_symlink() and not install_root.is_symlink():
                     parser.error(f'Existing host skill conflicts: {installed}; preserve and reconcile it first.')
-        print(f'Destination: {dest}; {len(plans)} source skills to copy/verify; {len(shared)} shared skills per client')
+        claude_only = sum(t.parent.name == 'claude' for t in shared.values())
+        print(f'Destination: {dest}; {len(plans)} source skills to copy/verify; {len(shared)} skills, {claude_only} of them Claude-only')
         if args.dry_run:
             for src,target in plans:
                 print(f'  {src} -> {target}')
@@ -151,7 +160,13 @@ def main():
                 installed = install_root/target.name
                 if installed.is_symlink():
                     installed.unlink()
+                if scope == 'codex' and target.parent.name == 'claude':
+                    continue
                 installed.symlink_to(target,target_is_directory=True)
+            for root in (install_root, legacy):
+                for link in root.iterdir() if root.is_dir() else []:
+                    if stale(link, dest):
+                        link.unlink()
             # Keep old in-flight skill references usable, but keep app-owned
             # system files out of both source repositories.
             if system.exists() and not system.is_symlink():
