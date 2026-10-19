@@ -1,0 +1,286 @@
+#!/usr/bin/env python3
+"""Check dot, agent-skills, guidance links, skill links and the Obsidian research setup on every host.
+
+Hosts, repositories and optional Funnel checks come from a host-local JSON config
+(default ~/.config/harness-status/config.json):
+
+  {"hosts": [{"name": "Mac mini", "ssh": null, "research": true,
+              "funnel": {"port": 10000, "target": "http://127.0.0.1:39123"}},
+             {"name": "lab", "ssh": "lab-server", "research": true}],
+   "github": ["mseok/dot", "mseok/agent-skills"]}
+
+Prints one line per check (ok, warn, bad) and, with --html PATH, writes a status page.
+"""
+
+import argparse
+import html
+import json
+import os
+import subprocess
+from datetime import datetime
+from pathlib import Path
+
+PROBE = r"""
+emit() { printf '%s\n' "$1"; }
+for r in dot agent-skills; do
+  d=$HOME/$r
+  [ -d "$d/.git" ] || { emit "{\"repo\":\"$r\",\"missing\":true}"; continue; }
+  git -C "$d" fetch -q origin 2>/dev/null
+  set -- $(git -C "$d" rev-list --left-right --count HEAD...origin/main 2>/dev/null || echo "0 0")
+  emit "{\"repo\":\"$r\",\"head\":\"$(git -C "$d" rev-parse --short HEAD)\",\"origin\":\"$(git -C "$d" rev-parse --short origin/main)\",\"ahead\":$1,\"behind\":$2,\"dirty\":$(git -C "$d" status --short | wc -l | tr -d ' '),\"stash\":$(git -C "$d" stash list | wc -l | tr -d ' ')}"
+done
+sha=$( (shasum -a 256 "$HOME/dot/ai/codex/AGENTS.md" 2>/dev/null || sha256sum "$HOME/dot/ai/codex/AGENTS.md") | cut -c1-12)
+emit "{\"agents\":\"$sha\",\"codex_link\":\"$(readlink "$HOME/.codex/AGENTS.md")\",\"claude_link\":\"$(readlink "$HOME/.claude/CLAUDE.md")\",\"override\":$([ -e "$HOME/.codex/AGENTS.override.md" ] && echo true || echo false)}"
+for a in codex claude; do
+  n=0; local_names=""
+  for x in "$HOME/.$a/skills"/*; do
+    b=$(basename "$x"); t=$(readlink "$x")
+    case "$t" in "$HOME/agent-skills/skills/"*) n=$((n+1));; *) [ "$b" = synced ] || local_names="$local_names $b";; esac
+  done
+  emit "{\"skills\":\"$a\",\"repo_links\":$n,\"broken\":$(find -L "$HOME/.$a/skills" -maxdepth 1 -type l | wc -l | tr -d ' '),\"local\":\"${local_names# }\"}"
+done
+if [ -x "$HOME/.local/bin/obsidian-research" ]; then
+  pending=$("$HOME/.local/bin/obsidian-research" status 2>/dev/null | python3 -c 'import json,sys;print(len(json.load(sys.stdin)["pending"]))' 2>/dev/null || echo -1)
+  url=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.config/obsidian-mcp/client.json"))).get("gateway_url",""))' 2>/dev/null)
+  code=""; [ -n "$url" ] && code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$url/mcp")
+  emit "{\"research\":true,\"pending\":$pending,\"gateway_url\":\"$url\",\"gateway_http\":\"$code\",\"hooks_claude\":$(grep -c obsidian-research "$HOME/.claude/settings.json" 2>/dev/null || echo 0),\"hooks_codex\":$(grep -c obsidian-research "$HOME/.codex/hooks.json" 2>/dev/null || echo 0)}"
+else
+  emit '{"research":false}'
+fi
+"""
+
+
+def run_probe(host):
+    command = (
+        ["bash", "-s"]
+        if not host.get("ssh")
+        else [
+            "ssh",
+            "-o",
+            "ConnectTimeout=10",
+            "-o",
+            "BatchMode=yes",
+            host["ssh"],
+            "bash",
+            "-s",
+        ]
+    )
+    done = subprocess.run(
+        command, check=False, input=PROBE, capture_output=True, text=True, timeout=180
+    )
+    if done.returncode != 0 and not done.stdout:
+        return {"error": (done.stderr.strip().splitlines() or ["probe failed"])[-1]}
+    facts = {"repos": {}, "skills": {}}
+    for line in done.stdout.splitlines():
+        item = json.loads(line)
+        if "repo" in item:
+            facts["repos"][item["repo"]] = item
+        elif "skills" in item:
+            facts["skills"][item["skills"]] = item
+        elif "agents" in item:
+            facts["agents"] = item
+        elif "research" in item:
+            facts["research"] = item
+    return facts
+
+
+def funnel_check(spec):
+    status = json.loads(
+        subprocess.run(
+            ["tailscale", "serve", "status", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+        ).stdout
+        or "{}"
+    )
+    port, target = str(spec["port"]), spec["target"]
+    for name, web in (status.get("Web") or {}).items():
+        if (
+            name.endswith(":" + port)
+            and (status.get("AllowFunnel") or {}).get(name)
+            and web.get("Handlers", {}).get("/", {}).get("Proxy") == target
+        ):
+            return "ok", f"Funnel :{port} -> {target}"
+    return "bad", f"Funnel :{port} missing"
+
+
+def host_checks(host, facts, agents_majority):
+    if "error" in facts:
+        return [("connection", "bad", facts["error"])]
+    rows = []
+    for name, repo in sorted(facts["repos"].items()):
+        if repo.get("missing"):
+            rows.append((f"{name} checkout", "bad", "missing"))
+            continue
+        level = (
+            "ok"
+            if not (repo["dirty"] or repo["ahead"] or repo["behind"] or repo["stash"])
+            else "warn"
+        )
+        rows.append(
+            (
+                f"{name} checkout",
+                level,
+                f"{repo['head']} (origin {repo['origin']}), ahead {repo['ahead']}, behind {repo['behind']}, dirty {repo['dirty']}, stash {repo['stash']}",
+            )
+        )
+    agents = facts.get("agents", {})
+    linked = all(
+        link.endswith("/dot/ai/codex/AGENTS.md")
+        for link in (agents.get("codex_link", ""), agents.get("claude_link", ""))
+    )
+    level = (
+        "bad"
+        if agents.get("override")
+        or not linked
+        or agents.get("agents") != agents_majority
+        else "ok"
+    )
+    rows.append(
+        (
+            "AGENTS.md",
+            level,
+            f"{agents.get('agents')}, links {'ok' if linked else 'wrong'}, override {'present' if agents.get('override') else 'none'}",
+        )
+    )
+    for client, skills in sorted(facts["skills"].items()):
+        level = "bad" if skills["broken"] else "ok"
+        local = f", host-only: {skills['local']}" if skills["local"] else ""
+        rows.append(
+            (
+                f"{client} skills",
+                level,
+                f"{skills['repo_links']} repo links, {skills['broken']} broken{local}",
+            )
+        )
+    research = facts.get("research", {})
+    if host.get("research"):
+        if not research.get("research"):
+            rows.append(
+                ("research recording", "bad", "obsidian-research not installed")
+            )
+        else:
+            reachable = research["gateway_http"] in ("200", "401", "405")
+            rows.append(
+                (
+                    "gateway",
+                    "ok" if reachable else "bad",
+                    f"{research['gateway_url'] or 'no gateway_url'} -> HTTP {research['gateway_http'] or 'none'}",
+                )
+            )
+            rows.append(
+                (
+                    "research outbox",
+                    "ok" if research["pending"] == 0 else "warn",
+                    f"{research['pending']} pending",
+                )
+            )
+    if host.get("funnel"):
+        level, text = funnel_check(host["funnel"])
+        rows.append(("gateway Funnel", level, text))
+    return rows
+
+
+def github_rows(repos):
+    rows = []
+    for repo in repos:
+        data = subprocess.run(
+            [
+                "gh",
+                "api",
+                f"repos/{repo}",
+                "--jq",
+                '[.visibility, .pushed_at] | join(" ")',
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        head = subprocess.run(
+            ["gh", "api", f"repos/{repo}/commits/HEAD", "--jq", ".sha[0:7]"],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        prs = subprocess.run(
+            [
+                "gh",
+                "pr",
+                "list",
+                "-R",
+                repo,
+                "--state",
+                "open",
+                "--json",
+                "number",
+                "--jq",
+                "length",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        rows.append(
+            (
+                repo,
+                "ok" if data else "bad",
+                f"{data or 'unreachable'}, main {head}, open PRs {prs or '?'}",
+            )
+        )
+    return rows
+
+
+def write_html(path, results, github, checked_at):
+    def table(rows):
+        body = "".join(
+            f'<tr><td>{html.escape(a)}</td><td><span class="b {lvl}"></span>{html.escape(t)}</td></tr>'
+            for a, lvl, t in rows
+        )
+        return f"<table><tbody>{body}</tbody></table>"
+
+    sections = "".join(
+        f"<h2>{html.escape(name)}</h2>{table(rows)}" for name, rows in results
+    )
+    page = f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>harness status {checked_at}</title><style>
+body{{font-family:var(--font-sans,-apple-system,sans-serif);color:var(--foreground,#222);margin:0;line-height:1.45}}
+h2{{font-size:15px;margin:20px 0 6px}} table{{border-collapse:collapse;width:100%;font-size:12.5px}}
+td{{border-bottom:1px solid var(--border,#ddd);padding:5px 6px;vertical-align:top}} td:first-child{{font-weight:600;width:28%;overflow-wrap:anywhere}}
+.b{{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}} .ok{{background:var(--success,#2e9d5b)}} .warn{{background:var(--warning,#d99a00)}} .bad{{background:var(--destructive,#d33)}}
+.meta{{font-size:12px;color:var(--muted-foreground,#666)}}</style></head><body>
+<div class="meta">checked {html.escape(checked_at)} · ok / warn / bad</div>{sections}<h2>GitHub</h2>{table(github)}</body></html>"""
+    Path(path).write_text(page, encoding="utf-8")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--config", default=os.path.expanduser("~/.config/harness-status/config.json")
+    )
+    parser.add_argument("--html", help="Write a status page to this path")
+    args = parser.parse_args()
+    config = json.loads(Path(args.config).read_text())
+    facts = [(host, run_probe(host)) for host in config["hosts"]]
+    shas = [f["agents"]["agents"] for _, f in facts if "agents" in f]
+    majority = max(set(shas), key=shas.count) if shas else None
+    results = [(host["name"], host_checks(host, f, majority)) for host, f in facts]
+    github = github_rows(config.get("github", []))
+    checked_at = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z")
+    worst = "ok"
+    for name, rows in results + [("GitHub", github)]:
+        for check, level, text in rows:
+            print(f"{level:4}  {name:10}  {check:20}  {text}")
+            worst = (
+                "bad"
+                if level == "bad"
+                else ("warn" if level == "warn" and worst == "ok" else worst)
+            )
+    if args.html:
+        write_html(args.html, results, github, checked_at)
+        print(args.html)
+    raise SystemExit({"ok": 0, "warn": 1, "bad": 2}[worst])
+
+
+if __name__ == "__main__":
+    main()
