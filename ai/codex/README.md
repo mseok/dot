@@ -64,6 +64,15 @@ and its SHA-256. To create one, pipe JSON with `goal` and `next_action` into
 Optional fields are `scope`, `decisions`, `sources`, `active_operations`,
 `completed_checks`, `pending_questions` and `status`. Keep it in the task's
 existing artifact location and update only at meaningful transitions.
+A write appends every entry it removes, and replaced goal or scope text,
+verbatim to `<name>.history.jsonl` beside the handoff before replacing it.
+Completed checks carry IDs such as `[k12]`. Over a 12,000-byte budget the
+oldest checks move to the history, except the newest ten and those that another
+field cites; a handoff still over budget is saved with a warning. A handoff
+records its own path, so `read` reports a copy whose original still exists.
+Install the tool before the `thread-handoff` text that tells agents to delete
+reversed decisions. To roll back, restore the old tool with `path` added to the
+metadata keys it drops, so handoffs the new tool wrote stay writable.
 
 `AGENTS.md` keeps one upstream block, fenced by markers and pinned to the commit
 it was copied from: the coding guidelines (`karpathy-guidelines`, from

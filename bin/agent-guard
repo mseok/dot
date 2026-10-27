@@ -1,0 +1,212 @@
+#!/usr/bin/env python3
+"""PreToolUse guard for Claude Code and Codex.
+
+`agent-guard login-scan` denies whole-filesystem or shared-root scans and archive extraction in a shell
+command that runs on a login or controller host, either on this host or through ssh.
+`agent-guard identifiers` denies a subagent prompt, a web tool call, or a shell command with a URL or
+network client that contains one of the user's identifiers.
+
+Host-local configuration, one entry per line, `#` starts a comment; a missing file disables the check:
+  ~/.config/agent-guard/login-hosts    ssh aliases or hostnames of login and controller hosts
+  ~/.config/agent-guard/shared-roots   extra absolute paths that count as shared roots
+  ~/.config/agent-guard/identifiers    the user's email addresses
+The hook prints a deny decision only on a match. It does not catch its own errors: a crash shows as a
+hook error and both clients let the tool call through.
+"""
+import argparse
+from itertools import takewhile
+import json
+from pathlib import Path
+import re
+import socket
+import sys
+from urllib.parse import unquote
+
+CONFIG = Path.home() / '.config' / 'agent-guard'
+SEPARATORS = re.compile(r'\|\||&&|\$\(|[;|&\n`]')
+QUOTES = re.compile(r'''["'()]''')
+SSH_VALUE_OPTIONS = set('BbcDEeFIiJLlmOoPpQRSWw')
+NETWORK = re.compile(r'https?://|(?:^|[\s;|&(`])(?:\S*/)?'
+                     r'(?:curl|wget|http|https|xh|nc|ncat|telnet|ftp|gh|aws|gcloud|gsutil|rclone|sendmail|mail|mutt)'
+                     r'(?=\s|$)')
+GREP_RECURSIVE = re.compile(r'-[A-Za-z]*[rR][A-Za-z]*|--recursive|--dereference-recursive')
+LS_RECURSIVE = re.compile(r'-[A-Za-z]*R[A-Za-z]*|--recursive')
+TAR_EXTRACT = re.compile(r'-?[A-Za-z]*x[A-Za-z]*|--extract|--get')
+DECOMPRESS_FLAG = re.compile(r'-[A-Za-z0-9]*d[A-Za-z0-9]*|--decompress|--uncompress')
+STREAM_FLAG = re.compile(r'-[A-Za-z0-9]*c[A-Za-z0-9]*|--stdout|--to-stdout')
+DECOMPRESSORS = {'gunzip', 'bunzip2', 'unxz', 'unzstd', 'unlzma'}
+COMPRESSORS = {'gzip', 'bzip2', 'xz', 'zstd', 'pigz', 'lzma'}
+UNZIP_LISTING = {'-l', '-v', '-t', '-Z', '-z'}
+SUBAGENT_TOOLS = {'Task', 'Agent', 'spawn_agent', 'send_input'}
+WEB_TOOLS = {'WebFetch', 'WebSearch', 'web_run', 'web_search'}
+MAX_DEPTH = 2
+
+
+def entries(name):
+    path = CONFIG / name
+    if not path.exists():
+        return []
+    rows = (line.split('#', 1)[0].strip() for line in path.read_text().splitlines())
+    return [row for row in rows if row]
+
+
+def command_text(tool_input):
+    command = tool_input.get('command', tool_input.get('cmd', '')) if isinstance(tool_input, dict) else tool_input
+    return ' '.join(command) if isinstance(command, list) else str(command)
+
+
+def segments(command):
+    for part in SEPARATORS.split(command):
+        tokens = QUOTES.sub(' ', part).split()
+        if tokens:
+            yield tokens
+
+
+def program(token):
+    return token.rsplit('/', 1)[-1]
+
+
+def short(host):
+    return host.lower().split('.', 1)[0]
+
+
+def ssh_destinations(command):
+    for tokens in segments(command):
+        for index, token in enumerate(tokens):
+            if program(token) not in ('ssh', 'autossh'):
+                continue
+            position = index + 1
+            while position < len(tokens) and tokens[position].startswith('-'):
+                flag = tokens[position]
+                position += 2 if len(flag) == 2 and flag[1] in SSH_VALUE_OPTIONS else 1
+            if position < len(tokens):
+                destination = tokens[position].removeprefix('ssh://').rsplit('@', 1)[-1]
+                yield destination.split(':', 1)[0]
+
+
+def broad(path, shared_roots):
+    path = path.rstrip('*').rstrip('/') or '/'
+    if not path.startswith('/'):
+        return False
+    if path == '/' or path.count('/') == 1:
+        return True
+    return any(root == path or root.startswith(path + '/') for root in shared_roots)
+
+
+def option_value(args, option):
+    for flag, value in zip(args, args[1:]):
+        if flag == option and value.isdigit():
+            return int(value)
+    return None
+
+
+def extracts(name, args):
+    if name == 'tar':
+        mode = args[:1] + [arg for arg in args if arg.startswith('-')]
+        return any(TAR_EXTRACT.fullmatch(arg) for arg in mode)
+    if name == 'unzip':
+        return not UNZIP_LISTING.intersection(args)
+    if name in ('7z', '7za', '7zz'):
+        return bool(args) and args[0] in ('x', 'e')
+    streaming = any(STREAM_FLAG.fullmatch(arg) for arg in args)
+    if name in DECOMPRESSORS:
+        return not streaming
+    if name in COMPRESSORS:
+        return not streaming and any(DECOMPRESS_FLAG.fullmatch(arg) for arg in args)
+    return False
+
+
+def scan_finding(command, shared_roots):
+    for tokens in segments(command):
+        for index, token in enumerate(tokens):
+            name = program(token)
+            args = tokens[index + 1:]
+            wide = [arg for arg in args if broad(arg, shared_roots)]
+            if name == 'find':
+                starts = takewhile(lambda arg: not arg.startswith('-') or arg in ('-H', '-L', '-P'), args)
+                roots = [arg for arg in starts if broad(arg, shared_roots)]
+                depth = option_value(args, '-maxdepth')
+                if roots and (depth is None or depth > MAX_DEPTH):
+                    return f'find over {roots[0]} without -maxdepth {MAX_DEPTH} or less'
+            elif name in ('grep', 'egrep', 'fgrep') and wide and any(GREP_RECURSIVE.fullmatch(arg) for arg in args):
+                return f'recursive {name} over {wide[0]}'
+            elif name in ('rg', 'ag', 'fd', 'fdfind', 'du') and wide:
+                return f'{name} over {wide[0]}'
+            elif name == 'ls' and wide and any(LS_RECURSIVE.fullmatch(arg) for arg in args):
+                return f'recursive ls over {wide[0]}'
+            elif name == 'tree' and wide and (option_value(args, '-L') or MAX_DEPTH + 1) > MAX_DEPTH:
+                return f'tree over {wide[0]} without -L {MAX_DEPTH} or less'
+            elif extracts(name, args):
+                return f'archive extraction with {name}'
+    return None
+
+
+def check_login_scan(command, login_hosts, shared_roots, local_host):
+    hosts = {short(host) for host in ssh_destinations(command)
+             if short(host) in login_hosts or host.lower() in login_hosts}
+    if short(local_host) in login_hosts:
+        hosts.add(short(local_host))
+    finding = scan_finding(command, shared_roots) if hosts else None
+    if finding is None:
+        return None
+    return (f'agent-guard blocked {finding} on login or controller host {", ".join(sorted(hosts))}. '
+            'AGENTS.md Server work allows only short, bounded metadata reads there. Use an explicit narrow '
+            f'path or a manifest, keep find at -maxdepth {MAX_DEPTH} or less, or put the work in a Slurm job '
+            'script file and submit it. If the user asked for this exact command, tell them it was blocked '
+            'and let them run it themselves.')
+
+
+def mask(value):
+    local, _, domain = value.partition('@')
+    return local[:2] + '***' + ('@' + domain if domain else '')
+
+
+def check_identifiers(tool_name, tool_input, identifiers):
+    leaf = tool_name.rsplit('__', 1)[-1].lstrip('_')
+    if tool_name == 'Bash':
+        text = command_text(tool_input)
+        if not NETWORK.search(text):
+            return None
+        kind = 'a shell command with a URL or network client'
+    elif leaf in SUBAGENT_TOOLS:
+        text, kind = json.dumps(tool_input, ensure_ascii=False), 'a subagent prompt'
+    elif leaf in WEB_TOOLS:
+        text, kind = json.dumps(tool_input, ensure_ascii=False), 'a web request'
+    else:
+        return None
+    normalized = unquote(text).lower()
+    found = [value for value in identifiers if value.lower() in normalized]
+    if not found:
+        return None
+    return (f"agent-guard blocked {kind} that contains the user's identifier {mask(found[0])} listed in "
+            '~/.config/agent-guard/identifiers. AGENTS.md forbids putting it into external requests, URLs, API '
+            'parameters or subagent prompts unless the user asked. Remove it and retry; if the user explicitly '
+            'asked for it, tell them it was blocked and let them run it themselves.')
+
+
+def deny(reason):
+    return {'systemMessage': reason,
+            'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'deny',
+                                   'permissionDecisionReason': reason}}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('rule', choices=['login-scan', 'identifiers'])
+    rule = parser.parse_args().rule
+    payload = json.load(sys.stdin)
+    tool_name = payload.get('tool_name', '')
+    tool_input = payload.get('tool_input') or {}
+    reason = None
+    if rule == 'login-scan' and tool_name == 'Bash':
+        login_hosts = {entry.lower() for entry in entries('login-hosts')}
+        shared_roots = [entry.rstrip('/') for entry in entries('shared-roots')]
+        reason = check_login_scan(command_text(tool_input), login_hosts, shared_roots, socket.gethostname())
+    elif rule == 'identifiers':
+        reason = check_identifiers(tool_name, tool_input, entries('identifiers'))
+    if reason:
+        print(json.dumps(deny(reason)))
+
+
+if __name__ == '__main__':
+    main()

@@ -27,7 +27,7 @@ def prepare(path, client, hook):
     return before, encoded
 
 
-def publish(path, before, encoded):
+def publish(path, before, encoded, label='anti-slop'):
     if before == encoded:
         print(str(path) + ': unchanged')
         return
@@ -37,7 +37,7 @@ def publish(path, before, encoded):
     mode = stat.S_IMODE(path.stat().st_mode) if before is not None else 0o600
     if before is not None:
         stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
-        backup = path.with_name(path.name + '.anti-slop-backup-' + stamp)
+        backup = path.with_name(path.name + '.' + label + '-backup-' + stamp)
         with backup.open('xb') as stream:
             os.fchmod(stream.fileno(), 0o600)
             stream.write(before)
@@ -45,7 +45,7 @@ def publish(path, before, encoded):
             os.fsync(stream.fileno())
     temporary = None
     try:
-        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.anti-slop-', delete=False) as stream:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.' + label + '-', delete=False) as stream:
             temporary = Path(stream.name)
             os.fchmod(stream.fileno(), mode)
             stream.write(encoded)

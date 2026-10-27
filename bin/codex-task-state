@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
-"""Read or replace a compact task handoff without copying conversation history."""
+"""Read or replace a compact task handoff without copying conversation history.
+
+A write appends every entry it removes from a list field, and the goal or scope text it replaces,
+verbatim to <name>.history.jsonl beside the handoff before it replaces the handoff, so deleting a
+reversed decision never loses the user's words. Each completed check carries an ID prefix such as
+`[k12] `, assigned in increasing order and never reused. Over the size budget the oldest checks move
+to the history, except the newest ten and every check that a decision, question, next action or other
+non-check field cites; a handoff still over budget is written anyway and the write names its largest
+fields. The handoff records its own path; read reports a copy when that path still holds a different
+file.
+"""
 import argparse
+from collections import Counter
 from datetime import datetime, timezone
 import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import tempfile
 
@@ -13,49 +25,256 @@ FIELDS = {
     'goal', 'scope', 'decisions', 'sources', 'active_operations',
     'completed_checks', 'pending_questions', 'next_action', 'status',
 }
+ARCHIVED = ('goal', 'scope', 'decisions', 'sources', 'active_operations', 'completed_checks', 'pending_questions')
+BUDGET_BYTES = 12000
+KEEP_CHECKS = 10
+OWN_ID = re.compile(r'^\[k(\d+)\] ')
+CITATION = re.compile(r'\[k(\d+)\]')
+HISTORY_NOTE = 'Removed entries, verbatim. Read it only when the user disputes a decision or the handoff names a gap.'
+CLEANUP = ('Delete decisions the user reversed or replaced, finished operations, answered questions and sources no '
+           'longer used, and ask the user before removing a decision that is still in force. Every removed entry is '
+           'kept verbatim in the history; never paraphrase or merge decisions to save space.')
+
+def fail(message):
+    sys.exit('codex-task-state: error: ' + message)
 
 def sha(value):
     return hashlib.sha256(value).hexdigest()
 
+def encode(content):
+    return (json.dumps(content, ensure_ascii=False, indent=2)+'\n').encode()
+
+def canonical(item):
+    return json.dumps(item, ensure_ascii=False, sort_keys=True)
+
+def own_id(item):
+    match = OWN_ID.match(item) if isinstance(item, str) else None
+    return int(match.group(1)) if match else None
+
+def bare(item):
+    return OWN_ID.sub('', item, count=1) if isinstance(item, str) else item
+
+def history_path(target):
+    return target.with_name(target.stem + '.history.jsonl')
+
+def history_rows(history):
+    rows = []
+    for number, line in enumerate(history.read_bytes().split(b'\n') if history.exists() else [], 1):
+        if line:
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                fail(f'{history} line {number} is not JSON; repair or move that file before writing')
+    return rows
+
+def archived_ids(rows):
+    return {own_id(item) for row in rows if row.get('field') == 'completed_checks'
+            for item in row.get('removed', [])} - {None}
+
+def number_checks(checks, previous, archived):
+    """Prefix every string check with its own ID; a check from the previous handoff keeps its ID."""
+    old_text = {own_id(item): bare(item) for item in previous if own_id(item) is not None}
+    by_text = {}
+    for number, text in sorted(old_text.items()):
+        by_text.setdefault(text, []).append(number)
+    owner, used = {}, set()
+    strings = [index for index, item in enumerate(checks) if isinstance(item, str)]
+    for index in strings:  # the prefix and the text match a previous check
+        number = own_id(checks[index])
+        if number in old_text and number not in used and old_text[number] == bare(checks[index]):
+            owner[index] = (number, False)
+            used.add(number)
+    for index in strings:  # resent without its prefix: the text matches a previous check
+        number = next((n for n in by_text.get(checks[index], []) if n not in used), None)
+        if index not in owner and number is not None:
+            owner[index] = (number, True)
+            used.add(number)
+    for index in strings:  # a previous check's ID with new text is an edit of that check
+        number = own_id(checks[index])
+        if index not in owner and number in old_text and number not in used:
+            owner[index] = (number, False)
+            used.add(number)
+    for index in strings:  # an ID no check ever had: the agent numbered a new check itself
+        number = own_id(checks[index])
+        if index not in owner and number is not None and number not in old_text.keys() | archived | used:
+            owner[index] = (number, False)
+            used.add(number)
+    next_id = max([0, *old_text, *archived, *used]) + 1
+    numbered = list(checks)
+    for index in strings:
+        if index not in owner:  # a new check; a leading [kN] it carries is a citation
+            owner[index] = (next_id, True)
+            next_id += 1
+        number, prefix = owner[index]
+        numbered[index] = f'[k{number}] ' + checks[index] if prefix else checks[index]
+    return numbered
+
+def entry_keys(items, checks):
+    return [(own_id(item), canonical(bare(item))) if checks else (None, canonical(item)) for item in items]
+
+def unmatched(source, against, checks):
+    """Entries of source with no match in against; a check without an ID matches by text."""
+    keys = entry_keys(against, checks)
+    pairs, texts = Counter(keys), Counter(text for _, text in keys)
+    left = []
+    for item, (number, text) in zip(source, entry_keys(source, checks)):
+        if number is not None and pairs[(number, text)]:
+            pairs[(number, text)] -= 1
+        elif number is None and texts[text]:
+            texts[text] -= 1
+        else:
+            left.append(item)
+    return left
+
+def changes(old, new):
+    rows = []
+    for field in ARCHIVED:
+        before, after = old.get(field), new.get(field)
+        if before in (None, '', [], {}) or canonical(before) == canonical(after):
+            continue
+        if isinstance(before, list):
+            after = after if isinstance(after, list) else []
+            checks = field == 'completed_checks'
+            removed = unmatched(before, after, checks)
+            if removed:
+                rows.append({'field':field, 'removed':removed, 'added':unmatched(after, before, checks)})
+        else:
+            rows.append({'field':field, 'replaced':before})
+    return rows
+
+def fit_budget(content, stamp):
+    checks = content.get('completed_checks')
+    if not isinstance(checks, list):
+        return []
+    others = canonical({field: value for field, value in content.items() if field != 'completed_checks'})
+    keep = {int(number) for number in CITATION.findall(others)}
+    keep |= set(sorted(number for number in map(own_id, checks) if number is not None)[-KEEP_CHECKS:])
+    candidates = sorted((own_id(item), item) for item in checks if own_id(item) is not None and own_id(item) not in keep)
+    moved = []
+    for _, item in candidates:
+        if len(encode({**stamp, **content})) <= BUDGET_BYTES:
+            break
+        checks.remove(item)
+        moved.append(item)
+    reason = 'size budget: oldest checks beyond the newest ten that no other field cites'
+    return [{'field':'completed_checks', 'removed':moved, 'reason':reason}] if moved else []
+
+def largest_fields(content):
+    sizes = sorted(((len(encode(value)), field) for field, value in content.items()), reverse=True)
+    return {field: size for size, field in sizes[:4]}
+
+def append_history(history, rows):
+    try:
+        if not history.exists():
+            os.close(os.open(history, os.O_WRONLY | os.O_CREAT, 0o600))
+        with history.open('ab') as stream:
+            for row in rows:
+                stream.write((json.dumps(row, ensure_ascii=False)+'\n').encode())
+            stream.flush()
+            os.fsync(stream.fileno())
+    except OSError as error:
+        fail(f'cannot append to {history} ({error}); the handoff was not changed')
+
+def read(target, history, before):
+    try:
+        state = json.loads(before)
+    except ValueError:
+        fail(f'{target} is not valid JSON (sha256 {sha(before)}). Write a fresh state with that --expected-sha; '
+             'the old text is kept in the history.')
+    entries = history.read_bytes().count(b'\n') if history.exists() else 0
+    report = {'path':str(target), 'sha256':sha(before), 'state':state,
+              'history':{'path':str(history), 'entries':entries, 'note':HISTORY_NOTE}}
+    recorded = state.get('path') if isinstance(state, dict) else None
+    if isinstance(recorded, str) and os.path.exists(recorded) and not os.path.samefile(recorded, target):
+        report['copy_of'] = (recorded + ' still holds a different handoff, and this one was copied from it. Read that '
+                             'one and ask the user which is current before writing either.')
+    if len(before) > BUDGET_BYTES:
+        report['over_budget'] = f'{len(before)} bytes, over the {BUDGET_BYTES}-byte budget. ' + CLEANUP
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+
+def write(target, history, before, expected):
+    if before is not None and expected != sha(before):
+        fail('Handoff changed or expected SHA is missing; read the current handoff first')
+    if before is None and expected:
+        fail('Expected handoff is missing; review the destination')
+    content = json.load(sys.stdin)
+    if not isinstance(content, dict):
+        fail('Write a JSON object of current-state fields')
+    rows = []
+    try:
+        old = json.loads(before) if before else {}
+    except ValueError:
+        old = None
+    if not isinstance(old, dict):
+        rows.append({'field':None, 'unparseable_previous':before.decode('utf-8', 'replace')})
+        old = {}
+    # A read-back handoff carries the metadata this tool wrote; any other "path" value is the agent's own data.
+    if content.pop('path', None) not in (None, old.get('path'), str(target)):
+        fail('"path" is written by this tool; put locations in sources')
+    content = {k: v for k, v in content.items() if k not in ('version', 'updated_at')}
+    if set(content)-FIELDS:
+        fail('Use only the documented current-state fields (' + ', '.join(sorted(FIELDS))
+             + '); keep logs and history at their sources')
+    if not content.get('goal') or not content.get('next_action'):
+        fail('A handoff needs goal and next_action')
+    earlier = history_rows(history)
+    if isinstance(content.get('completed_checks'), list):
+        previous = old.get('completed_checks') if isinstance(old.get('completed_checks'), list) else []
+        content['completed_checks'] = number_checks(content['completed_checks'], previous, archived_ids(earlier))
+    rows += changes(old, content)
+    stamp = {'version':2, 'updated_at':datetime.now(timezone.utc).isoformat(), 'path':str(target)}
+    rows += fit_budget(content, stamp)
+    encoded = encode({**stamp, **content})
+    stamped = [{'at':stamp['updated_at'], 'previous_sha256':sha(before) if before is not None else None,
+                'sha256':sha(encoded), **row} for row in rows]
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix='.'+target.name+'-', dir=target.parent)
+    try:
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(encoded)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if (target.read_bytes() if target.exists() else None) != before:
+            fail('Concurrent edit detected; reread before updating')
+        if stamped:
+            append_history(history, stamped)
+        os.replace(temporary, target)
+    finally:
+        if os.path.exists(temporary): os.unlink(temporary)
+    result = {'path':str(target), 'sha256':sha(encoded), 'bytes':len(encoded)}
+    if rows:
+        by_field = Counter()
+        for row in rows:
+            by_field[row['field'] or 'unparseable_previous'] += len(row['removed']) if 'removed' in row else 1
+        result['archived'] = {'history':str(history), 'entries':sum(by_field.values()), 'by_field':dict(by_field)}
+    if len(encoded) > BUDGET_BYTES:
+        result['over_budget'] = {'bytes':len(encoded), 'budget':BUDGET_BYTES,
+                                 'largest_fields':largest_fields(content), 'advice':CLEANUP}
+        print(f'codex-task-state: warning: {target} is {len(encoded)} bytes, over the {BUDGET_BYTES}-byte budget. '
+              + CLEANUP, file=sys.stderr)
+    checks = content.get('completed_checks') if isinstance(content.get('completed_checks'), list) else []
+    cited = {int(n) for n in CITATION.findall(canonical({**content, 'completed_checks':[bare(i) for i in checks]}))}
+    dangling = cited - {own_id(item) for item in checks} - archived_ids(earlier + rows)
+    if dangling:
+        result['dangling_citations'] = [f'k{n}' for n in sorted(dangling)]
+    print(json.dumps(result, ensure_ascii=False))
+
 def main():
     example = 'echo \'{"goal":"...","next_action":"..."}\' | codex-task-state write PATH'
-    epilog = 'Fields: ' + ', '.join(sorted(FIELDS)) + '. Example: ' + example
-    parser = argparse.ArgumentParser(description=__doc__, epilog=epilog)
+    epilog = 'Fields: ' + ', '.join(sorted(FIELDS)) + f'. Budget: {BUDGET_BYTES} bytes. Example: ' + example
+    parser = argparse.ArgumentParser(description=__doc__, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('action', choices=['read', 'write'])
     parser.add_argument('path', type=Path)
     parser.add_argument('--expected-sha', help='Required when replacing an existing handoff')
     args = parser.parse_args()
     target = args.path.expanduser()
+    target = target.parent.resolve() / target.name
     before = target.read_bytes() if target.exists() else None
     if args.action == 'read':
         if before is None: parser.error('No handoff at that path')
-        print(json.dumps({'path':str(target.resolve()), 'sha256':sha(before), 'state':json.loads(before)}, ensure_ascii=False, indent=2))
-        return
-    if before is not None and args.expected_sha != sha(before):
-        parser.error('Handoff changed or expected SHA is missing; read the current handoff first')
-    if before is None and args.expected_sha:
-        parser.error('Expected handoff is missing; review the destination')
-    content = json.load(sys.stdin)
-    if isinstance(content, dict):
-        # A read-back handoff carries the metadata this tool wrote; drop it before validating.
-        content = {k: v for k, v in content.items() if k not in ('version', 'updated_at')}
-    if not isinstance(content, dict) or set(content)-FIELDS:
-        parser.error('Use only the documented current-state fields (' + ', '.join(sorted(FIELDS))
-                     + '); keep logs and history at their sources')
-    if not content.get('goal') or not content.get('next_action'):
-        parser.error('A handoff needs goal and next_action')
-    content = {'version':1, 'updated_at':datetime.now(timezone.utc).isoformat(), **content}
-    encoded = (json.dumps(content, ensure_ascii=False, indent=2)+'\n').encode()
-    target.parent.mkdir(parents=True, exist_ok=True)
-    fd, temporary = tempfile.mkstemp(prefix='.'+target.name+'-', dir=target.parent)
-    try:
-        with os.fdopen(fd, 'wb') as stream: stream.write(encoded)
-        current = target.read_bytes() if target.exists() else None
-        if current != before: parser.error('Concurrent edit detected; reread before updating')
-        os.replace(temporary, target)
-    finally:
-        if os.path.exists(temporary): os.unlink(temporary)
-    print(json.dumps({'path':str(target.resolve()), 'sha256':sha(encoded)}))
+        read(target, history_path(target), before)
+    else:
+        write(target, history_path(target), before, args.expected_sha)
 
 if __name__ == '__main__':
     main()

@@ -3,12 +3,15 @@
 
 Checks that ~/.codex/AGENTS.md and ~/.claude/CLAUDE.md are symlinks to the dot checkout's
 AGENTS.md, that no ~/.codex/AGENTS.override.md shadows the common file, and that a
-task-state file exists in the working tree (printing its goal and next action). Prints a
+task-state file exists in the working tree (printing its goal and next action, and noting a
+copy of another handoff or a file over codex-task-state's size budget). Prints a
 systemMessage only when something needs attention; never blocks.
 """
 import json
 import os
 import sys
+
+TASK_STATE_BUDGET = 12000  # BUDGET_BYTES in codex-task-state
 
 HOME = os.path.expanduser("~")
 SOURCE = os.path.join(HOME, "dot", "ai", "codex", "AGENTS.md")
@@ -38,6 +41,14 @@ def main():
                 goal = state.get("goal", "")[:120]
                 nxt = state.get("next_action", "")[:160]
                 notes.append(f"task state {candidate}: goal={goal!r}; next_action={nxt!r}")
+                origin = state.get("path")
+                if isinstance(origin, str) and os.path.exists(origin) and not os.path.samefile(origin, candidate):
+                    notes.append(f"task state {candidate} was copied from {origin}, which still exists; "
+                                 "read that one and ask which is current before writing either")
+                size = os.path.getsize(candidate)
+                if size > TASK_STATE_BUDGET:
+                    notes.append(f"task state {candidate} is {size} bytes, over the {TASK_STATE_BUDGET}-byte budget; "
+                                 "remove reversed decisions, finished operations and unused sources at the next write")
             except (OSError, ValueError):
                 notes.append(f"task state {candidate} could not be parsed")
             break
