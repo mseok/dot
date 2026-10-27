@@ -21,7 +21,7 @@ hooks, dispositions or receipts in the reply.
 
 # Shared working agreement
 
-The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global `AGENTS.md` and Claude Code's `CLAUDE.md` to it, and it applies in Codex, Claude Code, T3 Code and Cowork alike. Project files add only their own conventions; host facts live in `~/.codex/host-context.md`; procedures live in skills; configuration, credentials, MCP registrations and model choices stay host-local. One rule per bullet: after compaction re-read only the section you need.
+The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global `AGENTS.md` and Claude Code's `CLAUDE.md` to it, and it applies in Codex, Claude Code and Cowork alike. Project files add only their own conventions; host facts live in `~/.codex/host-context.md`; procedures live in skills; configuration, credentials, MCP registrations and model choices stay host-local. One rule per bullet: after compaction re-read only the section you need.
 
 ## Goal, scope and authorization
 
@@ -89,7 +89,7 @@ The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global
 ## Environment and tools
 
 - Each project's runtime stays in its own environment with its own Python, CUDA and framework versions; general tools such as Ruff come from the host-shared installation named in host-context. Never repair a routine check, lint or format by resolving dependencies, recreating an environment, changing lockfiles or clearing shared caches; when the first interpreter lacks a package, find the project's established one from its launch scripts or environment files, then add it to host-context.
-- Host facts (topology, peer hosts and key auth, what computer use, rc and T3-launched sessions can do, browser surfaces and accounts, interpreters, partitions, controller actions, ports in use) live in `~/.codex/host-context.md`: read it before promising a capability, and append a fact there when you rediscover one.
+- Host facts (topology, peer hosts and key auth, what computer use and rc sessions can do, browser surfaces and accounts, interpreters, partitions, controller actions, ports in use) live in `~/.codex/host-context.md`: read it before promising a capability, and append a fact there when you rediscover one.
 - When a capability looks unavailable, check this session's tool list and launch mode and run the tool's documented bootstrap, then report connection failure, missing tool or permission denial before proposing other causes.
 - Give GUI, REPL and remote calls explicit timeouts and say when a call waits on an approval prompt. Transfers resume where the server allows; otherwise use a stall timeout, never a wall-clock cap that discards partial data.
 - Menu paths, setting names and product limits come from the app's own files, docs or a screenshot checked in this turn; otherwise ask for a screenshot before giving steps.
