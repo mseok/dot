@@ -411,8 +411,8 @@ This dotfiles repository does not install an Obsidian REST API, ngrok tunnel, or
 
 The current system uses the private `obsidian-mcp-gateway` and `obsidian-main-plugin` projects. It runs as the local `local.obsidian-mcp-gateway` LaunchAgent on `127.0.0.1:39123`; Codex connects through `obsidian_main`.
 
-- The iCloud vault is canonical. `Notes/` is human-owned and read-only for agents.
-- Agent-created records belong under `Inbox/Agents/<authenticated-host>/` through the gateway.
+- The Mac mini SSD vault is canonical; devices use Obsidian Sync. Every vault rule lives in `~/agent-skills/skills/codex/obsidian-main-note/references/obsidian-policy.md`.
+- Agents read and write only through the gateway: the Mac mini host works on the whole vault outside hidden folders, remote hosts on their own records and shared question reports.
 - Check local availability with `curl -fsS http://127.0.0.1:39123/healthz` and Codex registration with `codex mcp list`.
 - Do not restore the retired REST/ngrok scripts from older revisions of this repository.
 

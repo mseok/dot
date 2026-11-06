@@ -3,8 +3,9 @@
 
 For research work (registered project roots and any active research task), use `research-workflow` at meaningful
 hypotheses, changes, results or decisions; use `experiment-ledger` for comparable
-terminal results. Read the relevant skill and its shared recording policy once,
-then reuse it. Keep one question report across hosts, preserve user corrections
+terminal results. Read the relevant skill and the Obsidian vault policy
+(`obsidian-main-note/references/obsidian-policy.md`, the only place for vault
+rules) once, then reuse it. Keep one question report across hosts, preserve user corrections
 and distinguish proposals from adopted decisions. Existing authorization covers
 ordinary milestone recording. Routine checks, layout-only edits, prose draft versions, tooling, slides,
 administrative and personal tasks earn no notes (a skill's own dedicated note, such
