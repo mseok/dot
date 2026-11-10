@@ -1,0 +1,32 @@
+# Copy to ~/.config/agent-guard/restricted-read-allow. fnmatch patterns, matched case-insensitively.
+# No slash: matches the file name. With a slash: matches the path relative to the project root.
+# Files matching a pattern may be read directly by Claude Fable and Opus 5.5; everything else under a root is denied.
+AGENTS.md
+CLAUDE.md
+task-state.json
+*.py
+*.pyi
+*.sh
+*.zsh
+*.bash
+*.js
+*.mjs
+*.cjs
+*.ts
+*.tsx
+*.jsx
+*.toml
+*.yaml
+*.yml
+*.rs
+*.go
+*.c
+*.h
+*.cpp
+*.hpp
+*.swift
+*.java
+*.css
+*.lock
+Makefile
+Dockerfile

@@ -1,0 +1,4 @@
+# Copy to ~/.config/agent-guard/restricted-roots. One absolute project root per line.
+# While this file is missing or has no entries, read-guard does nothing.
+# /absolute/path/to/project-root-one
+# /absolute/path/to/project-root-two

@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+"""PreToolUse guard for Claude Code and Codex: keep raw non-code project files away from restricted readers.
+
+When the session model is Claude Fable or Claude Opus 5.5, a tool call that would put the content of a
+non-code file under a registered project root into context is denied with an instruction to delegate the
+read to Claude Sonnet 5.5 (effort high). Covered calls: Claude Code Read, Grep in content mode, and shell
+cat, head, tail, less, more, nl, tac, sed, awk, grep, egrep, fgrep and rg (grep and rg only without a count,
+list or quiet flag), also after cd <root> &&. Restricted file reads go through Sonnet per bio-safe-reading.
+
+Host-local configuration, one entry per line, # starts a comment:
+  ~/.config/agent-guard/restricted-roots       absolute project roots; a missing or empty file disables the hook
+  ~/.config/agent-guard/restricted-read-allow  fnmatch patterns that may be read directly (code files,
+                                               AGENTS.md, task-state.json); a pattern without / matches the
+                                               file name, one with / matches the path relative to the root
+READ_GUARD_CONFIG overrides the configuration directory (used by the tests).
+Model: payload "model" when present, else the last "model" value in the transcript the payload points to
+(Claude Code assistant messages, Codex turn_context), else the call is allowed.
+Limits: this is a guard rail, not a sandbox. Interpreters (python, node), xargs, find -exec, git show and
+unresolved shell variables are not parsed.
+Usage in settings.json / hooks.json:
+  {"matcher": "Read|Grep|Bash", "hooks": [{"type": "command", "command": "python3 -I ~/dot/bin/read-guard", "timeout": 10}]}
+"""
+import fnmatch
+import glob
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import sys
+
+SHELL_TOOLS = {'Bash', 'exec_command', 'shell', 'shell_command', 'local_shell', 'unified_exec'}
+RESTRICTED_MODEL = re.compile(r'fable|opus[-_ ]?5[-_. ]5(?!\d)')
+TRANSCRIPT_MODEL = re.compile(r'"model"\s*:\s*"([^"]+)"')
+TRANSCRIPT_TAIL = 1 << 20
+PLAIN_READERS = {'cat', 'head', 'tail', 'less', 'more', 'nl', 'tac'}
+PLAIN_VALUE_FLAGS = {'-n', '-c'}
+AWK = {'awk', 'gawk', 'mawk', 'nawk'}
+SEARCHERS = {'grep', 'egrep', 'fgrep', 'rg'}
+WRAPPERS = {'env', 'command', 'time', 'nice', 'nohup', 'exec', 'builtin', 'sudo'}
+ASSIGNMENT = re.compile(r'^[A-Za-z_]\w*=')
+PUNCTUATION = set('();|&<>$')
+SEARCH_VALUE_SHORT = {'grep': set('efmABCdD'), 'rg': set('efgtTAmBCjMEr')}
+SEARCH_QUIET_SHORT = {'grep': set('cqlL'), 'rg': set('cql')}
+SEARCH_QUIET_LONG = {'--count', '--count-matches', '--files-with-matches', '--files-without-match', '--files',
+                     '--quiet', '--silent'}
+SEARCH_VALUE_LONG = {'--regexp', '--file', '--include', '--exclude', '--exclude-dir', '--exclude-from',
+                     '--max-count', '--after-context', '--before-context', '--context', '--glob', '--type',
+                     '--type-not', '--threads', '--replace', '--max-columns', '--binary-files', '--directories',
+                     '--devices', '--label'}
+INCLUDE_FLAGS = {'--include', '--glob', '-g'}
+
+
+def config_dir():
+    return Path(os.environ.get('READ_GUARD_CONFIG') or Path.home() / '.config' / 'agent-guard')
+
+
+def entries(name):
+    path = config_dir() / name
+    if not path.exists():
+        return []
+    rows = (line.split('#', 1)[0].strip() for line in path.read_text().splitlines())
+    return [row for row in rows if row]
+
+
+def model_name(value):
+    if isinstance(value, dict):
+        value = value.get('id') or value.get('model') or value.get('name') or value.get('slug')
+    return value.lower() if isinstance(value, str) else ''
+
+
+def transcript_model(path):
+    if not isinstance(path, str) or not path:
+        return ''
+    try:
+        with open(os.path.expanduser(path), 'rb') as handle:
+            handle.seek(0, os.SEEK_END)
+            handle.seek(max(0, handle.tell() - TRANSCRIPT_TAIL))
+            text = handle.read().decode('utf-8', 'replace')
+    except OSError:
+        return ''
+    names = [name for name in TRANSCRIPT_MODEL.findall(text) if not name.startswith('<')]
+    return names[-1].lower() if names else ''
+
+
+def session_model(payload):
+    return model_name(payload.get('model')) or transcript_model(payload.get('transcript_path'))
+
+
+def real(path):
+    return os.path.realpath(path)
+
+
+def inside(path, root):
+    return path == root or path.startswith(root.rstrip('/') + '/')
+
+
+def root_of(path, roots):
+    return next((root for root in roots if inside(path, root)), None)
+
+
+def overlaps(path, roots):
+    return any(inside(path, root) or inside(root, path) for root in roots)
+
+
+def is_allowed(path, root, patterns):
+    name = os.path.basename(path).lower()
+    relative = os.path.relpath(path, root).lower()
+    return any(fnmatch.fnmatchcase(relative if '/' in pattern else name, pattern.lower()) for pattern in patterns)
+
+
+def resolve(token, cwd):
+    expanded = os.path.expandvars(os.path.expanduser(token))
+    if not expanded or '$' in expanded:
+        return None
+    return real(os.path.join(cwd, expanded))
+
+
+def protected_file(path, roots, patterns):
+    root = root_of(path, roots)
+    if root is None or os.path.isdir(path) or is_allowed(path, root, patterns):
+        return None
+    return path
+
+
+def tokenize(command):
+    text = command.replace('\n', ' ; ').replace('`', ' ; ')
+    lexer = shlex.shlex(text, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    try:
+        return list(lexer)
+    except ValueError:
+        return re.sub(r'''["'()]''', ' ', text).split()
+
+
+def segments(command):
+    current = []
+    tokens = iter(tokenize(command))
+    for token in tokens:
+        punctuation = bool(token) and set(token) <= PUNCTUATION
+        if token == '$':
+            continue
+        if punctuation and token.endswith('(') or punctuation and not set(token) & set('<>'):
+            if current:
+                yield current
+            current = []
+        elif punctuation:
+            if current and current[-1].isdigit():
+                current.pop()
+            target = next(tokens, '')
+            if token == '<':
+                current.append(target)
+        else:
+            current.append(token)
+    if current:
+        yield current
+
+
+def strip_wrappers(tokens):
+    while tokens and (ASSIGNMENT.match(tokens[0]) or os.path.basename(tokens[0]) in WRAPPERS):
+        wrapper = os.path.basename(tokens[0])
+        tokens = tokens[1:]
+        while wrapper == 'env' and tokens and tokens[0].startswith('-'):
+            tokens = tokens[1:]
+    return tokens
+
+
+def plain_positionals(args):
+    files, skip, literal = [], False, False
+    for arg in args:
+        if skip:
+            skip = False
+        elif literal or not arg.startswith('-') or arg == '-':
+            files.append(arg)
+        elif arg == '--':
+            literal = True
+        elif arg in PLAIN_VALUE_FLAGS:
+            skip = True
+    return [arg for arg in files if arg != '-']
+
+
+def sed_files(args):
+    files, script_given, skip, literal = [], False, False, False
+    for arg in args:
+        if skip:
+            skip = False
+        elif literal or not arg.startswith('-') or arg == '-':
+            files.append(arg)
+        elif arg == '--':
+            literal = True
+        elif arg.startswith('-i') or arg.startswith('--in-place'):
+            return []
+        elif arg.startswith('--'):
+            script_given = script_given or arg.startswith(('--expression', '--file'))
+            skip = arg in ('--expression', '--file')
+        elif arg[-1] in 'ef':
+            script_given, skip = True, True
+    return files if script_given else files[1:]
+
+
+def awk_files(args):
+    files, program_given, skip, literal = [], False, False, False
+    for arg in args:
+        if skip:
+            skip = False
+        elif literal or not arg.startswith('-') or arg == '-':
+            files.append(arg)
+        elif arg == '--':
+            literal = True
+        elif arg in ('-F', '-v', '-f', '-e'):
+            program_given = program_given or arg in ('-f', '-e')
+            skip = True
+        elif arg.startswith(('-f', '-e')) and len(arg) > 2:
+            program_given = True
+    files = files if program_given else files[1:]
+    return [arg for arg in files if not ASSIGNMENT.match(arg)]
+
+
+def search_plan(name, args):
+    """Return (files, recursive, quiet, include_patterns) for grep, egrep, fgrep or rg."""
+    family = 'rg' if name == 'rg' else 'grep'
+    positional, includes = [], []
+    pattern_given = recursive = quiet = literal = skip = False
+    pending = None
+    for arg in args:
+        if skip:
+            skip = False
+            if pending in INCLUDE_FLAGS:
+                includes.append(arg)
+        elif literal or not arg.startswith('-') or arg == '-':
+            positional.append(arg)
+        elif arg == '--':
+            literal = True
+        elif arg.startswith('--'):
+            flag, _, value = arg.partition('=')
+            quiet = quiet or flag in SEARCH_QUIET_LONG
+            recursive = recursive or (family == 'grep' and flag in ('--recursive', '--dereference-recursive'))
+            pattern_given = pattern_given or flag in ('--regexp', '--file')
+            if flag in INCLUDE_FLAGS and value:
+                includes.append(value)
+            if flag in SEARCH_VALUE_LONG and not value:
+                skip, pending = True, flag
+        else:
+            for index, char in enumerate(arg[1:], start=1):
+                quiet = quiet or char in SEARCH_QUIET_SHORT[family]
+                recursive = recursive or (family == 'grep' and char in 'rR')
+                if char in SEARCH_VALUE_SHORT[family]:
+                    pattern_given = pattern_given or char in 'ef'
+                    rest = arg[index + 1:]
+                    if rest and char == 'g':
+                        includes.append(rest)
+                    elif not rest:
+                        skip, pending = True, '-' + char
+                    break
+    files = positional if pattern_given else positional[1:]
+    return files, recursive or family == 'rg', quiet, includes
+
+
+def shell_reads(command, cwd, roots, patterns):
+    """Yield the first protected path a shell command would print, as (path, kind)."""
+    for tokens in segments(command):
+        tokens = strip_wrappers(tokens)
+        if not tokens:
+            continue
+        name, args = os.path.basename(tokens[0]), tokens[1:]
+        if name in ('cd', 'pushd'):
+            target = next((arg for arg in args if not arg.startswith('-')), '~')
+            path = resolve(target, cwd)
+            cwd = path if path and os.path.isdir(path) else cwd
+            continue
+        if name in PLAIN_READERS:
+            files, tree = plain_positionals(args), False
+        elif name == 'sed':
+            files, tree = sed_files(args), False
+        elif name in AWK:
+            files, tree = awk_files(args), False
+        elif name in SEARCHERS:
+            files, recursive, quiet, includes = search_plan(name, args)
+            if quiet:
+                continue
+            tree = recursive and not any(is_allowed_name(include, patterns) for include in includes)
+            if tree and not files:
+                files = ['.']
+        else:
+            continue
+        for arg in files:
+            for path in expand(arg, cwd):
+                if os.path.isdir(path):
+                    if tree and overlaps(path, roots):
+                        yield path, 'tree'
+                elif os.path.exists(path) and protected_file(path, roots, patterns):
+                    yield path, 'file'
+
+
+def is_allowed_name(include, patterns):
+    return any(fnmatch.fnmatchcase(include.lower(), pattern.lower()) for pattern in patterns)
+
+
+def expand(arg, cwd):
+    resolved = resolve(arg, cwd)
+    if resolved is None:
+        return []
+    matches = glob.glob(os.path.join(cwd, os.path.expanduser(arg))) if glob.has_magic(arg) else [resolved]
+    return [real(match) for match in matches]
+
+
+def first_hit(payload, roots, patterns):
+    tool_name = payload.get('tool_name', '')
+    leaf = tool_name.rsplit('__', 1)[-1]
+    tool_input = payload.get('tool_input') or {}
+    cwd = real(payload.get('cwd') or os.getcwd())
+    if not isinstance(tool_input, dict):
+        return None
+    if leaf == 'Read':
+        target = resolve(str(tool_input.get('file_path') or tool_input.get('path') or ''), cwd)
+        return protected_file(target, roots, patterns) if target else None
+    if leaf == 'Grep' and tool_input.get('output_mode') == 'content':
+        target = resolve(str(tool_input.get('path') or '.'), cwd)
+        glob_filter = str(tool_input.get('glob') or '')
+        if target is None or not overlaps(target, roots) or (glob_filter and is_allowed_name(glob_filter, patterns)):
+            return None
+        return target if os.path.isdir(target) else protected_file(target, roots, patterns)
+    if leaf in SHELL_TOOLS:
+        command = tool_input.get('command', tool_input.get('cmd', ''))
+        command = ' '.join(command) if isinstance(command, list) else str(command)
+        return next((path for path, _ in shell_reads(command, cwd, roots, patterns)), None)
+    return None
+
+
+def deny(reason):
+    return {'systemMessage': reason,
+            'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'deny',
+                                   'permissionDecisionReason': reason}}
+
+
+def main():
+    try:
+        payload = json.load(sys.stdin)
+    except ValueError:
+        return
+    roots = [real(os.path.expanduser(entry)) for entry in entries('restricted-roots')]
+    if not roots or not isinstance(payload, dict):
+        return
+    model = session_model(payload)
+    if not RESTRICTED_MODEL.search(model):
+        return
+    hit = first_hit(payload, roots, entries('restricted-read-allow'))
+    if hit:
+        print(json.dumps(deny(
+            f'read-guard blocked reading {hit}: it is a non-code file under a registered project root and this '
+            f'session runs {model}. Delegate the read to Claude Sonnet 5.5 (claude-sonnet-5-5) at effort high: '
+            'spawn a subagent with that model and effort, pass only the paths and your question, and use its '
+            'answer. Code files, AGENTS.md and task-state.json may be read directly '
+            '(~/.config/agent-guard/restricted-read-allow). If the user asked you to read this exact file '
+            'yourself, tell them it was blocked.')))
+
+
+if __name__ == '__main__':
+    main()
