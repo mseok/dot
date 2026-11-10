@@ -25,8 +25,28 @@ export PLUGIN_DIR
 export SKETCHYBAR_BIN
 export AEROSPACE_BIN
 
+# Bound every CLI query so a stalled AeroSpace server cannot pile up clients.
+if [ -x "$HOMEBREW_PREFIX/bin/timeout" ]; then
+  TIMEOUT_BIN="${TIMEOUT_BIN:-$HOMEBREW_PREFIX/bin/timeout}"
+elif command -v gtimeout >/dev/null 2>&1; then
+  TIMEOUT_BIN="${TIMEOUT_BIN:-$(command -v gtimeout)}"
+else
+  TIMEOUT_BIN="${TIMEOUT_BIN:-}"
+fi
+AEROSPACE_TIMEOUT="${AEROSPACE_TIMEOUT:-3}"
+export TIMEOUT_BIN
+export AEROSPACE_TIMEOUT
+
+aerospace_cmd() {
+  if [ -n "$TIMEOUT_BIN" ]; then
+    "$TIMEOUT_BIN" -k 1 "$AEROSPACE_TIMEOUT" "$AEROSPACE_BIN" "$@"
+  else
+    "$AEROSPACE_BIN" "$@"
+  fi
+}
+
 aerospace_ready() {
-  [ -x "$AEROSPACE_BIN" ] && "$AEROSPACE_BIN" list-workspaces --focused >/dev/null 2>&1
+  [ -x "$AEROSPACE_BIN" ] && aerospace_cmd list-workspaces --focused >/dev/null 2>&1
 }
 
 wait_for_aerospace() {
@@ -51,11 +71,14 @@ sketchybar_item_exists() {
 }
 
 workspace_ids() {
-  "$AEROSPACE_BIN" list-workspaces --all 2>/dev/null
+  aerospace_cmd list-workspaces --all 2>/dev/null
 }
 
 monitor_ids() {
-  "$AEROSPACE_BIN" list-monitors 2>/dev/null | awk 'NF { print $1 }'
+  local raw
+
+  raw="$(aerospace_cmd list-monitors 2>/dev/null)" || return 1
+  printf '%s\n' "$raw" | awk 'NF { print $1 }'
 }
 
 all_display_ids() {
@@ -66,19 +89,20 @@ all_display_ids() {
 }
 
 workspaces_for_monitor() {
-  "$AEROSPACE_BIN" list-workspaces --monitor "$1" 2>/dev/null
+  aerospace_cmd list-workspaces --monitor "$1" 2>/dev/null
 }
 
 workspace_apps() {
   local sid="$1"
+  local raw
   local app_name
 
-  "$AEROSPACE_BIN" list-windows --workspace "$sid" --format '%{app-name}' 2>/dev/null |
-    while IFS= read -r app_name; do
-      app_name="$(trim_spaces "$app_name")"
-      [ -n "$app_name" ] || continue
-      printf '%s\n' "$app_name"
-    done
+  raw="$(aerospace_cmd list-windows --workspace "$sid" --format '%{app-name}' 2>/dev/null)" || return 1
+  while IFS= read -r app_name; do
+    app_name="$(trim_spaces "$app_name")"
+    [ -n "$app_name" ] || continue
+    printf '%s\n' "$app_name"
+  done <<< "$raw"
 }
 
 trim_spaces() {
@@ -112,14 +136,18 @@ build_icon_strip() {
 
 sync_space_item() {
   local sid="$1"
+  local display_target="${2:-}"
   local apps
   local icon_strip
-  local display_target
 
   sketchybar_item_exists "space.$sid" || return 0
-  display_target="$(all_display_ids)"
+  if [ -z "$display_target" ]; then
+    # Skip the update instead of writing a wrong display list after a timeout.
+    display_target="$(monitor_ids | paste -sd, -)"
+    [ -n "$display_target" ] || return 0
+  fi
 
-  apps="$(workspace_apps "$sid")"
+  apps="$(workspace_apps "$sid")" || return 0
   if [ -n "$apps" ]; then
     icon_strip="$(build_icon_strip "$apps")"
     "$SKETCHYBAR_BIN" --set "space.$sid" display="$display_target" drawing=on label="$icon_strip"
@@ -130,13 +158,20 @@ sync_space_item() {
 
 sync_all_spaces() {
   local sid
+  local sids
+  local display_target
 
-  for sid in $(workspace_ids); do
+  sids="$(workspace_ids)"
+  [ -n "$sids" ] || return 0
+  display_target="$(monitor_ids | paste -sd, -)"
+  [ -n "$display_target" ] || return 0
+
+  for sid in $sids; do
     sketchybar_item_exists "space.$sid" || continue
     "$SKETCHYBAR_BIN" --set "space.$sid" drawing=off label=""
   done
 
-  for sid in $(workspace_ids); do
-    sync_space_item "$sid"
+  for sid in $sids; do
+    sync_space_item "$sid" "$display_target"
   done
 }
