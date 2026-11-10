@@ -1,0 +1,318 @@
+#!/usr/bin/env python3
+"""Plan and verify targeted edits to a shared document from its exported source.
+
+Model-free and read-only: it reads an exported source archive (.zip) or folder and an approved
+change list, and writes only to standard output. It has no upload path and no network code; the
+edits themselves are made by the agent in the signed-in editor, one targeted replacement each
+(user decision 2026-11-10: never upload a source file over a live shared project).
+
+  shared-doc-apply hash EXPORT
+  shared-doc-apply plan EXPORT CHANGES [--json]
+  shared-doc-apply verify BEFORE_EXPORT CHANGES FRESH_EXPORT [--ignore GLOB]...
+
+CHANGES is JSON: a list (or {"changes": [...]}) of {"file", "before", "after"[, "reason"]}. Each
+`before` is one contiguous span that must occur exactly once in its file of the export. Exit codes:
+0 ok, 1 a check or the verification failed, 2 unreadable input.
+"""
+import argparse
+from dataclasses import dataclass
+import difflib
+import fnmatch
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import zipfile
+
+MAX_TOTAL_BYTES = 1 << 30
+MAX_DIFF_LINES = 40
+
+
+class InputError(Exception):
+    """The export or the change list cannot be read."""
+
+
+@dataclass
+class Export:
+    files: dict[str, bytes]
+    archive_sha256: str | None
+    skipped: int
+
+
+@dataclass
+class Located:
+    index: int
+    path: str
+    start: int
+    end: int
+    line: int
+    before: str
+    after: str
+    reason: str
+
+
+def sha256(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def load_zip(path):
+    files = {}
+    try:
+        with zipfile.ZipFile(path) as archive:
+            infos = [info for info in archive.infolist() if not info.is_dir()]
+            if sum(info.file_size for info in infos) > MAX_TOTAL_BYTES:
+                raise InputError('archive expands to more than 1 GiB')
+            for info in infos:
+                name = info.filename
+                if name.startswith('/') or '\\' in name or '..' in name.split('/'):
+                    raise InputError(f'unsafe path in archive: {name!r}')
+                if name in files:
+                    raise InputError(f'duplicate path in archive: {name!r}')
+                files[name] = archive.read(info)
+    except zipfile.BadZipFile as error:
+        raise InputError(f'not a readable zip archive: {path}') from error
+    return Export(files, sha256(Path(path).read_bytes()), 0)
+
+
+def load_dir(path):
+    files = {}
+    skipped = 0
+    for folder, _dirs, names in os.walk(path):
+        for name in names:
+            full = Path(folder)/name
+            if full.is_symlink() or not full.is_file():
+                skipped += 1
+                continue
+            files[full.relative_to(path).as_posix()] = full.read_bytes()
+    return Export(files, None, skipped)
+
+
+def load_export(path):
+    target = Path(path)
+    if target.is_dir():
+        return load_dir(target)
+    if target.is_file():
+        return load_zip(target)
+    raise InputError(f'no such export: {path}')
+
+
+def visible(files, ignore):
+    return {name: data for name, data in files.items() if not any(fnmatch.fnmatch(name, pattern) for pattern in ignore)}
+
+
+def tree_sha256(files):
+    digest = hashlib.sha256()
+    for name in sorted(files):
+        digest.update(f'{name}\0{sha256(files[name])}\n'.encode())
+    return digest.hexdigest()
+
+
+def load_changes(path):
+    try:
+        raw = json.loads(Path(path).read_text(encoding='utf-8'))
+    except (OSError, ValueError) as error:
+        raise InputError(f'cannot read change list {path}: {error}') from error
+    items = raw.get('changes') if isinstance(raw, dict) else raw
+    if not isinstance(items, list) or not items:
+        raise InputError('change list must be a non-empty list or {"changes": [...]}')
+    for number, item in enumerate(items, 1):
+        if not isinstance(item, dict) or not all(isinstance(item.get(key), str) for key in ('file', 'before', 'after')):
+            raise InputError(f'change {number} needs string fields file, before and after')
+    return items
+
+
+def resolve(files, name):
+    if name in files:
+        return name
+    nested = [path for path in files if path.count('/') == name.count('/') + 1 and path.endswith('/' + name)]
+    return nested[0] if len(nested) == 1 else None
+
+
+def occurrences(text, span):
+    found = []
+    at = text.find(span)
+    while at != -1:
+        found.append(at)
+        at = text.find(span, at + 1)
+    return found
+
+
+def decode(data):
+    try:
+        return data.decode('utf-8')
+    except UnicodeDecodeError:
+        return None
+
+
+def locate(files, changes):
+    """Return (located edits, problems); every `before` must match exactly once."""
+    located, problems = [], []
+    for number, change in enumerate(changes, 1):
+        path = resolve(files, change['file'])
+        before, after = change['before'], change['after']
+        if path is None:
+            problems.append(f'change {number}: file {change["file"]!r} is not in the export')
+            continue
+        text = decode(files[path])
+        if text is None:
+            problems.append(f'change {number}: {path} is not UTF-8 text')
+            continue
+        if not before or before == after:
+            problems.append(f'change {number}: before is empty or equal to after')
+            continue
+        hits = occurrences(text, before)
+        if not hits and '\r\n' in text:
+            before, after = (value.replace('\r\n', '\n').replace('\n', '\r\n') for value in (before, after))
+            hits = occurrences(text, before)
+        if len(hits) != 1:
+            problems.append(f'change {number}: before occurs {len(hits)} times in {path}, expected exactly 1')
+            continue
+        located.append(Located(number, path, hits[0], hits[0] + len(before), text.count('\n', 0, hits[0]) + 1,
+                               before, after, str(change.get('reason', ''))))
+    by_path = {}
+    for edit in sorted(located, key=lambda item: (item.path, item.start)):
+        previous = by_path.get(edit.path)
+        if previous and edit.start < previous.end:
+            problems.append(f'changes {previous.index} and {edit.index} overlap in {edit.path}')
+        by_path[edit.path] = edit
+    return located, problems
+
+
+def apply_edits(files, located):
+    result = dict(files)
+    for path in {edit.path for edit in located}:
+        text = files[path].decode('utf-8')
+        for edit in sorted((item for item in located if item.path == path), key=lambda item: -item.start):
+            text = text[:edit.start] + edit.after + text[edit.end:]
+        result[path] = text.encode('utf-8')
+    return result
+
+
+def header(label, export, files):
+    archive = f' archive_sha256={export.archive_sha256}' if export.archive_sha256 else ''
+    note = f' skipped_non_regular={export.skipped}' if export.skipped else ''
+    return f'{label}: files={len(files)} tree_sha256={tree_sha256(files)}{archive}{note}'
+
+
+def command_hash(args):
+    export = load_export(args.export)
+    print(header('export', export, export.files))
+    return 0
+
+
+def prepare(args, ignore=()):
+    export = load_export(args.export)
+    files = visible(export.files, ignore)
+    located, problems = locate(files, load_changes(args.changes))
+    return export, files, located, problems
+
+
+def print_problems(problems):
+    print(f'FAILED: {len(problems)} problem(s); no replacement is emitted')
+    for problem in problems:
+        print(f'  - {problem}')
+
+
+def command_plan(args):
+    export, files, located, problems = prepare(args)
+    print(header('export', export, files))
+    if problems:
+        print_problems(problems)
+        return 1
+    expected = apply_edits(files, located)
+    print(f'expected_tree_sha256={tree_sha256(expected)}')
+    if args.json:
+        edits = [{'index': e.index, 'file': e.path, 'line': e.line, 'before': e.before, 'after': e.after, 'reason': e.reason}
+                 for e in located]
+        print(json.dumps({'edits': edits}, ensure_ascii=False, indent=2))
+        return 0
+    print(f'OK: {len(located)} edit(s), each before-span occurs exactly once. Apply each in the editor as one targeted '
+          'replacement (select the exact span, paste the replacement), then re-export and run verify.')
+    for edit in located:
+        reason = f'  reason: {edit.reason}' if edit.reason else ''
+        print(f'\nEDIT {edit.index}/{len(located)}  file: {edit.path}  line: {edit.line}{reason}')
+        print(f'SELECT ({len(edit.before)} chars):\n<<<\n{edit.before}\n>>>')
+        print(f'REPLACE WITH ({len(edit.after)} chars):\n<<<\n{edit.after}\n>>>')
+    return 0
+
+
+def diff_lines(path, expected, fresh):
+    old, new = decode(expected), decode(fresh)
+    if old is None or new is None:
+        return [f'  binary content differs: expected {sha256(expected)[:12]}, fresh {sha256(fresh)[:12]}']
+    lines = list(difflib.unified_diff(old.splitlines(), new.splitlines(), f'expected/{path}', f'fresh/{path}', n=1, lineterm=''))
+    shown = [f'  {line}' for line in lines[:MAX_DIFF_LINES]]
+    if len(lines) > MAX_DIFF_LINES:
+        shown.append(f'  ... {len(lines) - MAX_DIFF_LINES} more diff lines')
+    return shown
+
+
+def command_verify(args):
+    args.export = args.before_export
+    _export, files, located, problems = prepare(args, args.ignore)
+    if problems:
+        print_problems(problems)
+        return 1
+    expected = apply_edits(files, located)
+    fresh_export = load_export(args.fresh_export)
+    fresh = visible(fresh_export.files, args.ignore)
+    print(f'before_tree_sha256={tree_sha256(files)}\nexpected_tree_sha256={tree_sha256(expected)}')
+    print(header('fresh', fresh_export, fresh))
+    if args.ignore:
+        print(f'ignored patterns: {", ".join(args.ignore)}')
+    approved = {edit.path for edit in located}
+    findings = []
+    for path in sorted(set(expected) | set(fresh)):
+        if path not in fresh:
+            findings.append([f'MISSING in fresh export: {path}'])
+        elif path not in expected:
+            findings.append([f'EXTRA in fresh export (not in the original export): {path}'])
+        elif fresh[path] != expected[path]:
+            if path in approved and fresh[path] == files[path]:
+                label = f'APPROVED EDIT NOT PRESENT: {path}'
+            elif path in approved:
+                label = f'DIFFERS beyond the approved edits (approved file): {path}'
+            else:
+                label = f'CHANGED outside the approved files: {path}'
+            findings.append([label, *diff_lines(path, expected[path], fresh[path])])
+    if not findings:
+        print(f'VERIFY OK: the fresh export equals the original export plus the {len(located)} approved edit(s)')
+        return 0
+    print(f'VERIFY FAILED: {len(findings)} file(s) differ from the expected result')
+    for finding in findings:
+        print('\n'.join(finding))
+    return 1
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(description='Plan and verify targeted edits from an exported source; read-only.')
+    sub = parser.add_subparsers(dest='command', required=True)
+    one = sub.add_parser('hash', help='print the hashes of an export')
+    one.add_argument('export')
+    one.set_defaults(run=command_hash)
+    plan = sub.add_parser('plan', help='check the change list and print the per-edit replacements')
+    plan.add_argument('export')
+    plan.add_argument('changes')
+    plan.add_argument('--json', action='store_true')
+    plan.set_defaults(run=command_plan)
+    verify = sub.add_parser('verify', help='compare a fresh export with the original plus the approved edits')
+    verify.add_argument('before_export')
+    verify.add_argument('changes')
+    verify.add_argument('fresh_export')
+    verify.add_argument('--ignore', action='append', default=[], metavar='GLOB', help='file pattern to leave out of all comparisons')
+    verify.set_defaults(run=command_verify)
+    return parser
+
+
+def main():
+    args = build_parser().parse_args()
+    try:
+        return args.run(args)
+    except InputError as error:
+        print(f'error: {error}', file=sys.stderr)
+        return 2
+
+
+if __name__ == '__main__':
+    sys.exit(main())
