@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""Start a command in its own session so it outlives the tool call that launched it.
+
+  agent-detach run --name NAME -- CMD [ARGS...]   start, wait two seconds, print the state
+  agent-detach status [NAME|RECEIPT]               alive or exited (all recent jobs without an argument)
+
+A plain background job (`nohup cmd &`) inside one tool call is killed when the call returns
+(host-context, 2026-11-07). Here the command runs under a small wrapper in a new session with
+stdin closed and output in a log; the wrapper records the exit code next to the receipt.
+State lives in $AGENT_DETACH_DIR (default ~/.local/state/agent-detach).
+"""
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import uuid
+from pathlib import Path
+
+WAIT_SECONDS = 2
+TAIL_LINES = 10
+LIST_LIMIT = 20
+
+
+def state_dir():
+    path = Path(os.environ.get('AGENT_DETACH_DIR') or Path.home()/'.local/state/agent-detach')
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def start_time(pid):
+    """The process start time as ps prints it, or None when no such process exists."""
+    out = subprocess.run(['ps', '-p', str(pid), '-o', 'lstart='], capture_output=True, text=True, check=False).stdout
+    return ' '.join(out.split()) or None
+
+
+def exit_path(receipt):
+    return receipt.with_suffix('.exit')
+
+
+def tail(log):
+    try:
+        with open(log, 'rb') as handle:
+            handle.seek(0, os.SEEK_END)
+            handle.seek(max(0, handle.tell() - 8192))
+            text = handle.read().decode('utf-8', 'replace')
+    except OSError:
+        return ''
+    return '\n'.join(text.splitlines()[-TAIL_LINES:])
+
+
+def wrap(receipt_path, command):
+    """Runs inside the new session: run the command, then record its exit code."""
+    try:
+        code = subprocess.run(command, stdin=subprocess.DEVNULL, check=False).returncode
+    except OSError as error:
+        print(f'agent-detach: cannot start {command[0]}: {error}', flush=True)
+        code = 127
+    exit_path(Path(receipt_path)).write_text(f'{code}\n')
+    return code
+
+
+def run(args):
+    if not re.fullmatch(r'[A-Za-z0-9._-]+', args.name):
+        sys.exit('agent-detach: --name may contain only letters, digits, dot, underscore and hyphen')
+    if not args.command:
+        sys.exit('agent-detach: no command after --')
+    base = f"{state_dir()/args.name}-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:4]}"
+    log, receipt = Path(base + '.log'), Path(base + '.json')
+    with open(log, 'ab') as out:
+        proc = subprocess.Popen([sys.executable, os.path.abspath(__file__), '_wrap', str(receipt), '--', *args.command],
+                                stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT, start_new_session=True)
+    receipt.write_text(json.dumps({'name': args.name, 'pid': proc.pid, 'started': start_time(proc.pid), 'log': str(log),
+                                   'cwd': os.getcwd(), 'command': args.command, 'launched_at': time.time()}, indent=1) + '\n')
+    try:
+        proc.wait(timeout=WAIT_SECONDS)
+    except subprocess.TimeoutExpired:
+        print(f'alive pid={proc.pid} log={log} receipt={receipt}')
+        return 0
+    code = int(exit_path(receipt).read_text()) if exit_path(receipt).exists() else proc.returncode
+    print(f'exited code={code} log={log} receipt={receipt}')
+    last = tail(log)
+    if last:
+        print(last)
+    return code if code >= 0 else 128 - code
+
+
+def describe(receipt):
+    info = json.loads(receipt.read_text())
+    where = f"name={info['name']} pid={info['pid']} log={info['log']} receipt={receipt}"
+    exit_file = exit_path(receipt)
+    if exit_file.exists():
+        return f'exited code={exit_file.read_text().strip()} {where}'
+    now = start_time(info['pid'])
+    if now is None:
+        return f'exited code=unknown (process gone without recording an exit code) {where}'
+    if info['started'] is not None and now != info['started']:
+        return f'exited code=unknown (pid was reused by another process) {where}'
+    return f'alive {where}'
+
+
+def status(args):
+    receipts = sorted(state_dir().glob('*.json'), key=lambda path: path.stat().st_mtime, reverse=True)
+    if args.target and Path(args.target).is_file():
+        chosen = [Path(args.target)]
+    elif args.target:
+        chosen = [path for path in receipts if path.name.rsplit('-', 3)[0] == args.target][:1]
+    else:
+        chosen = receipts[:LIST_LIMIT]
+    if not chosen:
+        print(f'agent-detach: no receipt for {args.target or "any job"}', file=sys.stderr)
+        return 2
+    for receipt in chosen:
+        print(describe(receipt))
+    return 0
+
+
+def main():
+    if len(sys.argv) > 3 and sys.argv[1] == '_wrap':
+        return wrap(sys.argv[2], sys.argv[4:])
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest='action', required=True)
+    run_parser = sub.add_parser('run')
+    run_parser.add_argument('--name', required=True)
+    run_parser.add_argument('command', nargs=argparse.REMAINDER)
+    status_parser = sub.add_parser('status')
+    status_parser.add_argument('target', nargs='?')
+    args = parser.parse_args()
+    if args.action == 'run':
+        args.command = args.command[1:] if args.command[:1] == ['--'] else args.command
+        return run(args)
+    return status(args)
+
+
+if __name__ == '__main__':
+    sys.exit(main())
