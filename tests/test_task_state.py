@@ -25,7 +25,7 @@ def bare(items):
 
 class TaskState(unittest.TestCase):
     def setUp(self):
-        self.dir = Path(tempfile.mkdtemp(dir='/private/tmp'))
+        self.dir = Path(tempfile.mkdtemp(dir=os.path.realpath(tempfile.gettempdir())))
         self.path = self.dir / 'task-state.json'
         self.history = self.dir / 'task-state.history.jsonl'
 

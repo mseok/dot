@@ -14,6 +14,8 @@ CHANGES is JSON: a list (or {"changes": [...]}) of {"file", "before", "after"[, 
 `before` is one contiguous span that must occur exactly once in its file of the export. Exit codes:
 0 ok, 1 a check or the verification failed, 2 unreadable input.
 """
+from __future__ import annotations
+
 import argparse
 from dataclasses import dataclass
 import difflib
