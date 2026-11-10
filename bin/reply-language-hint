@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""UserPromptSubmit hook (Claude Code and Codex): keep replies in the user's language.
+
+AGENTS.md says to reply in the language of the user's latest message, also in progress updates. The
+2026-11-10 audit found 16 verified cases where Korean sessions drifted into English progress notes or
+reports. This hook adds one line of context when the submitted message is written in Korean. It never
+blocks and prints nothing for other messages or when the user asks for an English answer.
+Usage in settings.json / hooks.json:
+  {"type": "command", "command": "python3 ~/dot/bin/reply-language-hint", "timeout": 5}
+"""
+import json
+import re
+import sys
+
+HANGUL = re.compile(r"[가-힣]")
+ASKS_ENGLISH = re.compile(r"영어로\s*(?:답|대답|말해|얘기)|(?i:answer|reply|respond)\s+in\s+English")
+HINT = ("The user's message is in Korean: write the reply and every progress note in Korean. "
+        "Code, commands, paths, quoted text and established technical terms stay as they are.")
+
+
+def hint_for(prompt):
+    if not isinstance(prompt, str) or len(HANGUL.findall(prompt)) < 2 or ASKS_ENGLISH.search(prompt):
+        return None
+    return HINT
+
+
+def main():
+    try:
+        payload = json.load(sys.stdin)
+    except ValueError:
+        return
+    hint = hint_for(payload.get("prompt") or payload.get("user_prompt") or "")
+    if hint:
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": hint}}, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

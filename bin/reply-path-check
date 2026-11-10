@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Stop hook (Claude Code) and Stop hook (Codex): warn when the final reply names local paths that do not exist.
+"""Stop hook (Claude Code and Codex): warn when the final reply names local paths that do not exist.
 
 Guidance alone cannot guarantee that an agent gives absolute, existing paths, so this hook checks the
 last assistant message mechanically. It never blocks; it appends a systemMessage listing paths that are
 relative, missing or unreadable on this host, so the agent (or the user) sees the mismatch at once.
+
+What it deliberately leaves alone (each was a recorded false alarm in the 2026-11-10 audit): fenced code
+blocks, inline command snippets, glob and placeholder patterns, paths that contain spaces (read whole
+from a Markdown link, a backtick span or the rest of the line), and paths on another host (another OS
+family, or a line that names a host listed in ~/.config/reply-path-check/other-hosts).
 Usage in settings.json / hooks.json:
   {"type": "command", "command": "python3 ~/dot/bin/reply-path-check", "timeout": 10}
 """
@@ -12,9 +17,16 @@ import os
 import re
 import sys
 
-PATH_RE = re.compile(r"(?<![\w/])((?:/Volumes|/Users|/home|~)/[^\s`'\")\]>]+)")
+ROOTS = r"(?:/Volumes|/Users|/home|~)/"
+FENCE_RE = re.compile(r"```.*?(?:```|\Z)", re.DOTALL)
+ANGLE_LINK_RE = re.compile(r"\]\(<([^>\n]+)>\)")
+TICK_RE = re.compile(r"`([^`\n]+)`")
+PATH_RE = re.compile(r"(?<![\w/])(" + ROOTS + r"[^\s`'\")\]>]+)")
 REL_DIRS = "drafts|findings|scripts|inbox|skills|batches|excerpts"
-REL_RE = re.compile(r"(?<![\w/.])((?:" + REL_DIRS + r")/[\w\-./]+\.[A-Za-z0-9]{1,5})")
+REL_RE = re.compile(r"(?<![\w/.~\-])((?:" + REL_DIRS + r")/[\w\-./]+\.[A-Za-z0-9]{1,5})")
+PATTERN_CHARS = set("*?{}$<>|…")
+TRAIL = ".,;:)]*_|"
+OTHER_HOSTS_FILE = os.path.expanduser("~/.config/reply-path-check/other-hosts")
 
 
 def last_assistant_text(transcript_path):
@@ -42,6 +54,80 @@ def last_assistant_text(transcript_path):
     return ""
 
 
+def other_host_names():
+    try:
+        with open(OTHER_HOSTS_FILE, encoding="utf-8") as fh:
+            return [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+    except OSError:
+        return []
+
+
+def foreign(path):
+    """True for a path that belongs to another OS family than this host."""
+    if sys.platform == "darwin":
+        return path.startswith("/home/")
+    return path.startswith(("/Volumes/", "/Users/"))
+
+
+def exists_whole_or_extended(token, rest_of_line):
+    """A bare path may contain spaces: accept it when the token, or the token plus following words, exists."""
+    words = rest_of_line.split(" ")
+    for n in range(1, min(len(words), 9) + 1):
+        candidate = os.path.expanduser(" ".join(words[:n]).rstrip(TRAIL))
+        if candidate and os.path.exists(candidate):
+            return candidate
+    return None
+
+
+def find_problems(text, hosts=()):
+    problems = []
+    text = FENCE_RE.sub("\n", text)
+    whole = []  # paths given as one unit, spaces included
+
+    def take_link(match):
+        whole.append(match.group(1))
+        return "]()"
+
+    def take_tick(match):
+        span = match.group(1).strip()
+        if re.match(ROOTS, span) and (" " not in span or os.path.exists(os.path.expanduser(span))):
+            whole.append(span)
+            return " "
+        if " " in span:
+            return " "  # an inline command snippet: its arguments are not deliverable paths
+        return " " + span + " "
+
+    text = ANGLE_LINK_RE.sub(take_link, text)
+    text = TICK_RE.sub(take_tick, text)
+    seen = set()
+    for path in whole:
+        if not re.match(ROOTS, path) or PATTERN_CHARS & set(path) or foreign(path):
+            continue
+        candidate = os.path.expanduser(path)
+        if candidate not in seen and not os.path.exists(candidate):
+            problems.append(f"missing: {candidate}")
+        seen.add(candidate)
+    for line in text.split("\n"):
+        on_other_host = any(name in line for name in hosts)
+        for match in PATH_RE.finditer(line):
+            token = match.group(1).rstrip(TRAIL)
+            if PATTERN_CHARS & set(token) or foreign(token) or on_other_host:
+                continue
+            candidate = os.path.expanduser(token)
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            found = candidate if os.path.exists(candidate) else exists_whole_or_extended(token, line[match.start(1):])
+            if not found:
+                problems.append(f"missing: {candidate}")
+            elif os.path.isfile(found) and not os.access(found, os.R_OK):
+                problems.append(f"unreadable: {found}")
+        for match in REL_RE.findall(line):
+            if not PATTERN_CHARS & set(match):
+                problems.append(f"relative (give an absolute path): {match}")
+    return problems
+
+
 def main():
     payload = json.load(sys.stdin)
     if payload.get("stop_hook_active"):
@@ -49,15 +135,7 @@ def main():
     text = last_assistant_text(payload.get("transcript_path", "")) or payload.get("last_assistant_message", "")
     if not text:
         return
-    problems = []
-    for match in PATH_RE.findall(text):
-        candidate = os.path.expanduser(match.rstrip(".,;:"))
-        if not os.path.exists(candidate):
-            problems.append(f"missing: {candidate}")
-        elif os.path.isfile(candidate) and not os.access(candidate, os.R_OK):
-            problems.append(f"unreadable: {candidate}")
-    for match in REL_RE.findall(text):
-        problems.append(f"relative (give an absolute path): {match}")
+    problems = find_problems(text, other_host_names())
     if problems:
         advice = ("Give absolute paths verified to exist on this host, and say on which host; "
                   "a path that exists here is not yet opened on the user's screen.")
