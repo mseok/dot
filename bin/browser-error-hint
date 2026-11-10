@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""PostToolUse hook (Claude Code and Codex): explain "Local browser use is disabled" once per session.
+
+The 2026-11-10 audit found 15 sessions where this message, which the installed app can return when no browser
+executor is linked to the chat, led to asking the user to change settings (12 of them). When a tool result
+contains the message, this hook adds one line of context pointing to the preflight in codex-browser.md, once per
+session. It never blocks and prints nothing otherwise.
+
+Payload (both clients send JSON on stdin): session_id, hook_event_name, tool_name, tool_input and tool_response
+(any JSON: a string, an object, or a list of content blocks). Claude Code reports a failed tool as event
+PostToolUseFailure with an `error` string, so `error` is read too. Output is
+{"hookSpecificOutput": {"hookEventName": <event>, "additionalContext": <text>}}, which both clients accept.
+Calls that only read a file (Read, Grep, cat, sed, ...) are ignored, because codex-browser.md quotes the message.
+Once-per-session state: one empty file per hashed session id in ~/.cache/browser-error-hint (override with
+BROWSER_ERROR_HINT_STATE_DIR), pruned after 7 days.
+Usage in settings.json / hooks.json (no matcher):
+  {"type": "command", "command": "python3 ~/dot/bin/browser-error-hint", "timeout": 5}
+"""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import sys
+import time
+
+MESSAGE = re.compile(r"local browser use is disabled", re.IGNORECASE)
+FILE_TOOLS = {"Read", "Grep", "Glob", "NotebookRead", "Edit", "Write", "MultiEdit", "NotebookEdit", "apply_patch"}
+SHELL_TOOLS = {"Bash", "exec_command", "shell", "local_shell"}
+READERS = {"cat", "head", "tail", "sed", "awk", "grep", "rg", "less", "more", "nl", "bat", "ack"}
+SETUP_WORDS = {"cd", "export", "env", "set"}
+MAX_AGE_SECONDS = 7 * 24 * 3600
+HINT = ("This message usually means no browser executor is linked to this chat, not that the setting is off. "
+        "Run the preflight in ~/dot/ai/codex/references/codex-browser.md once before asking the user for "
+        "anything, and report the stage it returns.")
+
+
+def state_dir():
+    override = os.environ.get("BROWSER_ERROR_HINT_STATE_DIR")
+    if override:
+        return Path(override)
+    return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "browser-error-hint"
+
+
+def first_for_session(session_id):
+    """True the first time this session id is seen; creates the marker atomically."""
+    directory = state_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    now = time.time()
+    for old in directory.iterdir():
+        if old.is_file() and now - old.stat().st_mtime > MAX_AGE_SECONDS:
+            old.unlink(missing_ok=True)
+    name = hashlib.sha256(str(session_id or "unknown").encode()).hexdigest()[:32]
+    try:
+        os.close(os.open(directory / name, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600))
+    except FileExistsError:
+        return False
+    return True
+
+
+def command_text(tool_input):
+    if not isinstance(tool_input, dict):
+        return ""
+    command = tool_input.get("command", tool_input.get("cmd", ""))
+    return " ".join(map(str, command)) if isinstance(command, list) else str(command)
+
+
+def only_reads(payload):
+    """True when the call just displays or edits a file, so the message is quoted text, not an error."""
+    tool = payload.get("tool_name")
+    if tool in FILE_TOOLS:
+        return True
+    if tool not in SHELL_TOOLS:
+        return False
+    for segment in re.split(r"&&|\|\||;|\n", command_text(payload.get("tool_input"))):
+        words = segment.split()
+        if words and words[0] not in SETUP_WORDS:
+            return words[0].rsplit("/", 1)[-1] in READERS
+    return False
+
+
+def hint_for(payload):
+    if not isinstance(payload, dict) or only_reads(payload):
+        return None
+    result = json.dumps([payload.get("tool_response"), payload.get("error"), payload.get("tool_output")],
+                        ensure_ascii=False, default=str)
+    if not MESSAGE.search(result) or not first_for_session(payload.get("session_id")):
+        return None
+    return HINT
+
+
+def main():
+    try:
+        payload = json.load(sys.stdin)
+    except ValueError:
+        return
+    hint = hint_for(payload)
+    if hint:
+        event = payload.get("hook_event_name") or "PostToolUse"
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": event, "additionalContext": hint}}, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()
