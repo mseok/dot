@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Print the one-line preflight for a subagent fan-out.
+
+It only informs. It never refuses a launch and always exits 0, whatever the quota says
+(user decision 2026-11-10: "한줄 안내만 하면될듯. 굳이 띄우지 않게는 하지마.").
+
+  fanout-preflight --agents 8 --model claude-sonnet-5-5 --effort high [--chars 1800000] [--search-cap 0] [--output PATH]
+"""
+import argparse
+import json
+import os
+import shlex
+import subprocess
+from datetime import datetime
+
+QUOTA_CMD = os.environ.get('FANOUT_PREFLIGHT_QUOTA_CMD') or 'node ' + shlex.quote(os.path.expanduser('~/.codex/skills/llm-quota/scripts/quota.mjs'))
+# Weekly-window points per million characters read, measured on 2026-11-10 with claude-sonnet-5-5 readers
+# (9 readers over 1.8M characters: +3 points; 18 readers over 4.4M: +2 points; orchestrator included). Rough.
+POINTS_PER_MILLION_CHARS = {'claude': (0.5, 1.7)}
+
+
+def provider(model):
+    name = model.lower()
+    return 'claude' if 'claude' in name else 'gemini' if 'gemini' in name else 'codex'
+
+
+def quota_text(name):
+    try:
+        out = subprocess.run(shlex.split(QUOTA_CMD) + [name], capture_output=True, text=True, timeout=45, check=False).stdout
+        windows = json.loads(out)['providers'][0]['windows']
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError):
+        return f'{name} quota unavailable'
+    parts = []
+    for window in windows:
+        if window.get('usedPercent') is None:
+            continue
+        label = 'weekly' if window.get('windowMinutes') == 10080 else f"{window.get('windowMinutes')}-minute"
+        scope = '' if window.get('scope') in (None, 'account') else f" {window['scope']}"
+        reset = ''
+        if window.get('resetsAt'):
+            reset = ', resets ' + datetime.fromisoformat(window['resetsAt'].replace('Z', '+00:00')).astimezone().strftime('%m-%d %H:%M')
+        parts.append(f"{name}{scope} {label} window {window['usedPercent']}% used{reset}")
+    return '; '.join(parts) or f'{name} quota unavailable'
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--agents', type=int, required=True)
+    parser.add_argument('--model', required=True)
+    parser.add_argument('--effort', required=True)
+    parser.add_argument('--chars', type=int, help='characters the agents will read in total')
+    parser.add_argument('--search-cap', type=int, default=0)
+    parser.add_argument('--output', default='not given')
+    args = parser.parse_args()
+    name = provider(args.model)
+    estimate = 'no estimate (pass --chars)'
+    if args.chars and name in POINTS_PER_MILLION_CHARS:
+        low, high = (rate * args.chars / 1e6 for rate in POINTS_PER_MILLION_CHARS[name])
+        estimate = f'+{low:.1f} to +{high:.1f} weekly points for {args.chars / 1e6:.1f}M characters (2026-11-10 measurement)'
+    print(f'fan-out preflight: {args.agents} agents · model {args.model} · effort {args.effort} · search cap {args.search_cap} per agent · '
+          f'{quota_text(name)} · estimate {estimate} · output {args.output}')
+
+
+if __name__ == '__main__':
+    main()
