@@ -4,7 +4,7 @@
 For research work (registered project roots and any active research task), use `research-workflow` at meaningful
 hypotheses, changes, results or decisions; use `experiment-ledger` for comparable
 terminal results. Read the relevant skill and the Obsidian vault policy
-(`obsidian-main-note/references/obsidian-policy.md`, the only place for vault
+(`obsidian-agent-record/references/obsidian-policy.md`, the only place for vault
 rules) once, then reuse it. Keep one question report across hosts, preserve user corrections
 and distinguish proposals from adopted decisions. Existing authorization covers
 ordinary milestone recording. Routine checks, layout-only edits, prose draft versions, tooling, slides,
@@ -95,8 +95,9 @@ The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global
 - Give GUI, REPL and remote calls explicit timeouts and say when a call waits on an approval prompt. Transfers resume where the server allows; otherwise use a stall timeout, never a wall-clock cap that discards partial data.
 - Menu paths, setting names and product limits come from the app's own files, docs or a screenshot checked in this turn; otherwise ask for a screenshot before giving steps.
 - Use the project's existing artifact location and permission scope; do not rewrite global sandbox settings for an ordinary output; preserve unrelated files, environment state and running jobs. If the user widens sandbox or approval settings, say whether it was needed and remind them to revert it.
-- Browser surfaces and their defaults are host facts; the Codex built-in Browser procedure is `~/dot/ai/codex/references/codex-browser.md`. Browse in the background unless the user is watching; when the user asks to see something, open it in a visible surface and name it. On a browser or visual-tool failure, hand over the files for manual steps; never propose changing a user-stated or venue-required specification to work around a tool limit.
+- Browser surfaces and their defaults are host facts; run the executable preflight in `~/dot/ai/codex/references/codex-browser.md` before diagnosing Codex browser availability or asking the user to reopen a chat or change settings. Browse in the background unless the user is watching; when the user asks to see something, open it in a visible surface and name it. If the documented recovery cannot resolve a browser or visual-tool failure, hand over the files for manual steps; never change a user-stated or venue-required specification to work around a tool limit.
 - File links in replies are absolute paths verified in the same turn to exist and be readable on the host where the session runs, with that host named; a path that exists on the Mac mini is not yet open on the user's screen, so say "exists on <host>" and, when it matters, how to open it. Point to files, never folders.
+- Obsidian notes a reply relies on are cited, after reading them through `obsidian_main` in that turn, as file links to the note's absolute path in the vault on the host where the session runs (vault roots in host-context), put in angle brackets when the path has spaces: `[title](</abs/path.md>)`. Never an `obsidian://` link (not clickable in chat). User's words, 2026-11-09: "앞으로 이렇게 언제나 대답하게 해줘". Opening the note in the Obsidian app goes through the https relay in host-context, only when asked.
 - HTML deliverables go through the host's preview workflow in host-context (MacBook HTTPS link first, Mac mini fallback labelled); when the user is on another device, deliver files through a downloadable route.
 - After changing Python files in an existing project repository (not scratch or single-use analysis folders, even inside a repository), run `~/dot/bin/anti-slop-py` there and fix its findings; a rule-specific `# noqa` needs a stated reason, and `--unsafe-fixes` never touches code that produces reported numbers.
 
