@@ -4,7 +4,8 @@
 Checks that ~/.codex/AGENTS.md and ~/.claude/CLAUDE.md are symlinks to the dot checkout's
 AGENTS.md, that no ~/.codex/AGENTS.override.md shadows the common file, and that a
 task-state file exists in the working tree (printing its goal and next action, and noting a
-copy of another handoff or a file over codex-task-state's size budget). Prints a
+copy of another handoff or a file over codex-task-state's size budget; the optional
+completion_criterion is printed when set). Prints a
 systemMessage only when something needs attention; never blocks.
 """
 import json
@@ -40,7 +41,9 @@ def main():
                 state = json.load(open(candidate))
                 goal = state.get("goal", "")[:120]
                 nxt = state.get("next_action", "")[:160]
-                notes.append(f"task state {candidate}: goal={goal!r}; next_action={nxt!r}")
+                criterion = state.get("completion_criterion")
+                shown = f"; completion_criterion={criterion[:160]!r}" if isinstance(criterion, str) and criterion else ""
+                notes.append(f"task state {candidate}: goal={goal!r}{shown}; next_action={nxt!r}")
                 origin = state.get("path")
                 if isinstance(origin, str) and os.path.exists(origin) and not os.path.samefile(origin, candidate):
                     notes.append(f"task state {candidate} was copied from {origin}, which still exists; "

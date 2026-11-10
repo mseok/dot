@@ -9,6 +9,11 @@ to the history, except the newest ten and every check that a decision, question,
 non-check field cites; a handoff still over budget is written anyway and the write names its largest
 fields. The handoff records its own path; read reports a copy when that path still holds a different
 file.
+
+The optional field `completion_criterion` holds the user's stopping test in the user's own words,
+with no added criterion. When it is set, the final reply says one of: met; not met, with the
+reason; or blocked, with the one user action that unblocks it. A handoff without the field reads
+and writes as before. Replacing the criterion archives the old text to the history.
 """
 import argparse
 from collections import Counter
@@ -22,10 +27,11 @@ import sys
 import tempfile
 
 FIELDS = {
-    'goal', 'scope', 'decisions', 'sources', 'active_operations',
+    'goal', 'completion_criterion', 'scope', 'decisions', 'sources', 'active_operations',
     'completed_checks', 'pending_questions', 'next_action', 'status',
 }
-ARCHIVED = ('goal', 'scope', 'decisions', 'sources', 'active_operations', 'completed_checks', 'pending_questions')
+ARCHIVED = ('goal', 'completion_criterion', 'scope', 'decisions', 'sources', 'active_operations',
+            'completed_checks', 'pending_questions')
 BUDGET_BYTES = 12000
 KEEP_CHECKS = 10
 OWN_ID = re.compile(r'^\[k(\d+)\] ')
@@ -217,6 +223,9 @@ def write(target, history, before, expected):
              + '); keep logs and history at their sources')
     if not content.get('goal') or not content.get('next_action'):
         fail('A handoff needs goal and next_action')
+    if 'completion_criterion' in content and not (isinstance(content['completion_criterion'], str)
+                                                  and content['completion_criterion'].strip()):
+        fail('completion_criterion must be the user\'s stopping test as non-empty text; omit the field when none was given')
     earlier = history_rows(history)
     if isinstance(content.get('completed_checks'), list):
         previous = old.get('completed_checks') if isinstance(old.get('completed_checks'), list) else []
@@ -262,6 +271,8 @@ def write(target, history, before, expected):
 def main():
     example = 'echo \'{"goal":"...","next_action":"..."}\' | codex-task-state write PATH'
     epilog = 'Fields: ' + ', '.join(sorted(FIELDS)) + f'. Budget: {BUDGET_BYTES} bytes. Example: ' + example
+    epilog += ('. completion_criterion is optional: the user\'s stopping test in their words; the final reply '
+               'says met, not met with the reason, or blocked with the user action')
     parser = argparse.ArgumentParser(description=__doc__, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('action', choices=['read', 'write'])
     parser.add_argument('path', type=Path)
