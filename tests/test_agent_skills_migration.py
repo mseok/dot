@@ -62,6 +62,18 @@ class MigrationTest(unittest.TestCase):
                 source = self.dest/'skills'/scope/f'{scope}-example'
                 self.assertEqual((home/'skills'/source.name).resolve(), source)
 
+    def test_claude_scope_linked_to_codex_installs_every_skill_once(self):
+        self.assertEqual(self.run_migration().returncode, 0)
+        claude_scope = self.dest/'skills/claude'
+        (claude_scope/'claude-example').rename(self.dest/'skills/codex/claude-example')
+        claude_scope.rmdir()
+        claude_scope.symlink_to('codex', target_is_directory=True)
+        result = self.run_migration()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for home in [self.codex, self.claude]:
+            for name in ['codex-example', 'claude-example']:
+                self.assertEqual((home/'skills'/name).resolve(), self.dest/'skills/codex'/name)
+
     def test_cross_client_conflict_preserves_both_sources(self):
         conflict = self.claude/'skills/codex-example'
         conflict.mkdir()

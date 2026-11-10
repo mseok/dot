@@ -241,7 +241,8 @@ installs or refreshes:
 ```
 
 This extracts `ai/codex/skills` and `ai/claude/skills` into
-`~/agent-skills/skills/{codex,claude}`, including uncommitted personal skills.
+`~/agent-skills/skills/codex`, the one scope both clients install from
+(`skills/claude` there is a link to it), including uncommitted personal skills.
 Set `AGENT_SKILLS_HOME` or pass `--destination PATH` for a different location.
 The normal Codex installer invokes the same idempotent migration.
 

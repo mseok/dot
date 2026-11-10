@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Share personal skills across Codex and Claude; preserve host-owned files.
 
-skills/codex is linked into both clients, skills/claude into Claude only.
+Every skill is linked into both clients. skills/codex is the one source scope; skills/claude
+is a link to it (nothing more to install) or, in an older checkout, a second directory.
 """
 import argparse
 import hashlib
@@ -34,6 +35,11 @@ def skills(root):
     if not root.is_dir():
         return []
     return sorted(p for p in root.iterdir() if not p.name.startswith('.') and (p/'SKILL.md').is_file())
+
+
+def scope_skills(root):
+    """Skills of one source scope; a scope that is only a link to another scope adds none."""
+    return [] if root.is_symlink() else skills(root)
 
 
 def stale(link, dest):
@@ -89,7 +95,7 @@ def main():
             live = [p for p in skills(legacy) if p.resolve() != (target_root/p.name).resolve()]
             # An existing extracted scope is authoritative; never overwrite it
             # with historical dot content on subsequent installs.
-            if not live and not skills(target_root):
+            if not live and not target_root.is_symlink() and not skills(target_root):
                 live = recover(dot, scope, Path(tmp)/scope)
             for src in live:
                 target = target_root/src.name
@@ -101,7 +107,7 @@ def main():
                 parser.error(f'Unrelated skill-root link: {install_root}; leaving it untouched.')
             if install_root.exists() and not install_root.is_dir():
                 parser.error(f'Not a skill directory: {install_root}')
-            for target in [t for _,t in plans if t.parent==target_root]+skills(target_root):
+            for target in [t for _,t in plans if t.parent==target_root]+scope_skills(target_root):
                 if target.name in shared and shared[target.name] != target:
                     parser.error(f'Duplicate shared skill name: {target.name}; reconcile the source scopes first.')
                 shared[target.name] = target
@@ -119,8 +125,7 @@ def main():
                     parser.error(f'Unrelated skill link conflicts: {installed}')
                 if installed.exists() and not installed.is_symlink() and not install_root.is_symlink():
                     parser.error(f'Existing host skill conflicts: {installed}; preserve and reconcile it first.')
-        claude_only = sum(t.parent.name == 'claude' for t in shared.values())
-        print(f'Destination: {dest}; {len(plans)} source skills to copy/verify; {len(shared)} skills, {claude_only} of them Claude-only')
+        print(f'Destination: {dest}; {len(plans)} source skills to copy/verify; {len(shared)} skills for both clients')
         if args.dry_run:
             for src,target in plans:
                 print(f'  {src} -> {target}')
@@ -147,7 +152,7 @@ def main():
                 shutil.copytree(system,install_root/'.system',symlinks=True)
                 if inventory(system)!=inventory(install_root/'.system'):
                     raise RuntimeError('System skill copy failed; original is still present.')
-            for target in skills(target_root):
+            for target in scope_skills(target_root):
                 old = legacy/target.name
                 if old.exists() and not old.is_symlink():
                     saved = backup/scope/target.name
@@ -160,8 +165,6 @@ def main():
                 installed = install_root/target.name
                 if installed.is_symlink():
                     installed.unlink()
-                if scope == 'codex' and target.parent.name == 'claude':
-                    continue
                 installed.symlink_to(target,target_is_directory=True)
             for root in (install_root, legacy):
                 for link in root.iterdir() if root.is_dir() else []:
