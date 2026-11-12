@@ -198,6 +198,26 @@ def read(target, history, before):
         report['over_budget'] = f'{len(before)} bytes, over the {BUDGET_BYTES}-byte budget. ' + CLEANUP
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
+
+def derived_restriction(value):
+    if isinstance(value, dict):
+        return any(derived_restriction(item) for item in value.values())
+    if isinstance(value, list):
+        return any(derived_restriction(item) for item in value)
+    if not isinstance(value, str):
+        return False
+    normalized = re.sub(r'\s+', '', value).lower()
+    incident = re.search(r'safetyreasons|pastrefusal|previousrefusal|previoustoolerror|서비스거부|서비스안전제한|오류로거부', normalized)
+    policy = re.search(r'never(?:read|inspect|retry)|donot(?:read|inspect|retry)|재시도하지않는다|재시도금지|열람금지', normalized)
+    scope = re.search(r'future|everagain|project|다른모델|향후|앞으로|프로젝트', normalized)
+    labeled = re.search(r'(?:decisions|scope|정책|권한):.*(?:이전|과거|앞선|prior|past|previous).*(?:안전제한|refus|toolerror).*재시도금지', normalized)
+    if not (policy and (labeled or (incident and scope))):
+        return False
+    attributed = re.search(r'user(?:instruction|explicitlyrequested)|사용자(?:원문|지시|명시)', normalized)
+    quoted = any(policy.group(0) in re.sub(r'\s+', '', match).lower()
+                 for match in re.findall(r'["“]([^"”]+)["”]', value))
+    return not (attributed and quoted)
+
 def write(target, history, before, expected):
     if before is not None and expected != sha(before):
         fail('Handoff changed or expected SHA is missing; read the current handoff first')
@@ -226,6 +246,8 @@ def write(target, history, before, expected):
     if 'completion_criterion' in content and not (isinstance(content['completion_criterion'], str)
                                                   and content['completion_criterion'].strip()):
         fail('completion_criterion must be the user\'s stopping test as non-empty text; omit the field when none was given')
+    if derived_restriction(content):
+        fail('An invocation outcome is not authority for a standing constraint; retain current status or cite the explicit instruction verbatim')
     earlier = history_rows(history)
     if isinstance(content.get('completed_checks'), list):
         previous = old.get('completed_checks') if isinstance(old.get('completed_checks'), list) else []
@@ -233,6 +255,8 @@ def write(target, history, before, expected):
     rows += changes(old, content)
     stamp = {'version':2, 'updated_at':datetime.now(timezone.utc).isoformat(), 'path':str(target)}
     rows += fit_budget(content, stamp)
+    if derived_restriction(rows):
+        fail('This update would copy a derived constraint into history; use an explicitly authorized targeted cleanup instead')
     encoded = encode({**stamp, **content})
     stamped = [{'at':stamp['updated_at'], 'previous_sha256':sha(before) if before is not None else None,
                 'sha256':sha(encoded), **row} for row in rows]
