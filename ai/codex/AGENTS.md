@@ -9,7 +9,7 @@ rules) once, then reuse it. Keep one question report across hosts, preserve user
 and distinguish proposals from adopted decisions. Existing authorization covers
 ordinary milestone recording. Routine checks, layout-only edits, prose draft versions, tooling, slides,
 administrative and personal tasks earn no notes (a skill's own dedicated note, such
-as research-talk's presentation note, follows that skill); if the hook still asks about such a
+as html-research-deck's presentation note, follows that skill); if the hook still asks about such a
 turn, answer with one no-material-change disposition and say nothing about it.
 Never write a hash, path, job ID or count into a record that you did not read
 from command output in this turn. Write records and judgment summaries in Korean
