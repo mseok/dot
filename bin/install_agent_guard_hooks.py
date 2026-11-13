@@ -11,6 +11,7 @@ from install_anti_slop_hooks import publish
 RULES = {
     'login-scan': 'Bash',
     'identifiers': 'Bash|Agent|Task|spawn_agent|send_input|WebFetch|WebSearch|web_run|web_search',
+    'git': 'Bash|.*exec_command|shell|local_shell',
 }
 CONFIG = Path.home() / '.config' / 'agent-guard'
 

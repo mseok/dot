@@ -5,6 +5,10 @@
 command that runs on a login or controller host, either on this host or through ssh.
 `agent-guard identifiers` denies a subagent prompt, a web tool call, or a shell command with a URL or
 network client that contains one of the user's identifiers.
+`agent-guard git` denies a git command that discards uncommitted or untracked work: reset --hard, clean
+with force, stash (except list and show), checkout or restore over the whole tree, and switch with force.
+It reads the command text, also inside ssh, a shell -c or eval; a script or program that runs git is not seen,
+and a heredoc line that begins with one of these commands is denied like a command.
 
 Host-local configuration, one entry per line, `#` starts a comment; a missing file disables the check:
   ~/.config/agent-guard/login-hosts    ssh aliases or hostnames of login and controller hosts
@@ -14,7 +18,9 @@ The hook prints a deny decision only on a match. It does not catch its own error
 hook error and both clients let the tool call through.
 """
 import argparse
-from itertools import takewhile
+from importlib.machinery import SourceFileLoader
+from importlib.util import module_from_spec, spec_from_loader
+from itertools import dropwhile, takewhile
 import json
 from pathlib import Path
 import re
@@ -40,6 +46,11 @@ UNZIP_LISTING = {'-l', '-v', '-t', '-Z', '-z'}
 SUBAGENT_TOOLS = {'Task', 'Agent', 'spawn_agent', 'send_input'}
 WEB_TOOLS = {'WebFetch', 'WebSearch', 'web_run', 'web_search'}
 MAX_DEPTH = 2
+RUNNERS = {'ssh', 'autossh', 'bash', 'sh', 'zsh', 'dash', 'ksh', 'eval', 'xargs', 'timeout', 'watch'}
+SHELL_KEYWORDS = {'then', 'do', 'else', 'elif', 'if', 'while', 'until', '!', '{'}
+GIT_VALUE_OPTIONS = {'-C', '-c', '--git-dir', '--work-tree', '--namespace', '--config-env'}
+SHORT_FLAGS = re.compile(r'-[A-Za-z]+')
+WHOLE_TREE = {'.', './', ':/', ':/.', '*'}
 
 
 def entries(name):
@@ -184,6 +195,63 @@ def check_identifiers(tool_name, tool_input, identifiers):
             'asked for it, tell them it was blocked and let them run it themselves.')
 
 
+def read_guard():
+    """The sibling read-guard script as a module, so that its quote-aware shell splitting is reused here."""
+    loader = SourceFileLoader('read_guard', str(Path(__file__).resolve().with_name('read-guard')))
+    module = module_from_spec(spec_from_loader(loader.name, loader))
+    loader.exec_module(module)
+    return module
+
+
+def git_calls(command, shell):
+    """Yield the arguments of every git invocation in a shell command, also inside ssh, a shell -c or eval."""
+    for tokens in shell.segments(command):
+        tokens = shell.strip_wrappers(list(dropwhile(SHELL_KEYWORDS.__contains__, tokens)))
+        names = [program(token) for token in tokens]
+        if names[:1] == ['git']:
+            yield tokens[1:]
+        elif names[:1] and names[0] in RUNNERS:
+            if 'git' in names[1:]:
+                yield tokens[names.index('git', 1) + 1:]
+            for token in tokens[1:]:
+                if ' ' in token:
+                    yield from git_calls(token, shell)
+
+
+def destructive(args):
+    """Name the form of a git invocation that discards uncommitted or untracked work, or return None."""
+    position = 0
+    while position < len(args) and args[position].startswith('-'):
+        position += 2 if args[position] in GIT_VALUE_OPTIONS else 1
+    command, rest = ''.join(args[position:position + 1]), args[position + 1:]
+    flags = ''.join(arg[1:] for arg in rest if SHORT_FLAGS.fullmatch(arg))
+    whole = WHOLE_TREE.intersection(rest)
+    staged_only = ('S' in flags or '--staged' in rest) and 'W' not in flags and '--worktree' not in rest
+    if command == 'reset' and '--hard' in rest:
+        return 'reset --hard'
+    if command == 'clean' and ('f' in flags or '--force' in rest) and 'n' not in flags and '--dry-run' not in rest:
+        return 'clean with force'
+    if command == 'stash' and rest[:1] not in (['list'], ['show']):
+        return 'stash'
+    if command == 'checkout' and (whole or 'f' in flags or '--force' in rest):
+        return 'checkout over the whole tree'
+    if command == 'switch' and ('f' in flags or '--force' in rest or '--discard-changes' in rest):
+        return 'switch that discards changes'
+    if command == 'restore' and whole and not staged_only:
+        return 'restore over the whole tree'
+    return None
+
+
+def check_git(command, shell):
+    kind = next(filter(None, map(destructive, git_calls(command, shell))), None)
+    if kind is None:
+        return None
+    return (f'agent-guard blocked git {kind}: it discards uncommitted or untracked work that Git cannot bring '
+            'back (AGENTS.md, Environment and tools). Keep your own state with a commit of the files you '
+            'changed, by path, and undo your own edit by naming that file. If the user asked for this exact '
+            'command, tell them it was blocked and let them run it themselves.')
+
+
 def deny(reason):
     return {'systemMessage': reason,
             'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'deny',
@@ -192,7 +260,7 @@ def deny(reason):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('rule', choices=['login-scan', 'identifiers'])
+    parser.add_argument('rule', choices=['login-scan', 'identifiers', 'git'])
     rule = parser.parse_args().rule
     payload = json.load(sys.stdin)
     tool_name = payload.get('tool_name', '')
@@ -204,6 +272,10 @@ def main():
         reason = check_login_scan(command_text(tool_input), login_hosts, shared_roots, socket.gethostname())
     elif rule == 'identifiers':
         reason = check_identifiers(tool_name, tool_input, entries('identifiers'))
+    elif rule == 'git':
+        shell = read_guard()
+        if tool_name.rsplit('__', 1)[-1] in shell.SHELL_TOOLS:
+            reason = check_git(command_text(tool_input), shell)
     if reason:
         print(json.dumps(deny(reason)))
 
