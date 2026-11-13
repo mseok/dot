@@ -1,18 +1,27 @@
 #!/usr/bin/env python3
-"""PostToolUse hook (Claude Code and Codex): explain "Local browser use is disabled" once per session.
+"""PostToolUse hook (Claude Code and Codex): when the ChatGPT app's in-app browser is unavailable, say how to restore it.
 
-The 2026-11-10 audit found 15 sessions where this message, which the installed app can return when no browser
-executor is linked to the chat, led to asking the user to change settings (12 of them). When a tool result
-contains the message, this hook adds one line of context pointing to the preflight in codex-browser.md, once per
+The app keeps its per-chat browser records in memory and creates them when the chat is opened in the app window of
+the Mac that runs it, so a chat driven from another device or created by an agent can lack them. Two results follow
+(read in the installed app 26.1106.51428 and observed on 2026-11-13):
+  access   "Local browser access is unavailable for this chat" (before 26.1106: "Local browser use is disabled in
+           Work settings"): no access record. The browser tool caches the denial for the rest of the turn.
+  missing  "Browser is not available: iab", or an inventory that lists browsers but no in-app browser: no browser
+           route.
+The 2026-11-10 audit found 15 sessions where the first message led to asking the user to change settings, and on
+2026-11-13 an agent retried inside the same turn and reported an unknown cause. When a browser tool result shows
+one of these, this hook adds the recovery steps as context, at most once per ten minutes for each kind in a
 session. It never blocks and prints nothing otherwise.
 
 Payload (both clients send JSON on stdin): session_id, hook_event_name, tool_name, tool_input and tool_response
 (any JSON: a string, an object, or a list of content blocks). Claude Code reports a failed tool as event
 PostToolUseFailure with an `error` string, so `error` is read too. Output is
 {"hookSpecificOutput": {"hookEventName": <event>, "additionalContext": <text>}}, which both clients accept.
-Calls that only read a file (Read, Grep, cat, sed, ...) are ignored, because codex-browser.md quotes the message.
-Once-per-session state: one empty file per hashed session id in ~/.cache/browser-error-hint (override with
-BROWSER_ERROR_HINT_STATE_DIR), pruned after 7 days.
+Only browser tools count: the tool name contains cua_repl, node_repl or browser, or a code-running tool's input
+calls the browser runtime. File and shell tools are ignored, because they can only quote the messages (all four
+hints given between 2026-11-10 and 2026-11-13 were such quotes, and each used up the hint for its session).
+State: one empty file per hashed session id and kind in ~/.cache/browser-error-hint (override with
+BROWSER_ERROR_HINT_STATE_DIR), re-armed after ten minutes, pruned after 7 days.
 Usage in settings.json / hooks.json (no matcher):
   {"type": "command", "command": "python3 ~/dot/bin/browser-error-hint", "timeout": 5}
 """
@@ -24,15 +33,36 @@ import re
 import sys
 import time
 
-MESSAGE = re.compile(r"local browser use is disabled", re.IGNORECASE)
+ACCESS = re.compile(r"local browser (?:access is unavailable for this chat|use is disabled)", re.IGNORECASE)
+MISSING = re.compile(r"browser is not available: iab|no chatgpt browser route is available", re.IGNORECASE)
+# cua.getState() prints {"apps":[...],"browsers":[...]}; the quotes may arrive escaped once more.
+INVENTORY = re.compile(r'apps\\*"\s*:\s*\[.*browsers\\*"\s*:\s*\[', re.DOTALL)
+IN_APP_BROWSER = re.compile(r'type\\*"\s*:\s*\\*"iab')
+BROWSER_TOOL = re.compile(r"cua_repl|node_repl|browser", re.IGNORECASE)
+BROWSER_CODE = re.compile(r"\bcua\.|cua_repl|node_repl|setupBrowserRuntime|agent\.browsers")
+THREAD_ID = re.compile(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}")
 FILE_TOOLS = {"Read", "Grep", "Glob", "NotebookRead", "Edit", "Write", "MultiEdit", "NotebookEdit", "apply_patch"}
 SHELL_TOOLS = {"Bash", "exec_command", "shell", "local_shell"}
-READERS = {"cat", "head", "tail", "sed", "awk", "grep", "rg", "less", "more", "nl", "bat", "ack"}
-SETUP_WORDS = {"cd", "export", "env", "set"}
 MAX_AGE_SECONDS = 7 * 24 * 3600
-HINT = ("This message usually means no browser executor is linked to this chat, not that the setting is off. "
-        "Run the preflight in ~/dot/ai/codex/references/codex-browser.md once before asking the user for "
-        "anything, and report the stage it returns.")
+REARM_SECONDS = 600
+OPEN_CHAT = ("call the app tool navigate_to_codex_page (mcp__codex_app__navigate_to_codex_page; load it through "
+             "tool search if it is not listed) with this chat's id{chat}, which shows this chat in the app window "
+             "on this Mac (say so in the reply)")
+CLOSING = (" Do not ask the user to change settings or reopen the chat, and do not switch to Chrome, Playwright "
+           "or a native app on your own. Details: ~/dot/ai/codex/references/codex-browser.md.")
+HINTS = {
+    "access": ("This chat has no browser access record in the ChatGPT app on this Mac, which is usual for a chat "
+               "continued from another device; it is not a setting. Recover in this order: (1) " + OPEN_CHAT + "; "
+               "(2) reset the REPL that reported the error (js_reset of cua_repl or node_repl), because the denial "
+               "is cached for the rest of the turn and a plain retry repeats it; (3) call cua.getState() and "
+               "continue once a browser of type iab is listed. If the message persists after the reset, the first "
+               "browser call of the next turn asks again: report that state in one line and continue the "
+               "non-browser work." + CLOSING),
+    "missing": ("No in-app browser (type iab) is registered for this chat, because the chat is not open in the "
+                "ChatGPT app window on this Mac, which is usual for a chat driven from another device; it is not "
+                "a setting. If the task needs the in-app browser, " + OPEN_CHAT + ", then call cua.getState(): "
+                "the in-app browser is listed in the same turn." + CLOSING),
+}
 
 
 def state_dir():
@@ -42,51 +72,51 @@ def state_dir():
     return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "browser-error-hint"
 
 
-def first_for_session(session_id):
-    """True the first time this session id is seen; creates the marker atomically."""
+def due(session_id, kind):
+    """True when this session has had no hint of this kind in the last ten minutes; records the hint."""
     directory = state_dir()
     directory.mkdir(parents=True, exist_ok=True)
     now = time.time()
     for old in directory.iterdir():
         if old.is_file() and now - old.stat().st_mtime > MAX_AGE_SECONDS:
             old.unlink(missing_ok=True)
-    name = hashlib.sha256(str(session_id or "unknown").encode()).hexdigest()[:32]
+    marker = directory / hashlib.sha256(f"{session_id or 'unknown'}:{kind}".encode()).hexdigest()[:32]
     try:
-        os.close(os.open(directory / name, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600))
+        os.close(os.open(marker, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600))
     except FileExistsError:
-        return False
+        if now - marker.stat().st_mtime < REARM_SECONDS:
+            return False
+        os.utime(marker, (now, now))
     return True
 
 
-def command_text(tool_input):
-    if not isinstance(tool_input, dict):
-        return ""
-    command = tool_input.get("command", tool_input.get("cmd", ""))
-    return " ".join(map(str, command)) if isinstance(command, list) else str(command)
-
-
-def only_reads(payload):
-    """True when the call just displays or edits a file, so the message is quoted text, not an error."""
-    tool = payload.get("tool_name")
-    if tool in FILE_TOOLS:
-        return True
-    if tool not in SHELL_TOOLS:
+def from_browser_tool(payload):
+    """True for a browser REPL call or a code-running tool whose input drives the browser runtime."""
+    tool = str(payload.get("tool_name") or "")
+    if tool in FILE_TOOLS or tool in SHELL_TOOLS:
         return False
-    for segment in re.split(r"&&|\|\||;|\n", command_text(payload.get("tool_input"))):
-        words = segment.split()
-        if words and words[0] not in SETUP_WORDS:
-            return words[0].rsplit("/", 1)[-1] in READERS
-    return False
+    code = json.dumps(payload.get("tool_input"), ensure_ascii=False, default=str)
+    return bool(BROWSER_TOOL.search(tool) or BROWSER_CODE.search(code))
+
+
+def kind_of(result):
+    if ACCESS.search(result):
+        return "access"
+    if MISSING.search(result) or (INVENTORY.search(result) and not IN_APP_BROWSER.search(result)):
+        return "missing"
+    return None
 
 
 def hint_for(payload):
-    if not isinstance(payload, dict) or only_reads(payload):
+    if not isinstance(payload, dict) or not from_browser_tool(payload):
         return None
     result = json.dumps([payload.get("tool_response"), payload.get("error"), payload.get("tool_output")],
                         ensure_ascii=False, default=str)
-    if not MESSAGE.search(result) or not first_for_session(payload.get("session_id")):
+    kind = kind_of(result)
+    if kind is None or not due(payload.get("session_id"), kind):
         return None
-    return HINT
+    session = str(payload.get("session_id") or "")
+    return HINTS[kind].replace("{chat}", f" ({session})" if THREAD_ID.fullmatch(session) else "")
 
 
 def main():

@@ -7,6 +7,10 @@
   const replName = toolNames.find(name => /^mcp__node_repl__js$/.test(name));
   const navigateName = toolNames.find(name => /^mcp__codex_app__navigate_to_codex_page$/.test(name));
   if (!replName) return { status: "tool-missing", tool: "node_repl.js" };
+  // Both mean that the app has no access record for this chat (the second wording since app 26.1106).
+  const unresolved = "/^Local browser (use is disabled in Work settings|access is unavailable for this chat)$/";
+  // The browser runtime keeps one verdict per chat and turn, so a denial outlives a repair made in the same turn.
+  const cachedDenial = "The browser runtime caches a denial for the rest of the turn. Reset this Node REPL (js_reset) and run prepare again, or retry in the next turn; do not infer a disabled setting.";
   async function repl(code) {
     const result = await tools[replName]({ code, timeout_ms: 30000, title: "Browser connection preflight" });
     if (result.isError) throw new Error("Node REPL failed; inspect the tool result before retrying.");
@@ -34,7 +38,7 @@
         try { agent = await (await import(${JSON.stringify(context.runtime)})).setupBrowserRuntime();
           nodeRepl.write(JSON.stringify({ status: 'bootstrapped' })); }
         catch (error) { nodeRepl.write(JSON.stringify({ status:
-          String(error?.message ?? error).trim() === 'Local browser use is disabled in Work settings'
+          ${unresolved}.test(String(error?.message ?? error).trim())
             ? 'access-unresolved'
             : /denied|permission|not authorized|prohibited|rejected|requires approval|blocked by/i.test(String(error?.message ?? error))
               ? 'access-blocked' : 'bootstrap-failed', error: String(error?.message ?? error),
@@ -63,7 +67,7 @@
       } catch (error) {
         bp.ready = false;
         var bpMessage = String(error?.message ?? error);
-        bpResult = { status: bpMessage.trim() === 'Local browser use is disabled in Work settings'
+        bpResult = { status: ${unresolved}.test(bpMessage.trim())
           ? 'access-unresolved'
           : /denied|permission|not authorized|prohibited|rejected|requires approval|blocked by/i.test(bpMessage)
             ? 'access-blocked' : 'browser-error', error: bpMessage };
@@ -72,7 +76,8 @@
     `;
     let observation = bootstrap.status === "bootstrapped" ? await repl(inspectCode) : bootstrap;
     if (!["registration-missing", "access-unresolved"].includes(observation.status)) return observation;
-    if (observation.navigationAttempted) return { ...observation, action: "Stop. Navigation already attempted; do not repeat it or infer a disabled setting." };
+    if (observation.navigationAttempted) return { ...observation, action: observation.status === "access-unresolved"
+      ? cachedDenial : "Stop. Navigation already attempted; do not repeat it or infer a disabled setting." };
     if (!navigateName) return { ...observation, status: "tool-missing", tool: "navigate_to_codex_page" };
     await repl("__codexBrowserPreflight.navigated = true; nodeRepl.write(JSON.stringify({ recorded: true }));");
     const navigation = await tools[navigateName]({ threadId: context.threadId });
@@ -80,9 +85,9 @@
     if (navigation.isError) return { status: "navigation-failed", action: "Inspect the tool result; do not retry or change settings." };
     const retryBootstrap = bootstrap.status === "bootstrapped" ? bootstrap : await repl(bootstrapCode);
     observation = retryBootstrap.status === "bootstrapped" ? await repl(inspectCode) : retryBootstrap;
-    return observation.status === "documentation-ready" ? observation : {
-      ...observation, action: "Stop. The supported navigation did not establish IAB access; do not bypass the access check."
-    };
+    if (observation.status === "documentation-ready") return observation;
+    return { ...observation, action: observation.status === "access-unresolved"
+      ? cachedDenial : "Stop. The supported navigation did not establish IAB access; do not bypass the access check." };
   }
   if (phase === "verify") {
     if (!documentationRead) return { status: "documentation-review-required" };

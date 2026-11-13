@@ -7,11 +7,12 @@ const source = fs.readFileSync(new URL('../ai/codex/browser-preflight.js', impor
 const run = vm.runInNewContext(source);
 const threadId = '00000000-0000-0000-0000-000000000001';
 const ambiguous = 'Local browser use is disabled in Work settings';
+const unavailable = 'Local browser access is unavailable for this chat';
 const names = ['mcp__node_repl__js', 'mcp__codex_app__navigate_to_codex_page'];
 
 // Execute the actual emitted REPL cells against a controlled public-API fixture.
 // The tiny adapter preserves top-level bindings as the real Node REPL does.
-function fixture({ state = 'missing', bootstrapError, readError, navigationError,
+function fixture({ state = 'missing', message = ambiguous, bootstrapError, readError, navigationError,
   fixed = true, siteLoggedOut = false, wrongThread = false, runtime = '/runtime.mjs' } = {}) {
   const events = [];
   const existing = { title: siteLoggedOut ? 'Sign in' : 'User page', touched: false };
@@ -36,7 +37,7 @@ function fixture({ state = 'missing', bootstrapError, readError, navigationError
   const agent = { browsers: {
     list: async () => {
       events.push(['inventory']);
-      if (state === 'ambiguous') throw Error(ambiguous);
+      if (state === 'ambiguous') throw Error(message);
       if (state === 'denied') throw Error('Browser access denied by policy');
       return state === 'healthy' ? [{ type: 'iab', id: 'iab',
         metadata: { codexSessionId: wrongThread ? 'different-thread' : threadId } }] : [];
@@ -92,6 +93,23 @@ test('the same misleading message during bootstrap also recovers', async () => {
   const f = fixture({ bootstrapError: ambiguous });
   assert.equal((await f.prepare()).status, 'documentation-ready');
   assert.equal((await f.verify()).status, 'verified');
+});
+
+test('the access-unavailable wording of app 26.1106 is the same unresolved state and recovers', async () => {
+  for (const f of [fixture({ state: 'ambiguous', message: unavailable }), fixture({ bootstrapError: unavailable })]) {
+    assert.equal((await f.prepare()).status, 'documentation-ready');
+    assert.deepEqual(f.events.filter(([event]) => event === 'navigate'), [['navigate', threadId]]);
+    assert.equal((await f.verify()).status, 'verified');
+  }
+});
+
+test('a denial that survives navigation names the REPL reset, as recorded on 2026-11-13', async () => {
+  const f = fixture({ state: 'ambiguous', message: unavailable, fixed: false });
+  for (const result of [await f.prepare(), await f.prepare()]) {
+    assert.equal(result.status, 'access-unresolved');
+    assert.match(result.action, /caches a denial for the rest of the turn.*js_reset.*next turn/);
+  }
+  assert.equal(f.events.filter(([event]) => event === 'navigate').length, 1);
 });
 
 test('healthy connection is not navigated, reimported or reselected on a second prepare', async () => {
