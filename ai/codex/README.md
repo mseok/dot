@@ -74,12 +74,15 @@ Install the tool before the `thread-handoff` text that tells agents to delete
 reversed decisions. To roll back, restore the old tool with `path` added to the
 metadata keys it drops, so handoffs the new tool wrote stay writable.
 
-`AGENTS.md` keeps one upstream block, fenced by markers and pinned to the commit
-it was copied from: the coding guidelines (`karpathy-guidelines`, from
-multica-ai/andrej-karpathy-skills, MIT; sections 2-3 rewritten locally on
+`AGENTS.md` holds one upstream text, sections 1 to 3 of its Coding guidelines:
+adapted from the `CLAUDE.md` of multica-ai/andrej-karpathy-skills (formerly
+forrestchang) at commit 2c60614, MIT; sections 2-3 rewritten locally on
 2026-10-15; on 2026-10-17 its section 1 was folded into the lead-in because it
 contradicted the working agreement's ask rules, section 4 was condensed and
-the rest renumbered). The former Attention-kind response-style block
+the rest renumbered; on 2026-11-13 section 1 was extended after a review of the
+user's research code, and the `karpathy-guidelines` marker comments were removed
+from `AGENTS.md` at the user's request, so this paragraph is the attribution.
+The former Attention-kind response-style block
 (alexgreensh/attention-span, AGPL-3.0) was replaced on 2026-10-17 by the short
 "Chat reply style" section, scoped to chat replies, after the 2026-08..10 audit
 found it bleeding into manuscripts, emails and UI work and measured two of its

@@ -123,7 +123,6 @@ The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global
 
 The ask rules above decide when to ask. Before implementing, surface in one short block your assumptions, any competing interpretation and any simpler approach. Before a round that adds a file or more than about 100 lines, list the files you will add with rough line counts; for copies of existing files or folders give the count and the reason. These guidelines bias toward caution over speed; for trivial tasks, use judgment.
 
-<!-- karpathy-guidelines:start (multica-ai/andrej-karpathy-skills, formerly forrestchang; CLAUDE.md @ 2c60614; MIT; sections 2-3 rewritten from local evaluation 2026-10-15; original section 1 folded into the lead-in above, section 4 condensed and sections renumbered 2026-10-17; section 1 extended 2026-11-13 after a review of the user's research code) -->
 ## 1. Simplicity First
 
 **Minimum code that solves the problem, simple enough for the user to read and understand all of it. Nothing speculative.** Avoid these, which cost cleanup time later:
@@ -147,7 +146,6 @@ Not bulk in research code: evaluation guards, count and cohort checks, provenanc
 ## 3. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.** Turn the task into a verifiable goal ("fix the bug" → "write a test that reproduces it, then make it pass"); for multi-step work, state a brief plan with a check per step. Strong criteria let you loop independently; weak ones ("make it work") require constant clarification.
-<!-- karpathy-guidelines:end -->
 
 # Chat reply style
 
