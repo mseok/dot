@@ -282,8 +282,10 @@ audited topology block is retained in `host-context.md` and the entire override
 is backed up. Unknown custom overrides and conflicting host facts require
 review; the installer does not silently discard them.
 
-On a new Slurm cluster, the `init-slurm-environment` skill's explicit full audit
-can populate `host-context.md`. It never copies the common policy into an
+On a new Slurm cluster, `host-context.md` is written after an explicit full
+audit of that cluster. The `init-slurm-environment` skill that ran this audit
+was retired on 2026-11-13 and remains in the agent-skills Git history (last
+present at c2f2b24). Nothing copies the common policy into an
 override. Installation and guidance migration do not audit the live cluster.
 See [the Codex guidance guide](ai/codex/README.md) for source ownership and scope.
 

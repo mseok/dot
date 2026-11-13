@@ -24,9 +24,10 @@ them to make synchronization succeed. No background Git synchronization is
 installed.
 
 `host-context.md` retains audited topology and environment facts on that host.
-The `init-slurm-environment` skill updates its managed topology block only
-after an explicit full audit. Installation or migration never runs a cluster
-audit, guesses storage paths or launches work.
+Its managed topology block was written by the `init-slurm-environment` skill
+(retired on 2026-11-13; agent-skills Git history, last present at c2f2b24) and
+changes only after an explicit full audit. Installation or migration never runs
+a cluster audit, guesses storage paths or launches work.
 
 A legacy `AGENTS.override.md` replaces the common policy in Codex; it does not
 extend it. Review a generated override's copied body, then migrate it with:
