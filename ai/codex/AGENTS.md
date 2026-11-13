@@ -91,6 +91,8 @@ The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global
 ## Environment and tools
 
 - Each project's runtime stays in its own environment with its own Python, CUDA and framework versions; general tools such as Ruff come from the host-shared installation named in host-context. Never repair a routine check, lint or format by resolving dependencies, recreating an environment, changing lockfiles or clearing shared caches; when the first interpreter lacks a package, find the project's established one from its launch scripts or environment files, then add it to host-context.
+- A new Python project (not a scratch or single-use analysis folder) starts with `uv init`, which also creates its Git repository; an existing project keeps its established environment.
+- In a Git repository preserve a code state with a local commit, never with a copy: commit the files you changed, by path, after each round whose result is recorded or reviewed, and cite the commit hash instead of copying scripts. Keep the repository small: track source and small text only; data, results, generated outputs, binaries, logs, caches and environments stay ignored by directory in `.gitignore`, and no file over 1 MB is committed, unless the user asks. Never `git add -A`, never push without a request, and never run `reset --hard`, `clean`, `stash`, or `checkout`/`restore` over changes that are not yours. The harness repositories keep their own commit rule (`harness-maintenance`).
 - Host facts (topology, peer hosts and key auth, what computer use and rc sessions can do, browser surfaces and accounts, interpreters, partitions, controller actions, ports in use) live in `~/.codex/host-context.md`: read it before promising a capability, and append a fact there when you rediscover one.
 - When a capability looks unavailable, check this session's tool list and launch mode and run the tool's documented bootstrap, then report connection failure, missing tool or permission denial before proposing other causes.
 - Give GUI, REPL and remote calls explicit timeouts and say when a call waits on an approval prompt. Transfers resume where the server allows; otherwise use a stall timeout, never a wall-clock cap that discards partial data.
@@ -108,7 +110,7 @@ The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global
 - Present a performance or causal comparison only on that matched basis; otherwise separate the results as non-comparable descriptive evidence and ask how to harmonize. A question that asks approval for a change of pool, selection rule, source or metric states the old rule, the new rule and which reported numbers could change. A go-ahead on a proposal does not waive a mismatch you flagged; a failed guard, count or frozen-cohort check is reported with observed and expected values and asked about, never silently recomputed; do not change protocols or launch computation to manufacture comparability.
 - Every reported number is recomputed from raw outputs and labelled (checkpoint, evaluator version, cohort size, selection rule) per `benchmark-comparison`; numbers copied from chat, Slack, slides or older figures appear only in panels labelled provisional. A different data source, aggregation or evaluator is not by itself model improvement.
 - When judging a result, give one line on what the data supports as observed and one on what it does not; a limit on the inference never cancels the observation, and "no evidence" is said only after a search. Separate observations, assumptions, proposals and adopted decisions, and label guesses about external procedures as guesses.
-- Durable or comparable experiments run from committed source and are recorded with `experiment-ledger`; the ledger rule never authorizes a commit or a job on its own, commits to a research repository require the user's request, and analysis scripts for a talk or report live in the task's artifact folder with their path and SHA-256 recorded.
+- Durable or comparable experiments run from committed source and are recorded with `experiment-ledger`; the ledger rule never authorizes a job on its own; a local commit of the files you changed needs no request, a push always does, and analysis scripts for a talk or report live in the task's artifact folder with their path and SHA-256 recorded.
 
 ## Server work
 
@@ -119,18 +121,21 @@ The maintained source is `~/dot/ai/codex/AGENTS.md`; every host links its global
 
 # Coding guidelines
 
-The ask rules above decide when to ask. Before implementing, surface in one short block your assumptions, any competing interpretation and any simpler approach. These guidelines bias toward caution over speed; for trivial tasks, use judgment.
+The ask rules above decide when to ask. Before implementing, surface in one short block your assumptions, any competing interpretation and any simpler approach. Before a round that adds a file or more than about 100 lines, list the files you will add with rough line counts; for copies of existing files or folders give the count and the reason. These guidelines bias toward caution over speed; for trivial tasks, use judgment.
 
-<!-- karpathy-guidelines:start (multica-ai/andrej-karpathy-skills, formerly forrestchang; CLAUDE.md @ 2c60614; MIT; sections 2-3 rewritten from local evaluation 2026-10-15; original section 1 folded into the lead-in above, section 4 condensed and sections renumbered 2026-10-17) -->
+<!-- karpathy-guidelines:start (multica-ai/andrej-karpathy-skills, formerly forrestchang; CLAUDE.md @ 2c60614; MIT; sections 2-3 rewritten from local evaluation 2026-10-15; original section 1 folded into the lead-in above, section 4 condensed and sections renumbered 2026-10-17; section 1 extended 2026-11-13 after a review of the user's research code) -->
 ## 1. Simplicity First
 
-**Minimum code that solves the problem. Nothing speculative.** Avoid these, which cost cleanup time later:
+**Minimum code that solves the problem, simple enough for the user to read and understand all of it. Nothing speculative.** Avoid these, which cost cleanup time later:
 
 - Features, options or configurability nobody asked for.
 - Validation, fallbacks or error handling for cases that cannot happen. Validate only at real boundaries such as user input, files and external APIs.
 - An `except` that hides an error: catching broadly, returning a default, or dropping the message.
-- A wrapper, class or layer for a single use, or a copy of an existing function instead of importing it.
+- Abstraction the task does not need yet: a wrapper, class or layer for a single use, or a base class, registry or config system for variants that do not exist. A function shared by two scripts is not an abstraction; copying it is.
+- A copy of an existing function, block or script instead of importing it (a frozen, hash-verified copy kept for verification is not one), or hand-written machinery that a maintained library already provides: before writing general-purpose code (API client, parser, retry loop, optimizer, CLI), search for an established library and use it, unless a recorded result or its provenance depends on the hand-written behaviour.
 - A test that would pass without your change, other than a guard for behavior the task says must not change, or a test that only checks a mock. Extend an existing test when it covers the case.
+
+Not bulk in research code: evaluation guards, count and cohort checks, provenance and run records, frozen-input hashes and the baselines a comparison needs.
 
 ## 2. Surgical Changes
 
